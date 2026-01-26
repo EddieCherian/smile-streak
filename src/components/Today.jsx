@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { getDateKey } from "../utils/date";
-import { getYesterdayKey } from "../utils/streak";
+import { getDateKey } from "../utils/date.js";
+import { getYesterdayKey } from "../utils/streak.js";
 
 const BRUSH_TIME = 120; // seconds
 const RECOVERY_KEY = "__lastRecoveryUsed";

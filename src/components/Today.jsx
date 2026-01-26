@@ -19,11 +19,13 @@ export default function Today({ habitData, setHabitData }) {
   const formatTime = (s) =>
     `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 
-  // 🔁 TOGGLE TASK + STREAK CHECK
+  // 🔁 Toggle task + streak detection
   const toggleTask = (task) => {
     const nextValue = !todayData[task];
-    const completedNow =
-      Object.values({ ...todayData, [task]: nextValue }).filter(Boolean).length;
+    const completedNow = Object.values({
+      ...todayData,
+      [task]: nextValue,
+    }).filter(Boolean).length;
 
     setHabitData((prev) => ({
       ...prev,
@@ -39,7 +41,7 @@ export default function Today({ habitData, setHabitData }) {
     }
   };
 
-  // ⏱️ TIMER
+  // ⏱️ Timer logic
   useEffect(() => {
     if (!activeTimer) return;
 
@@ -77,16 +79,16 @@ export default function Today({ habitData, setHabitData }) {
         </div>
       )}
 
-      <section className="space-y-6 animate-pop">
+      <section className="space-y-6">
         {/* PROGRESS */}
-        <div className="bg-white rounded-3xl p-6 shadow-md">
+        <div className="bg-white rounded-3xl p-6 shadow-md animate-fade">
           <p className="text-sm font-semibold text-gray-500 mb-2">
             Today’s Progress
           </p>
 
           <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-700 ease-out"
+              className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-[width] duration-700 ease-out"
               style={{ width: `${percent}%` }}
             />
           </div>
@@ -94,7 +96,7 @@ export default function Today({ habitData, setHabitData }) {
           <p className="mt-2 text-sm text-gray-500">{percent}% completed</p>
         </div>
 
-        {/* BRUSHING */}
+        {/* BRUSHING TASKS */}
         {["morning", "night"].map((task) => {
           const isDone = todayData[task];
           const isRunning = activeTimer === task;
@@ -114,7 +116,7 @@ export default function Today({ habitData, setHabitData }) {
               className={`w-full flex justify-between items-center p-5 rounded-2xl border transition-all duration-300
                 ${
                   isDone
-                    ? "bg-green-50 border-green-400 animate-pop"
+                    ? "bg-green-50 border-green-400"
                     : isBlocked
                     ? "bg-gray-100 opacity-50 cursor-not-allowed"
                     : "bg-white border-gray-200 hover:scale-[1.02] hover:shadow-md"
@@ -130,7 +132,11 @@ export default function Today({ habitData, setHabitData }) {
                     {formatTime(timeLeft)}
                   </span>
                 )}
-                <span>{isDone ? "✅" : "🪥"}</span>
+
+                {/* ✅ ONLY ICON ANIMATES */}
+                <span className={isDone ? "animate-pop" : ""}>
+                  {isDone ? "✅" : "🪥"}
+                </span>
               </div>
             </button>
           );
@@ -139,15 +145,17 @@ export default function Today({ habitData, setHabitData }) {
         {/* FLOSS */}
         <button
           onClick={() => toggleTask("floss")}
-          className={`w-full flex justify-between items-center p-5 rounded-2xl border transition-all
+          className={`w-full flex justify-between items-center p-5 rounded-2xl border transition-all duration-300
             ${
               todayData.floss
-                ? "bg-green-50 border-green-400 animate-pop"
+                ? "bg-green-50 border-green-400"
                 : "bg-white border-gray-200 hover:scale-[1.02] hover:shadow-md"
             }`}
         >
           <span className="font-semibold">Floss</span>
-          <span>{todayData.floss ? "✅" : "🧵"}</span>
+          <span className={todayData.floss ? "animate-pop" : ""}>
+            {todayData.floss ? "✅" : "🧵"}
+          </span>
         </button>
       </section>
     </>

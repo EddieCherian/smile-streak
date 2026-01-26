@@ -1,3 +1,4 @@
+import { scheduleDailyNotifications } from "../utils/scheduleNotifications";
 import { useState, useEffect } from "react";
 import { getReminders, saveReminders } from "../utils/reminders";
 import { requestNotificationPermission } from "../utils/notifications";

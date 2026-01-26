@@ -3,8 +3,8 @@ import Today from "./components/Today";
 import Progress from "./components/Progress";
 import Tips from "./components/Tips";
 import Reminders from "./components/Reminders";
-import { scheduleDailyNotifications } from "./utils/scheduleNotifications";
 import { storage } from "./utils/storage";
+import { scheduleDailyNotifications } from "./utils/scheduleNotifications";
 import "./App.css";
 
 export default function App() {
@@ -13,14 +13,18 @@ export default function App() {
     storage.get("habitData", {})
   );
 
-  // 💾 Persist habit data
+  // persist habit data
   useEffect(() => {
     storage.set("habitData", habitData);
   }, [habitData]);
 
-  // 🔔 Schedule notifications once
+  // notifications (MOBILE SAFE)
   useEffect(() => {
-    if (Notification.permission === "granted") {
+    if (
+      typeof window !== "undefined" &&
+      "Notification" in window &&
+      Notification.permission === "granted"
+    ) {
       scheduleDailyNotifications();
     }
   }, []);

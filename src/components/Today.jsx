@@ -113,3 +113,4 @@ export default function Today({ habitData, setHabitData }) {
     </div>
   );
 }
+export default function Today(...) { ... }

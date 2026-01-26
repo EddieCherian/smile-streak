@@ -1,10 +1,9 @@
-import { useEffect } from "react";
-import { scheduleDailyNotifications } from "./utils/scheduleNotifications";
 import { useEffect, useState } from "react";
 import Today from "./components/Today";
 import Progress from "./components/Progress";
 import Tips from "./components/Tips";
 import Reminders from "./components/Reminders";
+import { scheduleDailyNotifications } from "./utils/scheduleNotifications";
 import { storage } from "./utils/storage";
 import "./App.css";
 
@@ -14,23 +13,18 @@ export default function App() {
     storage.get("habitData", {})
   );
 
+  // 💾 Persist habit data
   useEffect(() => {
     storage.set("habitData", habitData);
   }, [habitData]);
-export default function App() {
 
+  // 🔔 Schedule notifications once
   useEffect(() => {
     if (Notification.permission === "granted") {
       scheduleDailyNotifications();
     }
   }, []);
 
-  return (
-    <div className="min-h-screen bg-gray-100 p-4">
-      {/* routes / pages */}
-    </div>
-  );
-}
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-cyan-50 text-gray-800">
       {/* HEADER */}

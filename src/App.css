@@ -1,3 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* optional but safe */
+html, body {
+  margin: 0;
+  padding: 0;
+}

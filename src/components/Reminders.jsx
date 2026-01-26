@@ -1,26 +1,46 @@
+import { useState, useEffect } from "react";
+import { getReminders, saveReminders } from "../utils/reminders";
 import { requestNotificationPermission } from "../utils/notifications";
 
 export default function Reminders() {
+  const [reminders, setReminders] = useState(getReminders());
+
+  useEffect(() => {
+    saveReminders(reminders);
+  }, [reminders]);
+
+  const updateTime = (key, value) => {
+    setReminders((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
   return (
     <section className="space-y-6">
       <h2 className="text-xl font-bold">Reminders</h2>
 
-      <div className="bg-white p-4 rounded-2xl shadow">
-        <p className="font-semibold">Morning Brush</p>
-        <p className="text-sm text-gray-500">9:00 AM</p>
-      </div>
+      {/* MORNING */}
+      <ReminderRow
+        label="Morning Brush"
+        time={reminders.morning}
+        onChange={(v) => updateTime("morning", v)}
+      />
 
-      <div className="bg-white p-4 rounded-2xl shadow">
-        <p className="font-semibold">Night Brush</p>
-        <p className="text-sm text-gray-500">8:00 PM</p>
-      </div>
+      {/* NIGHT */}
+      <ReminderRow
+        label="Night Brush"
+        time={reminders.night}
+        onChange={(v) => updateTime("night", v)}
+      />
 
-      <div className="bg-white p-4 rounded-2xl shadow">
-        <p className="font-semibold">Floss</p>
-        <p className="text-sm text-gray-500">9:00 PM</p>
-      </div>
+      {/* FLOSS */}
+      <ReminderRow
+        label="Floss"
+        time={reminders.floss}
+        onChange={(v) => updateTime("floss", v)}
+      />
 
-      {/* 🔔 NOTIFICATION PERMISSION */}
       <button
         onClick={requestNotificationPermission}
         className="w-full bg-cyan-600 text-white p-4 rounded-xl font-semibold hover:bg-cyan-700 transition"
@@ -28,5 +48,20 @@ export default function Reminders() {
         Enable Notifications 🔔
       </button>
     </section>
+  );
+}
+
+function ReminderRow({ label, time, onChange }) {
+  return (
+    <div className="bg-white p-4 rounded-2xl shadow flex items-center justify-between">
+      <p className="font-semibold">{label}</p>
+
+      <input
+        type="time"
+        value={time}
+        onChange={(e) => onChange(e.target.value)}
+        className="border rounded-lg px-3 py-1 text-sm"
+      />
+    </div>
   );
 }

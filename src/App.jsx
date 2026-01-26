@@ -3,6 +3,7 @@ import Today from "./components/Today";
 import Progress from "./components/Progress";
 import Tips from "./components/Tips";
 import Reminders from "./components/Reminders";
+import Dentists from "./components/Dentists"; // ✅ ADDED
 import { storage } from "./utils/storage";
 import { scheduleDailyNotifications } from "./utils/scheduleNotifications";
 import "./App.css";
@@ -43,7 +44,7 @@ export default function App() {
 
       {/* TABS */}
       <nav className="flex gap-2 px-4 py-2 overflow-x-auto">
-        {["today", "progress", "tips", "reminders"].map((tab) => (
+        {["today", "progress", "tips", "reminders", "dentists"].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -67,6 +68,7 @@ export default function App() {
         {activeTab === "progress" && <Progress habitData={habitData} />}
         {activeTab === "tips" && <Tips />}
         {activeTab === "reminders" && <Reminders />}
+        {activeTab === "dentists" && <Dentists />} {/* ✅ ADDED */}
       </main>
     </div>
   );

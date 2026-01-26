@@ -37,36 +37,20 @@ export default function Dentists() {
   const [loading, setLoading] = useState(true);
   const [insurance, setInsurance] = useState("");
 
-  /* 📍 Fetch nearby dentists using OpenStreetMap */
+  /* 📍 Fetch nearby dentists using Yelp */
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
 
-        const query = `
-          [out:json];
-          node
-            ["amenity"="dentist"]
-            (around:5000,${latitude},${longitude});
-          out tags;
-        `;
-
         try {
           const res = await fetch(
-            "https://overpass-api.de/api/interpreter",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "text/plain",
-              },
-              body: query,
-            }
+            `/api/yelp?lat=${latitude}&lng=${longitude}`
           );
-
           const data = await res.json();
-          setDentists(data.elements || []);
+          setDentists(data.businesses || []);
         } catch (err) {
-          console.error("Overpass API failed:", err);
+          console.error("Yelp fetch failed:", err);
           setDentists([]);
         } finally {
           setLoading(false);
@@ -106,7 +90,7 @@ export default function Dentists() {
 
       {/* 🏥 Dentist list */}
       {dentists.map((d) => {
-        const clinicType = inferClinicType(d.tags);
+        const clinicType = inferClinicType({ name: d.name });
         const likelyPlans = INSURANCE_PROFILES[clinicType] || [];
         const likelyAccepted =
           insurance && likelyPlans.includes(insurance);
@@ -116,9 +100,15 @@ export default function Dentists() {
             key={d.id}
             className="bg-white p-5 rounded-2xl border shadow-sm space-y-1"
           >
-            <p className="font-semibold">
-              {d.tags.name || "Unnamed Dental Clinic"}
-            </p>
+            <p className="font-semibold">{d.name}</p>
+
+            {/* ⭐ Yelp rating (rating only, safe fallback) */}
+            {d.rating && (
+              <p className="text-sm text-yellow-600 font-medium">
+                ⭐ {d.rating} / 5
+                {d.review_count ? ` (${d.review_count} reviews)` : ""}
+              </p>
+            )}
 
             <p className="text-sm text-gray-500 capitalize">
               Clinic type: {clinicType}

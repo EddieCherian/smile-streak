@@ -92,7 +92,7 @@ export default function Today({ habitData, setHabitData }) {
       )}
 
       <section className="space-y-6">
-        {/* 🛟 RECOVERY BANNER */}
+        {/* 🛟 RECOVERY DAY BANNER */}
         {isRecoveryDay && (
           <div className="bg-orange-50 border border-orange-300 rounded-2xl p-4 animate-fade">
             <p className="font-semibold text-orange-600">

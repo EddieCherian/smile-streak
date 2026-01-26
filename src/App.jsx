@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { scheduleDailyNotifications } from "./utils/scheduleNotifications";
 import { useEffect, useState } from "react";
 import Today from "./components/Today";
 import Progress from "./components/Progress";
@@ -15,7 +17,20 @@ export default function App() {
   useEffect(() => {
     storage.set("habitData", habitData);
   }, [habitData]);
+export default function App() {
 
+  useEffect(() => {
+    if (Notification.permission === "granted") {
+      scheduleDailyNotifications();
+    }
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-gray-100 p-4">
+      {/* routes / pages */}
+    </div>
+  );
+}
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-cyan-50 text-gray-800">
       {/* HEADER */}

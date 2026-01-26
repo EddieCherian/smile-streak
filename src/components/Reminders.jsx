@@ -43,11 +43,14 @@ export default function Reminders() {
       />
 
       <button
-        onClick={requestNotificationPermission}
-        className="w-full bg-cyan-600 text-white p-4 rounded-xl font-semibold hover:bg-cyan-700 transition"
-      >
-        Enable Notifications 🔔
-      </button>
+  onClick={async () => {
+    await requestNotificationPermission();
+    scheduleDailyNotifications();
+  }}
+  className="w-full bg-cyan-600 text-white p-4 rounded-xl font-semibold hover:bg-cyan-700 transition"
+>
+  Enable Notifications 🔔
+</button>
     </section>
   );
 }

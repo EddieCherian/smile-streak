@@ -1,10 +1,12 @@
-export function requestNotificationPermission() {
-  if (!("Notification" in window)) return;
-  Notification.requestPermission();
-}
+export async function requestNotificationPermission() {
+  if (!("Notification" in window)) {
+    alert("Notifications not supported");
+    return;
+  }
 
-export function sendNotification(title, body) {
-  if (Notification.permission !== "granted") return;
+  const permission = await Notification.requestPermission();
 
-  new Notification(title, { body });
+  if (permission === "granted") {
+    new Notification("Notifications enabled 🔔");
+  }
 }

@@ -3,6 +3,7 @@ import { getDateKey } from "../utils/date";
 import { getYesterdayKey } from "../utils/streak";
 
 const BRUSH_TIME = 120; // seconds
+const RECOVERY_KEY = "__lastRecoveryUsed";
 
 export default function Today({ habitData, setHabitData }) {
   const today = getDateKey();
@@ -16,13 +17,23 @@ export default function Today({ habitData, setHabitData }) {
 
   const yesterdayData = habitData[yesterday];
 
+  // 🧠 Recovery availability (once per 7 days)
+  const lastRecovery = habitData[RECOVERY_KEY];
+  const lastRecoveryDate = lastRecovery ? new Date(lastRecovery) : null;
+
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+  const recoveryAvailable =
+    !lastRecoveryDate || lastRecoveryDate < oneWeekAgo;
+
   const missedYesterday =
     yesterdayData &&
     ["morning", "night", "floss"].some(
       (task) => yesterdayData[task] === false
     );
 
-  const isRecoveryDay = Boolean(missedYesterday);
+  const isRecoveryDay = missedYesterday && recoveryAvailable;
 
   const [activeTimer, setActiveTimer] = useState(null);
   const [timeLeft, setTimeLeft] = useState(BRUSH_TIME);
@@ -39,13 +50,22 @@ export default function Today({ habitData, setHabitData }) {
       [task]: nextValue,
     }).filter(Boolean).length;
 
-    setHabitData((prev) => ({
-      ...prev,
-      [today]: {
-        ...todayData,
-        [task]: nextValue,
-      },
-    }));
+    setHabitData((prev) => {
+      const updated = {
+        ...prev,
+        [today]: {
+          ...todayData,
+          [task]: nextValue,
+        },
+      };
+
+      // 🛟 Consume recovery only when day is completed
+      if (completedNow === 3 && isRecoveryDay) {
+        updated[RECOVERY_KEY] = new Date().toISOString();
+      }
+
+      return updated;
+    });
 
     if (completedNow === 3) {
       setShowStreak(true);
@@ -85,7 +105,7 @@ export default function Today({ habitData, setHabitData }) {
               🔥 Day Complete!
             </p>
             <p className="text-sm text-gray-500 text-center mt-1">
-              Nice recovery 😤
+              {isRecoveryDay ? "Nice recovery 😤" : "Great consistency 👏"}
             </p>
           </div>
         </div>
@@ -99,7 +119,7 @@ export default function Today({ habitData, setHabitData }) {
               Recovery Day 💪
             </p>
             <p className="text-sm text-orange-500">
-              You missed yesterday — today counts extra.
+              You missed yesterday — recovery available once this week.
             </p>
           </div>
         )}

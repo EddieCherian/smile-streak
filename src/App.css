@@ -1,3 +1,35 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+13:08:40.459 Running build in Washington, D.C., USA (East) – iad1
+13:08:40.460 Build machine configuration: 2 cores, 8 GB
+13:08:41.208 Cloning github.com/EddieCherian/smile-streak (Branch: main, Commit: 2d75830)
+13:08:41.210 Previous build caches not available.
+13:08:41.511 Cloning completed: 302.000ms
+13:08:42.018 Running "vercel build"
+13:08:43.353 Vercel CLI 50.4.10
+13:08:44.126 Installing dependencies...
+13:09:01.676 
+13:09:01.677 added 128 packages in 17s
+13:09:01.678 
+13:09:01.678 25 packages are looking for funding
+13:09:01.679   run `npm fund` for details
+13:09:01.817 
+13:09:01.817 > smile-streak@1.0.0 build
+13:09:01.817 > vite build
+13:09:01.818 
+13:09:02.046 [36mvite v5.4.21 [32mbuilding for production...[36m[39m
+13:09:02.098 transforming...
+13:09:02.393 [32m✓[39m 3 modules transformed.
+13:09:02.395 [31mx[39m Build failed in 323ms
+13:09:02.395 [31merror during build:
+13:09:02.395 [31m[vite:css] [postcss] Unexpected token, expected "," (31:1)[31m
+13:09:02.396 file: [36m/vercel/path0/src/App.css:undefined:NaN[31m
+13:09:02.396     at unexpected (/vercel/path0/node_modules/sucrase/dist/parser/traverser/util.js:99:15)
+13:09:02.396     at expect (/vercel/path0/node_modules/sucrase/dist/parser/traverser/util.js:86:5)
+13:09:02.396     at parseObj (/vercel/path0/node_modules/sucrase/dist/parser/traverser/expression.js:759:20)
+13:09:02.397     at parseExprAtom (/vercel/path0/node_modules/sucrase/dist/parser/traverser/expression.js:553:7)
+13:09:02.397     at parseExprSubscripts (/vercel/path0/node_modules/sucrase/dist/parser/traverser/expression.js:276:20)
+13:09:02.397     at parseMaybeUnary (/vercel/path0/node_modules/sucrase/dist/parser/traverser/expression.js:257:20)
+13:09:02.397     at parseExprOps (/vercel/path0/node_modules/sucrase/dist/parser/traverser/expression.js:185:20)
+13:09:02.397     at parseMaybeConditional (/vercel/path0/node_modules/sucrase/dist/parser/traverser/expression.js:157:20)
+13:09:02.398     at baseParseMaybeAssign (/vercel/path0/node_modules/sucrase/dist/parser/traverser/expression.js:142:20)
+13:09:02.398     at tsParseMaybeAssignWithoutJSX (/vercel/path0/node_modules/sucrase/dist/parser/plugins/typescript.js:1580:45)[39m
+13:09:02.415 Error: Command "npm run build" exited with 1

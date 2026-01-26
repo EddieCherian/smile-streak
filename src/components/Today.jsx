@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
+import { getDateKey } from "../utils/date";
 
-const BRUSH_TIME = 120;
+const BRUSH_TIME = 120; // seconds
 
 export default function Today({ habitData, setHabitData }) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getDateKey();
 
   const todayData = habitData[today] || {
     morning: false,
     night: false,
-    floss: false
+    floss: false,
   };
 
   const [activeTimer, setActiveTimer] = useState(null);
@@ -18,12 +19,12 @@ export default function Today({ habitData, setHabitData }) {
     `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 
   const completeTask = (task) => {
-    setHabitData(prev => ({
+    setHabitData((prev) => ({
       ...prev,
       [today]: {
         ...todayData,
-        [task]: true
-      }
+        [task]: true,
+      },
     }));
   };
 
@@ -31,7 +32,7 @@ export default function Today({ habitData, setHabitData }) {
     if (!activeTimer) return;
 
     const interval = setInterval(() => {
-      setTimeLeft(t => {
+      setTimeLeft((t) => {
         if (t <= 1) {
           clearInterval(interval);
           completeTask(activeTimer);
@@ -49,31 +50,47 @@ export default function Today({ habitData, setHabitData }) {
   const percent = Math.round((completedCount / 3) * 100);
 
   return (
-    <div className="bg-white rounded-2xl p-6 shadow space-y-4">
-      <h2 className="text-xl font-bold">Today's Routine</h2>
+    <section className="space-y-6">
+      {/* PROGRESS */}
+      <div className="bg-white rounded-3xl p-6 shadow-md">
+        <p className="text-sm font-semibold text-gray-500 mb-2">
+          Today’s Progress
+        </p>
+        <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all"
+            style={{ width: `${percent}%` }}
+          />
+        </div>
+        <p className="mt-2 text-sm text-gray-500">{percent}% completed</p>
+      </div>
 
-      {["morning", "night"].map(task => {
-        const isCompleted = todayData[task];
+      {/* BRUSHING */}
+      {["morning", "night"].map((task) => {
+        const isDone = todayData[task];
         const isRunning = activeTimer === task;
         const isBlocked = activeTimer && activeTimer !== task;
 
         return (
           <button
             key={task}
-            disabled={isCompleted || isBlocked}
+            disabled={isDone || isBlocked}
             onClick={() => {
               setActiveTimer(task);
               setTimeLeft(BRUSH_TIME);
             }}
-            className={`w-full flex justify-between items-center p-4 rounded-xl border transition ${
-              isCompleted
-                ? "bg-green-50 border-green-400"
-                : isBlocked
-                ? "bg-gray-100 opacity-50 cursor-not-allowed"
-                : "bg-gray-50 hover:bg-gray-100"
-            }`}
+            className={`w-full flex justify-between items-center p-5 rounded-2xl border transition
+              ${
+                isDone
+                  ? "bg-green-50 border-green-400"
+                  : isBlocked
+                  ? "bg-gray-100 opacity-50 cursor-not-allowed"
+                  : "bg-white border-gray-200 hover:bg-gray-50"
+              }`}
           >
-            <span className="capitalize">{task} brushing</span>
+            <span className="capitalize font-semibold">
+              {task} brushing
+            </span>
 
             <div className="flex items-center gap-3">
               {isRunning && (
@@ -81,7 +98,7 @@ export default function Today({ habitData, setHabitData }) {
                   {formatTime(timeLeft)}
                 </span>
               )}
-              <span>{isCompleted ? "✅" : "🪥"}</span>
+              <span>{isDone ? "✅" : "🪥"}</span>
             </div>
           </button>
         );
@@ -90,27 +107,16 @@ export default function Today({ habitData, setHabitData }) {
       {/* FLOSS */}
       <button
         onClick={() => completeTask("floss")}
-        className={`w-full flex justify-between items-center p-4 rounded-xl border ${
-          todayData.floss
-            ? "bg-green-50 border-green-400"
-            : "bg-gray-50 hover:bg-gray-100"
-        }`}
+        className={`w-full flex justify-between items-center p-5 rounded-2xl border
+          ${
+            todayData.floss
+              ? "bg-green-50 border-green-400"
+              : "bg-white border-gray-200 hover:bg-gray-50"
+          }`}
       >
-        <span>Floss</span>
+        <span className="font-semibold">Floss</span>
         <span>{todayData.floss ? "✅" : "🧵"}</span>
       </button>
-
-      {/* PROGRESS */}
-      <div>
-        <p className="text-sm mb-1">Daily Progress</p>
-        <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
-          <div
-            className="h-3 bg-gradient-to-r from-cyan-500 to-blue-500 transition-all"
-            style={{ width: `${percent}%` }}
-          />
-        </div>
-      </div>
-    </div>
+    </section>
   );
 }
-export default function Today(...) { ... }

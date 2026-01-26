@@ -1,12 +1,19 @@
 export async function requestNotificationPermission() {
-  if (!("Notification" in window)) {
-    alert("Notifications not supported");
-    return;
+  // iOS Safari: do nothing silently
+  if (
+    !("Notification" in window) ||
+    /iPhone|iPad|iPod/.test(navigator.userAgent)
+  ) {
+    return "unsupported";
   }
 
-  const permission = await Notification.requestPermission();
-
-  if (permission === "granted") {
-    new Notification("Notifications enabled 🔔");
+  if (Notification.permission === "granted") {
+    return "granted";
   }
+
+  if (Notification.permission === "denied") {
+    return "denied";
+  }
+
+  return await Notification.requestPermission();
 }

@@ -37,21 +37,61 @@ export default function Dentists() {
   const [loading, setLoading] = useState(true);
   const [insurance, setInsurance] = useState("");
 
-  /* 📍 Fetch nearby dentists using Yelp */
+  /* 📍 Fetch nearby dentists (Yelp → fallback to OpenStreetMap) */
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
 
         try {
+          // 1️⃣ Try Yelp first
           const res = await fetch(
             `/api/yelp?lat=${latitude}&lng=${longitude}`
           );
+
+          if (!res.ok) {
+            throw new Error("Yelp failed");
+          }
+
           const data = await res.json();
           setDentists(data.businesses || []);
         } catch (err) {
-          console.error("Yelp fetch failed:", err);
-          setDentists([]);
+          console.warn("Yelp failed, using OpenStreetMap fallback");
+
+          // 2️⃣ Fallback: OpenStreetMap
+          const query = `
+            [out:json];
+            node
+              ["amenity"="dentist"]
+              (around:5000,${latitude},${longitude});
+            out tags;
+          `;
+
+          try {
+            const res = await fetch(
+              "https://overpass-api.de/api/interpreter",
+              {
+                method: "POST",
+                headers: { "Content-Type": "text/plain" },
+                body: query,
+              }
+            );
+
+            const data = await res.json();
+
+            // Normalize OSM data to match Yelp shape
+            const normalized = (data.elements || []).map((d) => ({
+              id: d.id,
+              name: d.tags?.name || "Unnamed Dental Clinic",
+              rating: null,
+              review_count: null,
+            }));
+
+            setDentists(normalized);
+          } catch (fallbackErr) {
+            console.error("Fallback failed:", fallbackErr);
+            setDentists([]);
+          }
         } finally {
           setLoading(false);
         }

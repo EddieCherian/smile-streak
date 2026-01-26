@@ -14,22 +14,32 @@ export default function Today({ habitData, setHabitData }) {
 
   const [activeTimer, setActiveTimer] = useState(null);
   const [timeLeft, setTimeLeft] = useState(BRUSH_TIME);
+  const [showStreak, setShowStreak] = useState(false);
 
   const formatTime = (s) =>
     `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 
-  // 🔁 TOGGLE task (this is the key fix)
+  // 🔁 TOGGLE TASK + STREAK CHECK
   const toggleTask = (task) => {
+    const nextValue = !todayData[task];
+    const completedNow =
+      Object.values({ ...todayData, [task]: nextValue }).filter(Boolean).length;
+
     setHabitData((prev) => ({
       ...prev,
       [today]: {
         ...todayData,
-        [task]: !todayData[task],
+        [task]: nextValue,
       },
     }));
+
+    if (completedNow === 3) {
+      setShowStreak(true);
+      setTimeout(() => setShowStreak(false), 1200);
+    }
   };
 
-  // ⏱️ Timer logic (only for brushing)
+  // ⏱️ TIMER
   useEffect(() => {
     if (!activeTimer) return;
 
@@ -52,78 +62,94 @@ export default function Today({ habitData, setHabitData }) {
   const percent = Math.round((completedCount / 3) * 100);
 
   return (
-    <section className="space-y-6">
-      {/* PROGRESS */}
-      <div className="bg-white rounded-3xl p-6 shadow-md">
-        <p className="text-sm font-semibold text-gray-500 mb-2">
-          Today’s Progress
-        </p>
-        <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all"
-            style={{ width: `${percent}%` }}
-          />
+    <>
+      {/* 🔥 STREAK POPUP */}
+      {showStreak && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+          <div className="bg-white px-8 py-6 rounded-3xl shadow-xl animate-pop animate-glow">
+            <p className="text-3xl font-extrabold text-orange-500 text-center">
+              🔥 Streak Complete!
+            </p>
+            <p className="text-sm text-gray-500 text-center mt-1">
+              You finished today 🎉
+            </p>
+          </div>
         </div>
-        <p className="mt-2 text-sm text-gray-500">{percent}% completed</p>
-      </div>
+      )}
 
-      {/* BRUSHING */}
-      {["morning", "night"].map((task) => {
-        const isDone = todayData[task];
-        const isRunning = activeTimer === task;
-        const isBlocked = activeTimer && activeTimer !== task;
+      <section className="space-y-6 animate-pop">
+        {/* PROGRESS */}
+        <div className="bg-white rounded-3xl p-6 shadow-md">
+          <p className="text-sm font-semibold text-gray-500 mb-2">
+            Today’s Progress
+          </p>
 
-        return (
-          <button
-            key={task}
-            disabled={isBlocked}
-            onClick={() => {
-              if (isDone) {
-                // 🔁 allow unselect
-                toggleTask(task);
-              } else {
-                setActiveTimer(task);
-                setTimeLeft(BRUSH_TIME);
-              }
-            }}
-            className={`w-full flex justify-between items-center p-5 rounded-2xl border transition
-              ${
-                isDone
-                  ? "bg-green-50 border-green-400"
-                  : isBlocked
-                  ? "bg-gray-100 opacity-50 cursor-not-allowed"
-                  : "bg-white border-gray-200 hover:bg-gray-50"
-              }`}
-          >
-            <span className="capitalize font-semibold">
-              {task} brushing
-            </span>
+          <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-700 ease-out"
+              style={{ width: `${percent}%` }}
+            />
+          </div>
 
-            <div className="flex items-center gap-3">
-              {isRunning && (
-                <span className="font-mono text-sm text-cyan-600">
-                  {formatTime(timeLeft)}
-                </span>
-              )}
-              <span>{isDone ? "✅" : "🪥"}</span>
-            </div>
-          </button>
-        );
-      })}
+          <p className="mt-2 text-sm text-gray-500">{percent}% completed</p>
+        </div>
 
-      {/* FLOSS */}
-      <button
-        onClick={() => toggleTask("floss")}
-        className={`w-full flex justify-between items-center p-5 rounded-2xl border transition
-          ${
-            todayData.floss
-              ? "bg-green-50 border-green-400"
-              : "bg-white border-gray-200 hover:bg-gray-50"
-          }`}
-      >
-        <span className="font-semibold">Floss</span>
-        <span>{todayData.floss ? "✅" : "🧵"}</span>
-      </button>
-    </section>
+        {/* BRUSHING */}
+        {["morning", "night"].map((task) => {
+          const isDone = todayData[task];
+          const isRunning = activeTimer === task;
+          const isBlocked = activeTimer && activeTimer !== task;
+
+          return (
+            <button
+              key={task}
+              disabled={isBlocked}
+              onClick={() => {
+                if (isDone) toggleTask(task);
+                else {
+                  setActiveTimer(task);
+                  setTimeLeft(BRUSH_TIME);
+                }
+              }}
+              className={`w-full flex justify-between items-center p-5 rounded-2xl border transition-all duration-300
+                ${
+                  isDone
+                    ? "bg-green-50 border-green-400 animate-pop"
+                    : isBlocked
+                    ? "bg-gray-100 opacity-50 cursor-not-allowed"
+                    : "bg-white border-gray-200 hover:scale-[1.02] hover:shadow-md"
+                }`}
+            >
+              <span className="capitalize font-semibold">
+                {task} brushing
+              </span>
+
+              <div className="flex items-center gap-3">
+                {isRunning && (
+                  <span className="font-mono text-sm text-cyan-600">
+                    {formatTime(timeLeft)}
+                  </span>
+                )}
+                <span>{isDone ? "✅" : "🪥"}</span>
+              </div>
+            </button>
+          );
+        })}
+
+        {/* FLOSS */}
+        <button
+          onClick={() => toggleTask("floss")}
+          className={`w-full flex justify-between items-center p-5 rounded-2xl border transition-all
+            ${
+              todayData.floss
+                ? "bg-green-50 border-green-400 animate-pop"
+                : "bg-white border-gray-200 hover:scale-[1.02] hover:shadow-md"
+            }`}
+        >
+          <span className="font-semibold">Floss</span>
+          <span>{todayData.floss ? "✅" : "🧵"}</span>
+        </button>
+      </section>
+    </>
   );
 }

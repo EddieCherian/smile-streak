@@ -37,31 +37,46 @@ export default function Dentists() {
   const [loading, setLoading] = useState(true);
   const [insurance, setInsurance] = useState("");
 
-  /* 📍 Fetch nearby dentists using OpenStreetMap */
+  /* 📍 Fetch nearby dentists using Yelp (browser-safe via proxy) */
   useEffect(() => {
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-      const { latitude, longitude } = pos.coords;
+    const YELP_API_KEY = "KKVs0W-kP-VksWrRFr9lnLFrOMLlNr8yHfjOau1EPSbkYMhxvppPXsG6jjYOS-s9QUj_IS43BYWiqUvWPgDXSyJ_mATKuhhZJnnPK4UiqrHMNq5HdmfpnOcX0ep3aXYx";
 
-      const query = `
-        [out:json];
-        node
-          ["amenity"="dentist"]
-          (around:5000,${latitude},${longitude});
-        out tags;
-      `;
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
 
-      const res = await fetch(
-        "https://overpass-api.de/api/interpreter",
-        {
-          method: "POST",
-          body: query,
+        try {
+          const res = await fetch(
+            `https://corsproxy.io/?https://api.yelp.com/v3/businesses/search?term=dentist&latitude=${latitude}&longitude=${longitude}&limit=10`,
+            {
+              headers: {
+                Authorization: `Bearer ${YELP_API_KEY}`,
+              },
+            }
+          );
+
+          const data = await res.json();
+
+          // 🔁 Normalize Yelp data to match your existing intelligence system
+          const normalized = (data.businesses || []).map((b) => ({
+            id: b.id,
+            tags: {
+              name: b.name,
+            },
+          }));
+
+          setDentists(normalized);
+        } catch (err) {
+          console.error("Yelp fetch failed:", err);
+          setDentists([]);
+        } finally {
+          setLoading(false);
         }
-      );
-
-      const data = await res.json();
-      setDentists(data.elements || []);
-      setLoading(false);
-    });
+      },
+      () => {
+        setLoading(false);
+      }
+    );
   }, []);
 
   return (

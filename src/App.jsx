@@ -1,134 +1,55 @@
-import { useEffect, useMemo, useState } from "react";
-
-/* -------------------- DATA -------------------- */
-
-const TIPS = [
-  {
-    title: "Don’t rinse after brushing",
-    content:
-      "Spit, don’t rinse. This allows fluoride to stay on your teeth longer and strengthen enamel.",
-    source: "NHS UK"
-  },
-  {
-    title: "Floss before brushing",
-    content:
-      "Flossing first removes plaque so fluoride toothpaste can reach between teeth.",
-    source: "American Dental Association"
-  },
-  {
-    title: "Brush for 2 minutes",
-    content:
-      "Two full minutes ensures all tooth surfaces are cleaned properly.",
-    source: "CDC"
-  }
-];
-
-const ACHIEVEMENTS = [
-  { id: 1, label: "1 Day", requirement: 1, icon: "🥉" },
-  { id: 3, label: "3 Days", requirement: 3, icon: "🥈" },
-  { id: 7, label: "7 Days", requirement: 7, icon: "🥇" }
-];
-
-/* -------------------- HELPERS -------------------- */
-
-const todayKey = () => new Date().toISOString().slice(0, 10);
-
-function calculateStreak(data) {
-  let current = 0;
-  let longest = 0;
-  let temp = 0;
-
-  for (let i = 0; i < 365; i++) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const key = d.toISOString().slice(0, 10);
-
-    const day = data[key];
-    const complete = day?.morning && day?.night && day?.floss;
-
-    if (complete) {
-      temp++;
-      longest = Math.max(longest, temp);
-      if (i === current) current++;
-    } else {
-      temp = 0;
-    }
-  }
-
-  return { current, longest };
-}
-
-/* -------------------- APP -------------------- */
+import { useEffect, useState } from "react";
+import { TIPS, ACHIEVEMENTS } from "./data";
+import { getDateKey } from "./utils/date";
+import { storage } from "./utils/storage";
+import { getCompletionPercent, calculateStreaks } from "./utils/progress";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("today");
-  const [habitData, setHabitData] = useState({});
-
-  /* Persist data */
-  useEffect(() => {
-    const saved = localStorage.getItem("habitData");
-    if (saved) setHabitData(JSON.parse(saved));
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("habitData", JSON.stringify(habitData));
-  }, [habitData]);
-
-  const { current, longest } = useMemo(
-    () => calculateStreak(habitData),
-    [habitData]
+  const [habitData, setHabitData] = useState(() =>
+    storage.get("habitData", {})
   );
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
+  useEffect(() => {
+    storage.set("habitData", habitData);
+  }, [habitData]);
 
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-cyan-50 text-gray-800">
       {/* HEADER */}
-      <header className="p-4 text-center">
-        <h1 className="text-2xl font-bold">Smile Streak</h1>
+      <header className="px-6 pt-8 pb-4">
+        <h1 className="text-3xl font-extrabold tracking-tight">
+          Smile Streak 😁
+        </h1>
         <p className="text-sm text-gray-500">
-          Build healthy dental habits
+          Build a perfect daily dental routine
         </p>
       </header>
 
-      {/* STREAK BAR */}
-      <div className="px-4">
-        <div className="bg-white rounded-xl shadow p-4 flex justify-between text-center">
-          <div>
-            <p className="text-xs text-gray-500">Current Streak</p>
-            <p className="text-xl font-bold text-orange-500">🔥 {current}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500">Best Streak</p>
-            <p className="text-xl font-bold text-yellow-500">🏆 {longest}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* NAV */}
-      <nav className="flex gap-2 p-4 justify-center">
+      {/* TABS */}
+      <nav className="flex gap-2 px-4 py-2 overflow-x-auto">
         {["today", "progress", "tips", "reminders"].map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 rounded-full font-semibold transition ${
-              activeTab === tab
-                ? "bg-cyan-500 text-white"
-                : "bg-white text-gray-600"
-            }`}
+            className={`px-5 py-2 rounded-full text-sm font-semibold transition
+              ${
+                activeTab === tab
+                  ? "bg-cyan-500 text-white shadow"
+                  : "bg-white text-gray-600 shadow-sm"
+              }`}
           >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            {tab[0].toUpperCase() + tab.slice(1)}
           </button>
         ))}
       </nav>
 
       {/* CONTENT */}
-      <main className="p-4 pb-24 max-w-md mx-auto">
+      <main className="p-4 space-y-6 pb-24">
         {activeTab === "today" && (
           <Today habitData={habitData} setHabitData={setHabitData} />
         )}
-        {activeTab === "progress" && (
-          <Progress habitData={habitData} />
-        )}
+        {activeTab === "progress" && <Progress habitData={habitData} />}
         {activeTab === "tips" && <Tips />}
         {activeTab === "reminders" && <Reminders />}
       </main>
@@ -136,10 +57,10 @@ export default function App() {
   );
 }
 
-/* -------------------- TODAY -------------------- */
+/* ───────────────── TODAY ───────────────── */
 
 function Today({ habitData, setHabitData }) {
-  const today = todayKey();
+  const today = getDateKey();
   const todayData = habitData[today] || {
     morning: false,
     night: false,
@@ -153,96 +74,137 @@ function Today({ habitData, setHabitData }) {
     }));
   };
 
-  const completed = Object.values(todayData).filter(Boolean).length;
-  const percent = Math.round((completed / 3) * 100);
+  const percent = getCompletionPercent(todayData);
 
   return (
-    <div className="bg-white rounded-2xl p-6 shadow space-y-4">
-      <h2 className="font-bold text-lg">Today’s Routine</h2>
-
-      {[
-        ["morning", "Morning Brush"],
-        ["night", "Night Brush"],
-        ["floss", "Floss"]
-      ].map(([key, label]) => (
-        <button
-          key={key}
-          onClick={() => toggle(key)}
-          className={`w-full flex justify-between items-center p-4 rounded-xl border ${
-            todayData[key]
-              ? "bg-green-50 border-green-400"
-              : "bg-gray-50"
-          }`}
-        >
-          <span>{label}</span>
-          <span className="text-xl">
-            {todayData[key] ? "✅" : "⭕"}
-          </span>
-        </button>
-      ))}
-
-      <div>
-        <p className="text-xs mb-1 text-gray-500">Daily Progress</p>
-        <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+    <section className="space-y-6">
+      {/* PROGRESS CARD */}
+      <div className="bg-white rounded-3xl p-6 shadow-md">
+        <p className="text-sm font-semibold text-gray-500 mb-2">
+          Today’s Progress
+        </p>
+        <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
           <div
-            className="h-3 bg-gradient-to-r from-cyan-500 to-blue-500"
+            className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all"
             style={{ width: `${percent}%` }}
           />
         </div>
+        <p className="mt-2 text-sm text-gray-500">{percent}% completed</p>
       </div>
-    </div>
+
+      {/* TASKS */}
+      <div className="space-y-3">
+        <Task
+          label="Morning Brushing"
+          icon="🌅"
+          done={todayData.morning}
+          onClick={() => toggle("morning")}
+        />
+        <Task
+          label="Night Brushing"
+          icon="🌙"
+          done={todayData.night}
+          onClick={() => toggle("night")}
+        />
+        <Task
+          label="Flossing"
+          icon="🧵"
+          done={todayData.floss}
+          onClick={() => toggle("floss")}
+        />
+      </div>
+    </section>
   );
 }
 
-/* -------------------- PROGRESS -------------------- */
+function Task({ label, icon, done, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full flex items-center justify-between p-5 rounded-2xl border transition
+        ${
+          done
+            ? "bg-green-50 border-green-400"
+            : "bg-white border-gray-200 hover:bg-gray-50"
+        }`}
+    >
+      <div className="flex items-center gap-4">
+        <span className="text-2xl">{icon}</span>
+        <span className="font-semibold">{label}</span>
+      </div>
+      <span className="text-xl">{done ? "✅" : "⭕"}</span>
+    </button>
+  );
+}
+
+/* ───────────────── PROGRESS ───────────────── */
 
 function Progress({ habitData }) {
-  const completedDays = Object.values(habitData).filter(
+  const days = Object.values(habitData);
+  const completed = days.filter(
     d => d?.morning && d?.night && d?.floss
   ).length;
 
+  const { currentStreak, longestStreak } =
+    calculateStreaks(habitData);
+
   return (
-    <div className="space-y-4">
-      <div className="bg-white p-6 rounded-2xl shadow text-center">
-        <p className="text-sm text-gray-500">Completed Days</p>
-        <p className="text-3xl font-bold text-cyan-600">
-          {completedDays}
-        </p>
+    <section className="space-y-6">
+      {/* STATS */}
+      <div className="grid grid-cols-3 gap-3">
+        <Stat label="Completed" value={completed} />
+        <Stat label="Current Streak" value={currentStreak} />
+        <Stat label="Longest" value={longestStreak} />
       </div>
 
-      <div className="bg-white p-6 rounded-2xl shadow">
-        <h3 className="font-bold mb-3">Achievements</h3>
-        <div className="grid grid-cols-3 gap-3">
+      {/* ACHIEVEMENTS */}
+      <div className="bg-white rounded-3xl p-6 shadow-md">
+        <h3 className="font-bold mb-4">Achievements</h3>
+        <div className="grid grid-cols-3 gap-4">
           {ACHIEVEMENTS.map(a => (
             <div
               key={a.id}
-              className={`p-4 rounded-xl text-center ${
-                completedDays >= a.requirement
-                  ? "bg-yellow-100"
-                  : "bg-gray-100 opacity-40"
-              }`}
+              className={`p-4 rounded-2xl text-center transition
+                ${
+                  completed >= a.requirement
+                    ? "bg-yellow-100"
+                    : "bg-gray-100 opacity-50"
+                }`}
             >
-              <div className="text-2xl">{a.icon}</div>
-              <p className="text-xs">{a.label}</p>
+              <div className="text-3xl">{a.icon}</div>
+              <p className="text-xs font-semibold mt-1">{a.label}</p>
             </div>
           ))}
         </div>
       </div>
+    </section>
+  );
+}
+
+function Stat({ label, value }) {
+  return (
+    <div className="bg-white rounded-2xl p-4 shadow text-center">
+      <p className="text-xs text-gray-500">{label}</p>
+      <p className="text-2xl font-extrabold text-cyan-600">{value}</p>
     </div>
   );
 }
 
-/* -------------------- TIPS -------------------- */
+/* ───────────────── TIPS ───────────────── */
 
 function Tips() {
   return (
     <div className="space-y-4">
-      {TIPS.map((tip, i) => (
-        <div key={i} className="bg-white p-5 rounded-2xl shadow">
-          <h3 className="font-bold">{tip.title}</h3>
-          <p className="text-sm text-gray-600 mt-1">
-            {tip.content}
-          </p>
+      {TIPS.map(tip => (
+        <div
+          key={tip.id}
+          className="bg-white p-5 rounded-3xl shadow-md"
+        >
+          <div className="flex items-center gap-3 mb-1">
+            <span className="text-2xl">{tip.icon}</span>
+            <h3 className="font-bold">{tip.title}</h3>
+          </div>
+          <p className="text-sm text-gray-600">{tip.content}</p>
           <p className="text-xs text-cyan-600 mt-2">
             Source: {tip.source}
           </p>
@@ -252,15 +214,14 @@ function Tips() {
   );
 }
 
-/* -------------------- REMINDERS -------------------- */
+/* ───────────────── REMINDERS ───────────────── */
 
 function Reminders() {
   return (
-    <div className="bg-white p-6 rounded-2xl shadow">
-      <h2 className="font-bold mb-2">Reminders</h2>
+    <div className="bg-white p-6 rounded-3xl shadow-md">
+      <h2 className="font-bold text-lg mb-2">Reminders</h2>
       <p className="text-sm text-gray-600">
-        Notification reminders require browser permissions.
-        (Demo placeholder)
+        Notification scheduling is a future feature.
       </p>
     </div>
   );

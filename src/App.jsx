@@ -3,6 +3,12 @@ import { TIPS, ACHIEVEMENTS } from "./data/index.js";
 import { getDateKey } from "./utils/date";
 import { storage } from "./utils/storage";
 import { getCompletionPercent, calculateStreaks } from "./utils/progress";
+import { useState } from "react";
+import Today from "./components/Today";
+import Progress from "./components/Progress";
+import Tips from "./components/Tips";
+import Reminders from "./components/Reminders";
+import "./App.css";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("today");

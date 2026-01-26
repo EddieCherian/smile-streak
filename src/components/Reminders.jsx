@@ -1,6 +1,8 @@
+import { requestNotificationPermission } from "../utils/notifications";
+
 export default function Reminders() {
   return (
-    <section className="space-y-4">
+    <section className="space-y-6">
       <h2 className="text-xl font-bold">Reminders</h2>
 
       <div className="bg-white p-4 rounded-2xl shadow">
@@ -17,6 +19,14 @@ export default function Reminders() {
         <p className="font-semibold">Floss</p>
         <p className="text-sm text-gray-500">9:00 PM</p>
       </div>
+
+      {/* 🔔 NOTIFICATION PERMISSION */}
+      <button
+        onClick={requestNotificationPermission}
+        className="w-full bg-cyan-600 text-white p-4 rounded-xl font-semibold hover:bg-cyan-700 transition"
+      >
+        Enable Notifications 🔔
+      </button>
     </section>
   );
 }

@@ -5,6 +5,29 @@ import { getYesterdayKey } from "../utils/streak.js";
 const BRUSH_TIME = 120; // seconds
 const RECOVERY_KEY = "__lastRecoveryUsed";
 
+/* 🧠 Reflection options */
+const REFLECTION_OPTIONS = [
+  { id: "forgot", label: "I forgot" },
+  { id: "tired", label: "I was too tired" },
+  { id: "busy", label: "I was busy / away" },
+  { id: "lazy", label: "I didn’t feel motivated" },
+  { id: "stressed", label: "I was stressed or overwhelmed" },
+];
+
+/* 💡 Reflection intelligence */
+const REFLECTION_INSIGHTS = {
+  forgot:
+    "You tend to forget — choosing a consistent time usually helps.",
+  tired:
+    "Low energy nights are common — brushing earlier works better.",
+  busy:
+    "Busy days happen — recovery keeps consistency long-term.",
+  lazy:
+    "Motivation dips are normal — starting small breaks the cycle.",
+  stressed:
+    "Stress disrupts routines — protecting basics reduces overload.",
+};
+
 export default function Today({ habitData, setHabitData }) {
   const today = getDateKey();
   const yesterday = getYesterdayKey(today);
@@ -17,7 +40,7 @@ export default function Today({ habitData, setHabitData }) {
 
   const yesterdayData = habitData[yesterday];
 
-  // 🧠 Recovery availability (once per 7 days)
+  /* 🛟 Recovery availability (once per 7 days) */
   const lastRecovery = habitData[RECOVERY_KEY];
   const lastRecoveryDate = lastRecovery ? new Date(lastRecovery) : null;
 
@@ -39,10 +62,31 @@ export default function Today({ habitData, setHabitData }) {
   const [timeLeft, setTimeLeft] = useState(BRUSH_TIME);
   const [showStreak, setShowStreak] = useState(false);
 
-  const formatTime = (s) =>
-    `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
+  const [submittedReflection, setSubmittedReflection] = useState(
+    habitData[today]?.reflection || null
+  );
 
-  // 🔁 Toggle task + streak detection
+  const shouldReflect = isRecoveryDay && !submittedReflection;
+
+  /* 🧠 Get most recent reflection */
+  const getLastReflection = () =>
+    Object.keys(habitData)
+      .sort()
+      .reverse()
+      .map((day) => habitData[day]?.reflection)
+      .find(Boolean);
+
+  const lastReflection = getLastReflection();
+  const insightMessage = lastReflection
+    ? REFLECTION_INSIGHTS[lastReflection]
+    : null;
+
+  const formatTime = (s) =>
+    `${Math.floor(s / 60)}:${(s % 60)
+      .toString()
+      .padStart(2, "0")}`;
+
+  /* 🔁 Toggle task */
   const toggleTask = (task) => {
     const nextValue = !todayData[task];
     const completedNow = Object.values({
@@ -59,7 +103,6 @@ export default function Today({ habitData, setHabitData }) {
         },
       };
 
-      // 🛟 Consume recovery only when day is completed
       if (completedNow === 3 && isRecoveryDay) {
         updated[RECOVERY_KEY] = new Date().toISOString();
       }
@@ -73,7 +116,7 @@ export default function Today({ habitData, setHabitData }) {
     }
   };
 
-  // ⏱️ Timer logic
+  /* ⏱️ Timer */
   useEffect(() => {
     if (!activeTimer) return;
 
@@ -100,7 +143,7 @@ export default function Today({ habitData, setHabitData }) {
       {/* 🔥 STREAK POPUP */}
       {showStreak && (
         <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-          <div className="bg-white px-8 py-6 rounded-3xl shadow-xl animate-pop animate-glow">
+          <div className="bg-white px-8 py-6 rounded-3xl shadow-xl animate-pop">
             <p className="text-3xl font-extrabold text-orange-500 text-center">
               🔥 Day Complete!
             </p>
@@ -112,93 +155,71 @@ export default function Today({ habitData, setHabitData }) {
       )}
 
       <section className="space-y-6">
-        {/* 🛟 RECOVERY DAY BANNER */}
+        {/* 🧠 REFLECTION QUESTION */}
+        {shouldReflect && (
+          <div className="bg-white border border-cyan-200 rounded-2xl p-5 space-y-4">
+            <p className="font-semibold">Quick check-in 🤔</p>
+            <p className="text-sm text-gray-500">
+              What caused you to miss yesterday?
+            </p>
+
+            {REFLECTION_OPTIONS.map((option) => (
+              <button
+                key={option.id}
+                onClick={() => {
+                  setHabitData((prev) => ({
+                    ...prev,
+                    [today]: {
+                      ...todayData,
+                      reflection: option.id,
+                    },
+                  }));
+                  setSubmittedReflection(option.id);
+                }}
+                className="w-full text-left px-4 py-3 rounded-xl border hover:bg-cyan-50"
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* 💡 INTELLIGENCE OUTPUT */}
+        {insightMessage && (
+          <div className="bg-cyan-50 border border-cyan-200 rounded-2xl p-4">
+            <p className="text-sm font-semibold text-cyan-700">
+              Pattern Insight 💡
+            </p>
+            <p className="text-sm text-cyan-600">
+              {insightMessage}
+            </p>
+          </div>
+        )}
+
+        {/* 🛟 RECOVERY BANNER */}
         {isRecoveryDay && (
-          <div className="bg-orange-50 border border-orange-300 rounded-2xl p-4 animate-fade">
+          <div className="bg-orange-50 border border-orange-300 rounded-2xl p-4">
             <p className="font-semibold text-orange-600">
               Recovery Day 💪
             </p>
             <p className="text-sm text-orange-500">
-              You missed yesterday — recovery available once this week.
+              Recovery available once per week.
             </p>
           </div>
         )}
 
         {/* PROGRESS */}
-        <div className="bg-white rounded-3xl p-6 shadow-md animate-fade">
-          <p className="text-sm font-semibold text-gray-500 mb-2">
-            Today’s Progress
-          </p>
-
-          <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
+        <div className="bg-white rounded-3xl p-6 shadow">
+          <div className="h-4 bg-gray-200 rounded-full">
             <div
-              className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-[width] duration-700 ease-out"
+              className="h-full bg-cyan-500 rounded-full transition-all"
               style={{ width: `${percent}%` }}
             />
           </div>
-
-          <p className="mt-2 text-sm text-gray-500">{percent}% completed</p>
+          <p className="text-sm mt-2 text-gray-500">
+            {percent}% completed
+          </p>
         </div>
-
-        {/* BRUSHING TASKS */}
-        {["morning", "night"].map((task) => {
-          const isDone = todayData[task];
-          const isRunning = activeTimer === task;
-          const isBlocked = activeTimer && activeTimer !== task;
-
-          return (
-            <button
-              key={task}
-              disabled={isBlocked}
-              onClick={() => {
-                if (isDone) toggleTask(task);
-                else {
-                  setActiveTimer(task);
-                  setTimeLeft(BRUSH_TIME);
-                }
-              }}
-              className={`w-full flex justify-between items-center p-5 rounded-2xl border transition-all duration-300
-                ${
-                  isDone
-                    ? "bg-green-50 border-green-400"
-                    : isBlocked
-                    ? "bg-gray-100 opacity-50 cursor-not-allowed"
-                    : "bg-white border-gray-200 hover:scale-[1.02] hover:shadow-md"
-                }`}
-            >
-              <span className="capitalize font-semibold">
-                {task} brushing
-              </span>
-
-              <div className="flex items-center gap-3">
-                {isRunning && (
-                  <span className="font-mono text-sm text-cyan-600">
-                    {formatTime(timeLeft)}
-                  </span>
-                )}
-                <span className={isDone ? "animate-pop" : ""}>
-                  {isDone ? "✅" : "🪥"}
-                </span>
-              </div>
-            </button>
-          );
-        })}
-
-        {/* FLOSS */}
-        <button
-          onClick={() => toggleTask("floss")}
-          className={`w-full flex justify-between items-center p-5 rounded-2xl border transition-all duration-300
-            ${
-              todayData.floss
-                ? "bg-green-50 border-green-400"
-                : "bg-white border-gray-200 hover:scale-[1.02] hover:shadow-md"
-            }`}
-        >
-          <span className="font-semibold">Floss</span>
-          <span className={todayData.floss ? "animate-pop" : ""}>
-            {todayData.floss ? "✅" : "🧵"}
-          </span>
-        </button>
       </section>
     </>
   );

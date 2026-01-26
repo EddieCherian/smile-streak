@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { TIPS, ACHIEVEMENTS } from "./data";
+import { TIPS, ACHIEVEMENTS } from "./data/index.js";
 import { getDateKey } from "./utils/date";
 import { storage } from "./utils/storage";
 import { getCompletionPercent, calculateStreaks } from "./utils/progress";

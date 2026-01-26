@@ -1,3 +1,4 @@
+import WeeklyCalendar from "./WeeklyCalendar";
 import { ACHIEVEMENTS } from "../data";
 import { calculateStreaks } from "../utils/progress";
 

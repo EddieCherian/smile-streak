@@ -11,7 +11,16 @@ export default function Today({ habitData, setHabitData }) {
     night: false,
     floss: false,
   };
+import { getYesterdayKey } from "../utils/streak";
 
+const yesterday = getYesterdayKey(today);
+const yesterdayData = habitData[yesterday];
+
+const missedYesterday =
+  yesterdayData &&
+  Object.values(yesterdayData).some((v) => v === false);
+
+const isRecoveryDay = missedYesterday;
   const [activeTimer, setActiveTimer] = useState(null);
   const [timeLeft, setTimeLeft] = useState(BRUSH_TIME);
   const [showStreak, setShowStreak] = useState(false);

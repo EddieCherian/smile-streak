@@ -1,15 +1,23 @@
+import { TIPS } from "../data";
+
 export default function Tips() {
   return (
-    <section className="space-y-4">
-      <div className="bg-white p-6 rounded-3xl shadow-md">
-        <h2 className="text-xl font-bold mb-2">Tips</h2>
-        <ul className="list-disc list-inside text-gray-600 space-y-1">
-          <li>Smile when you wake up</li>
-          <li>Brush gently morning and night</li>
-          <li>Floss before bed</li>
-          <li>Stay consistent — streaks matter</li>
-        </ul>
-      </div>
-    </section>
+    <div className="space-y-4">
+      {TIPS.map((tip) => (
+        <div
+          key={tip.id}
+          className="bg-white p-5 rounded-3xl shadow-md"
+        >
+          <div className="flex items-center gap-3 mb-1">
+            <span className="text-2xl">{tip.icon}</span>
+            <h3 className="font-bold">{tip.title}</h3>
+          </div>
+          <p className="text-sm text-gray-600">{tip.content}</p>
+          <p className="text-xs text-cyan-600 mt-2">
+            Source: {tip.source}
+          </p>
+        </div>
+      ))}
+    </div>
   );
 }

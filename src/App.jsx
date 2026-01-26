@@ -30,15 +30,16 @@ export default function App() {
 
       {/* TABS */}
       <nav className="flex gap-2 px-4 py-2 overflow-x-auto">
-        {["today", "progress", "tips", "reminders"].map(tab => (
+        {["today", "progress", "tips", "reminders"].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-5 py-2 rounded-full text-sm font-semibold transition ${
-              activeTab === tab
-                ? "bg-cyan-500 text-white shadow"
-                : "bg-white text-gray-600 shadow-sm"
-            }`}
+            className={`px-5 py-2 rounded-full text-sm font-semibold transition
+              ${
+                activeTab === tab
+                  ? "bg-cyan-500 text-white shadow"
+                  : "bg-white text-gray-600 shadow-sm"
+              }`}
           >
             {tab[0].toUpperCase() + tab.slice(1)}
           </button>
@@ -50,13 +51,8 @@ export default function App() {
         {activeTab === "today" && (
           <Today habitData={habitData} setHabitData={setHabitData} />
         )}
-
-        {activeTab === "progress" && (
-          <Progress habitData={habitData} />
-        )}
-
+        {activeTab === "progress" && <Progress habitData={habitData} />}
         {activeTab === "tips" && <Tips />}
-
         {activeTab === "reminders" && <Reminders />}
       </main>
     </div>

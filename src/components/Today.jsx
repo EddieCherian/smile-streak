@@ -19,7 +19,19 @@ export default function Today({ habitData, setHabitData }) {
   const formatTime = (s) =>
     `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 
-  // 🔁 Toggle task + streak detection
+  /* ---------------- REMINDERS (IN-APP) ---------------- */
+  const hour = new Date().getHours();
+
+  const showMorningReminder =
+    hour >= 9 && hour < 12 && !todayData.morning;
+
+  const showNightReminder =
+    hour >= 20 && !todayData.night;
+
+  const showFlossReminder =
+    hour >= 21 && !todayData.floss;
+
+  /* ---------------- TOGGLE + STREAK ---------------- */
   const toggleTask = (task) => {
     const nextValue = !todayData[task];
     const completedNow = Object.values({
@@ -41,7 +53,7 @@ export default function Today({ habitData, setHabitData }) {
     }
   };
 
-  // ⏱️ Timer logic
+  /* ---------------- TIMER ---------------- */
   useEffect(() => {
     if (!activeTimer) return;
 
@@ -65,10 +77,10 @@ export default function Today({ habitData, setHabitData }) {
 
   return (
     <>
-      {/* 🔥 STREAK POPUP */}
+      {/* 🔥 STREAK POPUP (ONLY POPUP ANIMATES) */}
       {showStreak && (
         <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-          <div className="bg-white px-8 py-6 rounded-3xl shadow-xl animate-pop animate-glow">
+          <div className="bg-white px-8 py-6 rounded-3xl shadow-xl animate-pop">
             <p className="text-3xl font-extrabold text-orange-500 text-center">
               🔥 Streak Complete!
             </p>
@@ -80,8 +92,27 @@ export default function Today({ habitData, setHabitData }) {
       )}
 
       <section className="space-y-6">
+        {/* 🔔 IN-APP REMINDERS */}
+        {showMorningReminder && (
+          <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl text-sm">
+            ☀️ Don’t forget your morning brushing
+          </div>
+        )}
+
+        {showNightReminder && (
+          <div className="bg-purple-50 border border-purple-200 p-4 rounded-xl text-sm">
+            🌙 Night brushing keeps your streak alive
+          </div>
+        )}
+
+        {showFlossReminder && (
+          <div className="bg-green-50 border border-green-200 p-4 rounded-xl text-sm">
+            🧵 Floss = easy streak points
+          </div>
+        )}
+
         {/* PROGRESS */}
-        <div className="bg-white rounded-3xl p-6 shadow-md animate-fade">
+        <div className="bg-white rounded-3xl p-6 shadow-md">
           <p className="text-sm font-semibold text-gray-500 mb-2">
             Today’s Progress
           </p>
@@ -93,10 +124,12 @@ export default function Today({ habitData, setHabitData }) {
             />
           </div>
 
-          <p className="mt-2 text-sm text-gray-500">{percent}% completed</p>
+          <p className="mt-2 text-sm text-gray-500">
+            {percent}% completed
+          </p>
         </div>
 
-        {/* BRUSHING TASKS */}
+        {/* BRUSHING */}
         {["morning", "night"].map((task) => {
           const isDone = todayData[task];
           const isRunning = activeTimer === task;
@@ -133,7 +166,7 @@ export default function Today({ habitData, setHabitData }) {
                   </span>
                 )}
 
-                {/* ✅ ONLY ICON ANIMATES */}
+                {/* ICON-ONLY ANIMATION */}
                 <span className={isDone ? "animate-pop" : ""}>
                   {isDone ? "✅" : "🪥"}
                 </span>

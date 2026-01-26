@@ -6,31 +6,11 @@ const BRUSH_TIME = 120;
 const RECOVERY_KEY = "__lastRecoveryUsed";
 
 const REFLECTION_OPTIONS = [
-  {
-    id: "forgot",
-    label: "I forgot",
-    response: "Let’s add a reminder today."
-  },
-  {
-    id: "tired",
-    label: "I was too tired",
-    response: "Try brushing a bit earlier tonight."
-  },
-  {
-    id: "busy",
-    label: "I was busy / away",
-    response: "Short routines still count."
-  },
-  {
-    id: "unmotivated",
-    label: "I lacked motivation",
-    response: "Momentum comes after action."
-  },
-  {
-    id: "other",
-    label: "Something else",
-    response: "Progress isn’t linear — keep going."
-  }
+  { id: "forgot", label: "I forgot", response: "Let’s add a reminder today." },
+  { id: "tired", label: "I was too tired", response: "Try brushing a bit earlier tonight." },
+  { id: "busy", label: "I was busy / away", response: "Short routines still count." },
+  { id: "unmotivated", label: "I lacked motivation", response: "Momentum comes after action." },
+  { id: "other", label: "Something else", response: "Progress isn’t linear — keep going." }
 ];
 
 export default function Today({ habitData, setHabitData }) {
@@ -46,7 +26,6 @@ export default function Today({ habitData, setHabitData }) {
 
   const yesterdayData = habitData[yesterday];
 
-  // 🛟 Recovery availability (once per 7 days)
   const lastRecovery = habitData[RECOVERY_KEY];
   const lastRecoveryDate = lastRecovery ? new Date(lastRecovery) : null;
 
@@ -68,13 +47,15 @@ export default function Today({ habitData, setHabitData }) {
   const [timeLeft, setTimeLeft] = useState(BRUSH_TIME);
   const [showStreak, setShowStreak] = useState(false);
 
+  // ✅ NEW: timer toggle
+  const [timerEnabled, setTimerEnabled] = useState(false);
+
   const submittedReflection = todayData.reflection;
   const shouldReflect = isRecoveryDay && !submittedReflection;
 
   const formatTime = (s) =>
     `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 
-  // 🔁 Toggle task
   const toggleTask = (task) => {
     const nextValue = !todayData[task];
 
@@ -105,7 +86,6 @@ export default function Today({ habitData, setHabitData }) {
     }
   };
 
-  // ⏱️ Timer logic
   useEffect(() => {
     if (!activeTimer) return;
 
@@ -133,7 +113,6 @@ export default function Today({ habitData, setHabitData }) {
 
   return (
     <>
-      {/* 🔥 STREAK POPUP */}
       {showStreak && (
         <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
           <div className="bg-white px-8 py-6 rounded-3xl shadow-xl animate-pop animate-glow">
@@ -149,7 +128,20 @@ export default function Today({ habitData, setHabitData }) {
 
       <section className="space-y-6">
 
-        {/* 🧠 REFLECTION INTELLIGENCE */}
+        {/* ✅ TIMER TOGGLE */}
+        <div className="bg-white rounded-2xl p-4 border flex items-center justify-between">
+          <p className="text-sm font-semibold text-gray-700">
+            Brushing timer
+          </p>
+          <button
+            onClick={() => setTimerEnabled((v) => !v)}
+            className={`px-4 py-2 rounded-full text-sm font-semibold transition
+              ${timerEnabled ? "bg-cyan-500 text-white" : "bg-gray-200 text-gray-700"}`}
+          >
+            {timerEnabled ? "Timer ON" : "Timer OFF"}
+          </button>
+        </div>
+
         {shouldReflect && (
           <div className="bg-white border border-cyan-200 rounded-2xl p-5 space-y-4 animate-fade">
             <p className="font-semibold text-gray-800">Quick check-in 🤔</p>
@@ -179,7 +171,6 @@ export default function Today({ habitData, setHabitData }) {
           </div>
         )}
 
-        {/* 🧠 REFLECTION RESPONSE */}
         {reflectionMeta && (
           <div className="bg-cyan-50 border border-cyan-300 rounded-2xl p-4 animate-fade">
             <p className="text-sm font-semibold text-cyan-700">
@@ -191,7 +182,6 @@ export default function Today({ habitData, setHabitData }) {
           </div>
         )}
 
-        {/* 🛟 RECOVERY DAY BANNER */}
         {isRecoveryDay && (
           <div className="bg-orange-50 border border-orange-300 rounded-2xl p-4 animate-fade">
             <p className="font-semibold text-orange-600">
@@ -203,7 +193,6 @@ export default function Today({ habitData, setHabitData }) {
           </div>
         )}
 
-        {/* PROGRESS */}
         <div className="bg-white rounded-3xl p-6 shadow-md animate-fade">
           <p className="text-sm font-semibold text-gray-500 mb-2">
             Today’s Progress
@@ -219,7 +208,6 @@ export default function Today({ habitData, setHabitData }) {
           </p>
         </div>
 
-        {/* TASKS */}
         {["morning", "night"].map((task) => {
           const isDone = todayData[task];
           const isRunning = activeTimer === task;
@@ -229,11 +217,16 @@ export default function Today({ habitData, setHabitData }) {
             <button
               key={task}
               disabled={isBlocked}
-              onClick={() =>
-                isDone
-                  ? toggleTask(task)
-                  : (setActiveTimer(task), setTimeLeft(BRUSH_TIME))
-              }
+              onClick={() => {
+                if (isDone) {
+                  toggleTask(task);
+                } else if (timerEnabled) {
+                  setActiveTimer(task);
+                  setTimeLeft(BRUSH_TIME);
+                } else {
+                  toggleTask(task);
+                }
+              }}
               className={`w-full flex justify-between items-center p-5 rounded-2xl border transition-all
                 ${
                   isDone
@@ -249,7 +242,7 @@ export default function Today({ habitData, setHabitData }) {
               <div className="flex items-center gap-3">
                 {isRunning && (
                   <span className="font-mono text-sm text-cyan-600">
-                    {formatTime(timeLeft)}
+                    Timer active · {formatTime(timeLeft)}
                   </span>
                 )}
                 <span>{isDone ? "✅" : "🪥"}</span>
@@ -258,7 +251,6 @@ export default function Today({ habitData, setHabitData }) {
           );
         })}
 
-        {/* FLOSS */}
         <button
           onClick={() => toggleTask("floss")}
           className={`w-full flex justify-between items-center p-5 rounded-2xl border

@@ -37,43 +37,43 @@ export default function Dentists() {
   const [loading, setLoading] = useState(true);
   const [insurance, setInsurance] = useState("");
 
-  /* 📍 Fetch nearby dentists using Yelp (browser-safe via proxy) */
+  /* 📍 Fetch nearby dentists using OpenStreetMap */
   useEffect(() => {
-    const YELP_API_KEY = "KKVs0W-kP-VksWrRFr9lnLFrOMLlNr8yHfjOau1EPSbkYMhxvppPXsG6jjYOS-s9QUj_IS43BYWiqUvWPgDXSyJ_mATKuhhZJnnPK4UiqrHMNq5HdmfpnOcX0ep3aXYx";
-
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
 
+        const query = `
+          [out:json];
+          node
+            ["amenity"="dentist"]
+            (around:5000,${latitude},${longitude});
+          out tags;
+        `;
+
         try {
           const res = await fetch(
-            `https://corsproxy.io/?https://api.yelp.com/v3/businesses/search?term=dentist&latitude=${latitude}&longitude=${longitude}&limit=10`,
+            "https://overpass-api.de/api/interpreter",
             {
+              method: "POST",
               headers: {
-                Authorization: `Bearer ${YELP_API_KEY}`,
+                "Content-Type": "text/plain",
               },
+              body: query,
             }
           );
 
           const data = await res.json();
-
-          // 🔁 Normalize Yelp data to match your existing intelligence system
-          const normalized = (data.businesses || []).map((b) => ({
-            id: b.id,
-            tags: {
-              name: b.name,
-            },
-          }));
-
-          setDentists(normalized);
+          setDentists(data.elements || []);
         } catch (err) {
-          console.error("Yelp fetch failed:", err);
+          console.error("Overpass API failed:", err);
           setDentists([]);
         } finally {
           setLoading(false);
         }
       },
-      () => {
+      (err) => {
+        console.error("Geolocation failed:", err);
         setLoading(false);
       }
     );

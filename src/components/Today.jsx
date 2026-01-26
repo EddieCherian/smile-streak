@@ -1,26 +1,29 @@
 import { useEffect, useState } from "react";
 import { getDateKey } from "../utils/date";
+import { getYesterdayKey } from "../utils/streak";
 
 const BRUSH_TIME = 120; // seconds
 
 export default function Today({ habitData, setHabitData }) {
   const today = getDateKey();
+  const yesterday = getYesterdayKey(today);
 
   const todayData = habitData[today] || {
     morning: false,
     night: false,
     floss: false,
   };
-import { getYesterdayKey } from "../utils/streak";
 
-const yesterday = getYesterdayKey(today);
-const yesterdayData = habitData[yesterday];
+  const yesterdayData = habitData[yesterday];
 
-const missedYesterday =
-  yesterdayData &&
-  Object.values(yesterdayData).some((v) => v === false);
+  const missedYesterday =
+    yesterdayData &&
+    ["morning", "night", "floss"].some(
+      (task) => yesterdayData[task] === false
+    );
 
-const isRecoveryDay = missedYesterday;
+  const isRecoveryDay = Boolean(missedYesterday);
+
   const [activeTimer, setActiveTimer] = useState(null);
   const [timeLeft, setTimeLeft] = useState(BRUSH_TIME);
   const [showStreak, setShowStreak] = useState(false);
@@ -28,19 +31,7 @@ const isRecoveryDay = missedYesterday;
   const formatTime = (s) =>
     `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 
-  /* ---------------- REMINDERS (IN-APP) ---------------- */
-  const hour = new Date().getHours();
-
-  const showMorningReminder =
-    hour >= 9 && hour < 12 && !todayData.morning;
-
-  const showNightReminder =
-    hour >= 20 && !todayData.night;
-
-  const showFlossReminder =
-    hour >= 21 && !todayData.floss;
-
-  /* ---------------- TOGGLE + STREAK ---------------- */
+  // 🔁 Toggle task + streak detection
   const toggleTask = (task) => {
     const nextValue = !todayData[task];
     const completedNow = Object.values({
@@ -62,7 +53,7 @@ const isRecoveryDay = missedYesterday;
     }
   };
 
-  /* ---------------- TIMER ---------------- */
+  // ⏱️ Timer logic
   useEffect(() => {
     if (!activeTimer) return;
 
@@ -86,42 +77,35 @@ const isRecoveryDay = missedYesterday;
 
   return (
     <>
-      {/* 🔥 STREAK POPUP (ONLY POPUP ANIMATES) */}
+      {/* 🔥 STREAK POPUP */}
       {showStreak && (
         <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-          <div className="bg-white px-8 py-6 rounded-3xl shadow-xl animate-pop">
+          <div className="bg-white px-8 py-6 rounded-3xl shadow-xl animate-pop animate-glow">
             <p className="text-3xl font-extrabold text-orange-500 text-center">
-              🔥 Streak Complete!
+              🔥 Day Complete!
             </p>
             <p className="text-sm text-gray-500 text-center mt-1">
-              You finished today 🎉
+              Nice recovery 😤
             </p>
           </div>
         </div>
       )}
 
       <section className="space-y-6">
-        {/* 🔔 IN-APP REMINDERS */}
-        {showMorningReminder && (
-          <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl text-sm">
-            ☀️ Don’t forget your morning brushing
-          </div>
-        )}
-
-        {showNightReminder && (
-          <div className="bg-purple-50 border border-purple-200 p-4 rounded-xl text-sm">
-            🌙 Night brushing keeps your streak alive
-          </div>
-        )}
-
-        {showFlossReminder && (
-          <div className="bg-green-50 border border-green-200 p-4 rounded-xl text-sm">
-            🧵 Floss = easy streak points
+        {/* 🛟 RECOVERY BANNER */}
+        {isRecoveryDay && (
+          <div className="bg-orange-50 border border-orange-300 rounded-2xl p-4 animate-fade">
+            <p className="font-semibold text-orange-600">
+              Recovery Day 💪
+            </p>
+            <p className="text-sm text-orange-500">
+              You missed yesterday — today counts extra.
+            </p>
           </div>
         )}
 
         {/* PROGRESS */}
-        <div className="bg-white rounded-3xl p-6 shadow-md">
+        <div className="bg-white rounded-3xl p-6 shadow-md animate-fade">
           <p className="text-sm font-semibold text-gray-500 mb-2">
             Today’s Progress
           </p>
@@ -133,12 +117,10 @@ const isRecoveryDay = missedYesterday;
             />
           </div>
 
-          <p className="mt-2 text-sm text-gray-500">
-            {percent}% completed
-          </p>
+          <p className="mt-2 text-sm text-gray-500">{percent}% completed</p>
         </div>
 
-        {/* BRUSHING */}
+        {/* BRUSHING TASKS */}
         {["morning", "night"].map((task) => {
           const isDone = todayData[task];
           const isRunning = activeTimer === task;
@@ -174,8 +156,6 @@ const isRecoveryDay = missedYesterday;
                     {formatTime(timeLeft)}
                   </span>
                 )}
-
-                {/* ICON-ONLY ANIMATION */}
                 <span className={isDone ? "animate-pop" : ""}>
                   {isDone ? "✅" : "🪥"}
                 </span>

@@ -5,129 +5,159 @@ import "./App.css";
 const todayKey = () => new Date().toISOString().slice(0, 10);
 
 export default function App() {
-  const [tab, setTab] = useState("today");
-  const [data, setData] = useState(() =>
-    JSON.parse(localStorage.getItem("smileData") || "{}")
+  const [activeTab, setActiveTab] = useState("today");
+  const [habitData, setHabitData] = useState({});
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
+
+      {/* NAVIGATION */}
+      <nav className="flex gap-2 p-4">
+        {["today", "progress", "tips", "reminders"].map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2 rounded-full font-semibold ${
+              activeTab === tab
+                ? "bg-cyan-500 text-white"
+                : "bg-white text-gray-600"
+            }`}
+          >
+            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+          </button>
+        ))}
+      </nav>
+
+      {/* MAIN CONTENT */}
+      <main className="p-4 pb-20">
+        {activeTab === "today" && (
+          <Today habitData={habitData} setHabitData={setHabitData} />
+        )}
+        {activeTab === "progress" && (
+          <Progress habitData={habitData} />
+        )}
+        {activeTab === "tips" && <Tips />}
+        {activeTab === "reminders" && <Reminders />}
+      </main>
+    </div>
   );
-
-  useEffect(() => {
-    localStorage.setItem("smileData", JSON.stringify(data));
-  }, [data]);
-
+}
+function Today({ habitData, setHabitData }) {
   const today = todayKey();
-  const todayData = data[today] || {
+  const todayData = habitData[today] || {
     morning: false,
     night: false,
     floss: false
   };
 
-  const toggle = key =>
-    setData(d => ({
-      ...d,
-      [today]: { ...todayData, [key]: !todayData[key] }
+  const toggle = (key) => {
+    setHabitData(prev => ({
+      ...prev,
+      [today]: {
+        ...todayData,
+        [key]: !todayData[key]
+      }
     }));
+  };
 
-  const completedDays = useMemo(() => {
-    return Object.values(data).filter(
-      d => d.morning && d.night && d.floss
-    ).length;
-  }, [data]);
-
-  const streak = useMemo(() => {
-    let s = 0;
-    for (let i = 0; i < 365; i++) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const k = d.toISOString().slice(0, 10);
-      if (data[k]?.morning && data[k]?.night && data[k]?.floss) s++;
-      else break;
-    }
-    return s;
-  }, [data]);
+  const completedCount = Object.values(todayData).filter(Boolean).length;
+  const percent = Math.round((completedCount / 3) * 100);
 
   return (
-    <div className="app">
-      <header>
-        <h1>Smile Streak</h1>
-        <span>🔥 {streak}</span>
-      </header>
+    <div className="bg-white rounded-2xl p-6 shadow space-y-4">
+      <h2 className="text-xl font-bold">Today's Routine</h2>
 
-      <nav>
-        {["today", "progress", "tips"].map(t => (
-          <button
-            key={t}
-            className={tab === t ? "active" : ""}
-            onClick={() => setTab(t)}
-          >
-            {t}
-          </button>
-        ))}
-      </nav>
+      {["morning", "night", "floss"].map(task => (
+        <button
+          key={task}
+          onClick={() => toggle(task)}
+          className={`w-full flex justify-between items-center p-4 rounded-xl border ${
+            todayData[task]
+              ? "bg-green-50 border-green-400"
+              : "bg-gray-50"
+          }`}
+        >
+          <span className="capitalize">{task} brushing</span>
+          <span>{todayData[task] ? "✅" : "⭕"}</span>
+        </button>
+      ))}
 
-      <main>
-        {tab === "today" && (
-          <div className="card">
-            <h2>Today</h2>
+      <div>
+        <p className="text-sm mb-1">Daily Progress</p>
+        <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+          <div
+            className="h-3 bg-gradient-to-r from-cyan-500 to-blue-500"
+            style={{ width: `${percent}%` }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+function Progress({ habitData }) {
+  const days = Object.values(habitData);
+  const completedDays = days.filter(d =>
+    d.morning && d.night && d.floss
+  ).length;
 
-            {["morning", "night", "floss"].map(k => (
-              <label key={k} className="task">
-                <input
-                  type="checkbox"
-                  checked={todayData[k]}
-                  onChange={() => toggle(k)}
-                />
-                {k === "morning" && "Morning Brush"}
-                {k === "night" && "Night Brush"}
-                {k === "floss" && "Floss"}
-              </label>
-            ))}
+  return (
+    <div className="space-y-4">
+      <div className="bg-white p-6 rounded-2xl shadow text-center">
+        <h3 className="font-bold text-lg">Total Completed Days</h3>
+        <p className="text-3xl font-bold text-cyan-600">
+          {completedDays}
+        </p>
+      </div>
 
-            <div className="progress">
-              {Math.round(
-                (Object.values(todayData).filter(Boolean).length / 3) * 100
-              )}
-              % complete
+      <div className="bg-white p-6 rounded-2xl shadow">
+        <h3 className="font-bold mb-4">Achievements</h3>
+        <div className="grid grid-cols-3 gap-3">
+          {ACHIEVEMENTS.map(a => (
+            <div
+              key={a.id}
+              className={`p-4 rounded-xl text-center ${
+                completedDays >= a.requirement
+                  ? "bg-yellow-100"
+                  : "bg-gray-100 opacity-50"
+              }`}
+            >
+              <div className="text-2xl">{a.icon}</div>
+              <p className="text-xs">{a.label}</p>
             </div>
-          </div>
-        )}
-
-        {tab === "progress" && (
-          <>
-            <div className="card">
-              <h2>Stats</h2>
-              <p>Completed Days: {completedDays}</p>
-              <p>Current Streak: {streak}</p>
-            </div>
-
-            <div className="card">
-              <h2>Achievements</h2>
-              {ACHIEVEMENTS.map(a => (
-                <div
-                  key={a.days}
-                  className={
-                    streak >= a.days ? "achievement unlocked" : "achievement"
-                  }
-                >
-                  {a.label}
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        {tab === "tips" && (
-          <div className="card">
-            <h2>Dental Tips</h2>
-            {TIPS.map(t => (
-              <div key={t.title} className="tip">
-                <strong>{t.title}</strong>
-                <p>{t.text}</p>
-                <span>{t.source}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </main>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+function Tips() {
+  return (
+    <div className="space-y-4">
+      {TIPS.map((tip, i) => (
+        <div
+          key={i}
+          className="bg-white p-5 rounded-2xl shadow"
+        >
+          <h3 className="font-bold">{tip.title}</h3>
+          <p className="text-sm text-gray-600 mt-1">
+            {tip.content}
+          </p>
+          <p className="text-xs text-cyan-600 mt-2">
+            Source: {tip.source}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+function Reminders() {
+  return (
+    <div className="bg-white p-6 rounded-2xl shadow">
+      <h2 className="font-bold text-lg mb-2">Reminders</h2>
+      <p className="text-sm text-gray-600">
+        Reminder scheduling requires notifications and service workers.
+        (Claude demo feature)
+      </p>
     </div>
   );
 }

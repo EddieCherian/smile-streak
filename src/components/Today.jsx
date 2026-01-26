@@ -18,16 +18,18 @@ export default function Today({ habitData, setHabitData }) {
   const formatTime = (s) =>
     `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 
-  const completeTask = (task) => {
+  // 🔁 TOGGLE task (this is the key fix)
+  const toggleTask = (task) => {
     setHabitData((prev) => ({
       ...prev,
       [today]: {
         ...todayData,
-        [task]: true,
+        [task]: !todayData[task],
       },
     }));
   };
 
+  // ⏱️ Timer logic (only for brushing)
   useEffect(() => {
     if (!activeTimer) return;
 
@@ -35,7 +37,7 @@ export default function Today({ habitData, setHabitData }) {
       setTimeLeft((t) => {
         if (t <= 1) {
           clearInterval(interval);
-          completeTask(activeTimer);
+          toggleTask(activeTimer);
           setActiveTimer(null);
           return BRUSH_TIME;
         }
@@ -74,10 +76,15 @@ export default function Today({ habitData, setHabitData }) {
         return (
           <button
             key={task}
-            disabled={isDone || isBlocked}
+            disabled={isBlocked}
             onClick={() => {
-              setActiveTimer(task);
-              setTimeLeft(BRUSH_TIME);
+              if (isDone) {
+                // 🔁 allow unselect
+                toggleTask(task);
+              } else {
+                setActiveTimer(task);
+                setTimeLeft(BRUSH_TIME);
+              }
             }}
             className={`w-full flex justify-between items-center p-5 rounded-2xl border transition
               ${
@@ -106,8 +113,8 @@ export default function Today({ habitData, setHabitData }) {
 
       {/* FLOSS */}
       <button
-        onClick={() => completeTask("floss")}
-        className={`w-full flex justify-between items-center p-5 rounded-2xl border
+        onClick={() => toggleTask("floss")}
+        className={`w-full flex justify-between items-center p-5 rounded-2xl border transition
           ${
             todayData.floss
               ? "bg-green-50 border-green-400"

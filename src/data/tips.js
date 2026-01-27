@@ -5,6 +5,8 @@ export const TIPS = [
     content:
       "Most people brush for less than a minute. Dentists recommend brushing for a full 2 minutes to effectively remove plaque.",
     source: "American Dental Association (ADA)",
+    sourceLink:
+      "https://www.ada.org/resources/ada-library/oral-health-topics/brushing-your-teeth",
     icon: "⏱️"
   },
   {
@@ -13,6 +15,8 @@ export const TIPS = [
     content:
       "Spit, don’t rinse. Rinsing washes away fluoride, reducing its protective effect on enamel.",
     source: "Journal of Dentistry (2012)",
+    sourceLink:
+      "https://pubmed.ncbi.nlm.nih.gov/22204789/",
     icon: "💧"
   },
   {
@@ -21,6 +25,8 @@ export const TIPS = [
     content:
       "Replace your toothbrush every 3–4 months or when bristles are frayed to maintain cleaning effectiveness.",
     source: "ADA Clinical Guidelines",
+    sourceLink:
+      "https://www.ada.org/resources/ada-library/oral-health-topics/toothbrushes",
     icon: "🪥"
   },
   {
@@ -29,6 +35,8 @@ export const TIPS = [
     content:
       "Flossing first removes plaque between teeth, allowing fluoride to reach those areas when brushing.",
     source: "Journal of Periodontology (2018)",
+    sourceLink:
+      "https://pubmed.ncbi.nlm.nih.gov/29741238/",
     icon: "🦷"
   },
   {
@@ -37,6 +45,8 @@ export const TIPS = [
     content:
       "Brush gently in small circles at a 45-degree angle to the gums. Scrubbing can damage enamel and gums.",
     source: "ADA Brushing Guidelines",
+    sourceLink:
+      "https://www.ada.org/resources/ada-library/oral-health-topics/brushing-your-teeth",
     icon: "🔄"
   },
   {
@@ -45,6 +55,8 @@ export const TIPS = [
     content:
       "Cleaning your tongue reduces bacteria that cause bad breath and supports overall oral health.",
     source: "International Journal of Dental Hygiene (2015)",
+    sourceLink:
+      "https://pubmed.ncbi.nlm.nih.gov/25399659/",
     icon: "👅"
   },
   {
@@ -53,6 +65,8 @@ export const TIPS = [
     content:
       "After acidic foods or drinks, wait 30–60 minutes before brushing to avoid enamel erosion.",
     source: "Journal of the American Dental Association (2004)",
+    sourceLink:
+      "https://pubmed.ncbi.nlm.nih.gov/15127871/",
     icon: "🍋"
   },
   {
@@ -61,6 +75,8 @@ export const TIPS = [
     content:
       "Water helps rinse bacteria and supports saliva production, which protects enamel.",
     source: "CDC Oral Health Guidelines",
+    sourceLink:
+      "https://www.cdc.gov/oralhealth/basics/adult-oral-health/index.html",
     icon: "💦"
   },
   {
@@ -69,6 +85,8 @@ export const TIPS = [
     content:
       "Each sugar exposure causes a 20-minute acid attack on enamel. Fewer exposures reduce cavity risk.",
     source: "National Institute of Dental Research",
+    sourceLink:
+      "https://www.nidcr.nih.gov/health-info/tooth-decay",
     icon: "🍬"
   },
   {
@@ -77,6 +95,8 @@ export const TIPS = [
     content:
       "Fluoride strengthens enamel and reduces cavities by up to 25%.",
     source: "Cochrane Review (2019)",
+    sourceLink:
+      "https://www.cochranelibrary.com/cdsr/doi/10.1002/14651858.CD007868.pub3/full",
     icon: "✨"
   }
 ];

@@ -24,6 +24,14 @@ export default function Insights({ habitData }) {
             <p className="text-xl font-bold">{insights.completionRate}%</p>
           </div>
         </div>
+
+        {/* ✅ Confidence note (added) */}
+        {insights.confidence && !insights.confidence.patternsReliable && (
+          <p className="mt-3 text-xs text-gray-500">
+            Insights will become more precise after at least{" "}
+            {insights.confidence.minDaysForPatterns} days of tracking.
+          </p>
+        )}
       </div>
 
       {/* Patterns */}
@@ -46,6 +54,15 @@ export default function Insights({ habitData }) {
               </li>
             )}
           </ul>
+
+          {/* ✅ Pattern confidence message (added) */}
+          {insights.confidence &&
+            !insights.confidence.patternsReliable && (
+              <p className="mt-3 text-xs text-gray-500">
+                Pattern detection is based on limited data and may change as more
+                days are logged.
+              </p>
+            )}
         </div>
       )}
 
@@ -57,6 +74,15 @@ export default function Insights({ habitData }) {
             A common reason you’ve mentioned for missed days is{" "}
             <strong>“{insights.commonReflectionReason}.”</strong>
           </p>
+
+          {/* ✅ Reflection confidence message (added) */}
+          {insights.confidence &&
+            !insights.confidence.reflectionsReliable && (
+              <p className="mt-3 text-xs text-gray-500">
+                This insight is preliminary and will improve as you add more
+                reflections.
+              </p>
+            )}
         </div>
       )}
 

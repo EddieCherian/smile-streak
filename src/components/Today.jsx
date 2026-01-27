@@ -5,14 +5,6 @@ import { getYesterdayKey } from "../utils/streak.js";
 const BRUSH_TIME = 120;
 const RECOVERY_KEY = "__lastRecoveryUsed";
 
-const REFLECTION_OPTIONS = [
-  { id: "forgot", label: "I forgot", response: "Let’s add a reminder today." },
-  { id: "tired", label: "I was too tired", response: "Try brushing a bit earlier tonight." },
-  { id: "busy", label: "I was busy / away", response: "Short routines still count." },
-  { id: "unmotivated", label: "I lacked motivation", response: "Momentum comes after action." },
-  { id: "other", label: "Something else", response: "Progress isn’t linear — keep going." }
-];
-
 export default function Today({ habitData, setHabitData }) {
   const today = getDateKey();
   const yesterday = getYesterdayKey(today);
@@ -46,12 +38,7 @@ export default function Today({ habitData, setHabitData }) {
   const [activeTimer, setActiveTimer] = useState(null);
   const [timeLeft, setTimeLeft] = useState(BRUSH_TIME);
   const [showStreak, setShowStreak] = useState(false);
-
-  // Timer toggle
   const [timerEnabled, setTimerEnabled] = useState(false);
-
-  const submittedReflection = todayData.reflection;
-  const shouldReflect = isRecoveryDay && !submittedReflection;
 
   const formatTime = (s) =>
     `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
@@ -104,35 +91,31 @@ export default function Today({ habitData, setHabitData }) {
     return () => clearInterval(interval);
   }, [activeTimer]);
 
-  const completedCount = Object.values(todayData).filter(Boolean).length;
-  const percent = Math.round((completedCount / 3) * 100);
+  const completedCount = ["morning", "night", "floss"]
+    .filter((k) => todayData[k]).length;
 
-  const reflectionMeta = REFLECTION_OPTIONS.find(
-    (o) => o.id === submittedReflection
-  );
+  const percent = Math.round((completedCount / 3) * 100);
 
   return (
     <>
+      {/* STREAK MODAL */}
       {showStreak && (
         <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-          <div className="bg-white px-8 py-6 rounded-3xl shadow-xl animate-pop animate-glow">
+          <div className="bg-white px-8 py-6 rounded-3xl shadow-xl">
             <p className="text-3xl font-extrabold text-orange-500 text-center">
-              🔥 Day Complete!
-            </p>
-            <p className="text-sm text-gray-500 text-center mt-1">
-              {isRecoveryDay ? "Nice recovery 😤" : "Great consistency 👏"}
+              Day Complete
             </p>
           </div>
         </div>
       )}
 
-      <section className="space-y-6">
+      {/* HEADER */}
+      <div className="rounded-3xl p-6 bg-gradient-to-r from-cyan-500 to-blue-500 text-white mb-6 relative">
+        <h1 className="text-2xl font-extrabold">Smile Streak</h1>
+        <p className="text-sm opacity-90">Complete your routine today</p>
 
-        {/* TIMER TOGGLE */}
-        <div className="bg-white rounded-2xl p-4 border flex items-center justify-between">
-          <p className="text-sm font-semibold text-gray-700">
-            Brushing timer
-          </p>
+        {/* TIMER SMALL BOX */}
+        <div className="absolute top-4 right-4 bg-gray-100 text-gray-800 rounded-xl px-3 py-2 text-xs shadow">
           <button
             onClick={() =>
               setTimerEnabled((v) => {
@@ -144,14 +127,41 @@ export default function Today({ habitData, setHabitData }) {
                 return !v;
               })
             }
-            className={`px-4 py-2 rounded-full text-sm font-semibold transition
-              ${timerEnabled ? "bg-cyan-500 text-white" : "bg-gray-200 text-gray-700"}`}
+            className="font-semibold"
           >
-            {timerEnabled ? "Timer ON" : "Timer OFF"}
+            Timer: {timerEnabled ? "ON" : "OFF"}
           </button>
         </div>
+      </div>
 
-        {/* TASKS */}
+      {/* STATS */}
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="bg-white rounded-2xl p-4 text-center border">
+          <p className="text-sm text-gray-500">Current Streak</p>
+          <p className="text-2xl font-bold">0</p>
+        </div>
+        <div className="bg-white rounded-2xl p-4 text-center border">
+          <p className="text-sm text-gray-500">Best Streak</p>
+          <p className="text-2xl font-bold">0</p>
+        </div>
+      </div>
+
+      {/* PROGRESS BAR (RESTORED) */}
+      <div className="mb-6">
+        <p className="text-sm text-gray-600 mb-1">Daily Progress</p>
+        <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-green-500 transition-all"
+            style={{ width: `${percent}%` }}
+          />
+        </div>
+        <p className="text-right text-xs text-gray-500 mt-1">
+          {percent}%
+        </p>
+      </div>
+
+      {/* TASKS */}
+      <section className="space-y-4">
         {["morning", "night"].map((task) => {
           const isDone = todayData[task];
           const isRunning = activeTimer === task;
@@ -169,42 +179,27 @@ export default function Today({ habitData, setHabitData }) {
                   toggleTask(task);
                 }
               }}
-              className={`w-full flex justify-between items-center p-5 rounded-2xl border transition-all
-                ${
-                  isDone
-                    ? "bg-green-50 border-green-400"
-                    : "bg-white border-gray-200 hover:scale-[1.02]"
-                }`}
+              className={`w-full flex justify-between items-center p-5 rounded-2xl border
+                ${isDone ? "bg-green-50 border-green-400" : "bg-white"}`}
             >
               <span className="capitalize font-semibold">
                 {task} brushing
               </span>
-              <div className="flex items-center gap-3">
-                {isRunning && (
-                  <span className="font-mono text-sm text-cyan-600">
-                    Timer active · {formatTime(timeLeft)}
-                  </span>
-                )}
-                <span>{isDone ? "✅" : "🪥"}</span>
-              </div>
+              <span className="text-sm">
+                {isRunning ? formatTime(timeLeft) : isDone ? "Done" : ""}
+              </span>
             </button>
           );
         })}
 
-        {/* FLOSS */}
         <button
           onClick={() => toggleTask("floss")}
           className={`w-full flex justify-between items-center p-5 rounded-2xl border
-            ${
-              todayData.floss
-                ? "bg-green-50 border-green-400"
-                : "bg-white border-gray-200"
-            }`}
+            ${todayData.floss ? "bg-green-50 border-green-400" : "bg-white"}`}
         >
           <span className="font-semibold">Floss</span>
-          <span>{todayData.floss ? "✅" : "🧵"}</span>
+          <span>{todayData.floss ? "Done" : ""}</span>
         </button>
-
       </section>
     </>
   );

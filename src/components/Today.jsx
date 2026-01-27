@@ -116,7 +116,7 @@ export default function Today({ habitData, setHabitData }) {
       <div className="rounded-3xl p-6 bg-gradient-to-r from-cyan-500 to-blue-500 text-white mb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/icon-511.png" alt="Smile Streak" className="h-16 w-16" />
+            <img src="/icon-512.png" alt="Smile Streak" className="h-16 w-16" />
             <div>
               <h1 className="text-2xl font-extrabold">Smile Streak</h1>
               <p className="text-sm opacity-90">Complete your routine today</p>
@@ -171,13 +171,13 @@ export default function Today({ habitData, setHabitData }) {
             className="flex items-center gap-2 bg-gray-100 text-gray-800 rounded-xl px-3 py-2 text-xs shadow font-semibold"
           >
             <span>Timer {timerEnabled ? "ON" : "OFF"}</span>
-            <span>🪥</span>
+            <span>⏰</span>
           </button>
         </div>
       </div>
 
       {/* TASKS */}
-      <section className="space-y-4">
+      <section className="space-y-4 mt-14">
         {["morning", "night"].map((task) => {
           const isDone = todayData[task];
           const isRunning = activeTimer === task;

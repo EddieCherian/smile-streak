@@ -12,7 +12,10 @@ export const calculateStreaks = (days) => {
   for (let i = 0; i < 365; i++) {
     const dateKey = getDateKey(cursor);
     const day = days[dateKey];
-    const complete = day?.completed === true;
+   const complete =
+  day?.morning === true &&
+  day?.night === true &&
+  day?.floss === true;
 
     if (complete) {
       temp++;

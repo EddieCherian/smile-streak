@@ -69,7 +69,7 @@ export default function Today({ habitData, setHabitData }) {
 
     if (completedNow === 3) {
       setShowStreak(true);
-      setTimeout(() => setShowStreak(false), 1200);
+      setTimeout(() => setShowStreak(false), 1400);
     }
   };
 
@@ -100,10 +100,13 @@ export default function Today({ habitData, setHabitData }) {
     <>
       {/* STREAK MODAL */}
       {showStreak && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-          <div className="bg-white px-8 py-6 rounded-3xl shadow-xl">
-            <p className="text-3xl font-extrabold text-orange-500 text-center">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 pointer-events-none">
+          <div className="bg-white px-10 py-8 rounded-3xl shadow-2xl animate-[scaleFade_0.6s_ease-out]">
+            <p className="text-4xl font-extrabold text-orange-500 text-center">
               Day Complete
+            </p>
+            <p className="text-sm text-gray-500 text-center mt-2">
+              {isRecoveryDay ? "Recovered and back on track" : "Perfect consistency"}
             </p>
           </div>
         </div>
@@ -111,8 +114,22 @@ export default function Today({ habitData, setHabitData }) {
 
       {/* HEADER */}
       <div className="rounded-3xl p-6 bg-gradient-to-r from-cyan-500 to-blue-500 text-white mb-6 relative">
-        <h1 className="text-2xl font-extrabold">Smile Streak</h1>
-        <p className="text-sm opacity-90">Complete your routine today</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src="/logo.svg" alt="Smile Streak" className="h-8 w-8" />
+            <div>
+              <h1 className="text-2xl font-extrabold">Smile Streak</h1>
+              <p className="text-sm opacity-90">Complete your routine today</p>
+            </div>
+          </div>
+
+          <div className="text-right">
+            <p className="text-xs opacity-80">Current Streak</p>
+            <p className="text-2xl font-extrabold">
+              {habitData?.currentStreak || 0}
+            </p>
+          </div>
+        </div>
 
         {/* TIMER SMALL BOX */}
         <div className="absolute top-4 right-4 bg-gray-100 text-gray-800 rounded-xl px-3 py-2 text-xs shadow">
@@ -146,7 +163,7 @@ export default function Today({ habitData, setHabitData }) {
         </div>
       </div>
 
-      {/* PROGRESS BAR (RESTORED) */}
+      {/* PROGRESS BAR */}
       <div className="mb-6">
         <p className="text-sm text-gray-600 mb-1">Daily Progress</p>
         <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
@@ -155,9 +172,7 @@ export default function Today({ habitData, setHabitData }) {
             style={{ width: `${percent}%` }}
           />
         </div>
-        <p className="text-right text-xs text-gray-500 mt-1">
-          {percent}%
-        </p>
+        <p className="text-right text-xs text-gray-500 mt-1">{percent}%</p>
       </div>
 
       {/* TASKS */}
@@ -170,21 +185,16 @@ export default function Today({ habitData, setHabitData }) {
             <button
               key={task}
               onClick={() => {
-                if (isDone) {
-                  toggleTask(task);
-                } else if (timerEnabled) {
+                if (isDone) toggleTask(task);
+                else if (timerEnabled) {
                   setActiveTimer(task);
                   setTimeLeft(BRUSH_TIME);
-                } else {
-                  toggleTask(task);
-                }
+                } else toggleTask(task);
               }}
               className={`w-full flex justify-between items-center p-5 rounded-2xl border
                 ${isDone ? "bg-green-50 border-green-400" : "bg-white"}`}
             >
-              <span className="capitalize font-semibold">
-                {task} brushing
-              </span>
+              <span className="capitalize font-semibold">{task} brushing</span>
               <span className="text-sm">
                 {isRunning ? formatTime(timeLeft) : isDone ? "Done" : ""}
               </span>

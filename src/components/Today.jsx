@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getDateKey } from "../utils/date.js";
 import { getYesterdayKey } from "../utils/streak.js";
+import { calculateStreaks } from "../utils/streak.js";
 
 const BRUSH_TIME = 120;
 const RECOVERY_KEY = "__lastRecoveryUsed";
@@ -96,6 +97,9 @@ export default function Today({ habitData, setHabitData }) {
 
   const percent = Math.round((completedCount / 3) * 100);
 
+  // ✅ FIX: derive streaks (same logic as Progress tab)
+  const { current, longest } = calculateStreaks(habitData);
+
   return (
     <>
       {showStreak && (
@@ -124,7 +128,7 @@ export default function Today({ habitData, setHabitData }) {
           <div className="text-right">
             <p className="text-xs opacity-80">Current Streak</p>
             <p className="text-2xl font-extrabold">
-              {habitData?.currentStreak || 0}
+              {current}
             </p>
           </div>
         </div>
@@ -133,11 +137,11 @@ export default function Today({ habitData, setHabitData }) {
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="bg-white rounded-2xl p-4 text-center border">
           <p className="text-sm text-gray-500">Current Streak</p>
-          <p className="text-2xl font-bold">0</p>
+          <p className="text-2xl font-bold">{current}</p>
         </div>
         <div className="bg-white rounded-2xl p-4 text-center border">
           <p className="text-sm text-gray-500">Best Streak</p>
-          <p className="text-2xl font-bold">0</p>
+          <p className="text-2xl font-bold">{longest}</p>
         </div>
       </div>
 
@@ -171,7 +175,6 @@ export default function Today({ habitData, setHabitData }) {
         </div>
       </div>
 
-      {/* TASKS — ONLY CHANGE IS mt-24 */}
       <section className="space-y-4 mt-24">
         {["morning", "night"].map((task) => {
           const isDone = todayData[task];

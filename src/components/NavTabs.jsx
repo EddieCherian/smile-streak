@@ -1,5 +1,5 @@
 export default function NavTabs({ activeTab, setActiveTab }) {
-  const tabs = ["Today", "Progress", "Tips", "Reminders", "Dentists", "Insights"];
+  const tabs = ["Today", "Progress", "Tips", "Reminders", "Dentists", "Insights", "Mission"];
 
   return (
     <div className="flex gap-2 mb-4 overflow-x-auto">

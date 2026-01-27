@@ -11,3 +11,9 @@ export const getDateKey = (date = new Date()) => {
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 };
+
+export const getYesterdayKey = (todayKey) => {
+  const d = new Date(todayKey);
+  d.setDate(d.getDate() - 1);
+  return d.toISOString().slice(0, 10);
+};

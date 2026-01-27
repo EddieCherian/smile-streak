@@ -141,7 +141,7 @@ export default function Today({ habitData, setHabitData }) {
         </div>
       </div>
 
-      <div className="mb-6 relative">
+      <div className="mb-6 relative pb-16">
         <p className="text-sm text-gray-600 mb-1">Daily Progress</p>
         <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
           <div

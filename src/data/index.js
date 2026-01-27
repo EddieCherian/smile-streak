@@ -30,6 +30,39 @@ export const TIPS = [
     content:
       "Replace your toothbrush every 3–4 months or sooner if the bristles are frayed.",
     source: "ADA"
+  },
+
+  // ───────── Added Evidence-Based Tips ─────────
+
+  {
+    title: "Brush at a 45° angle to your gums",
+    content:
+      "Angling the toothbrush toward the gumline helps remove plaque where teeth and gums meet, reducing gum disease risk.",
+    source: "American Dental Association"
+  },
+  {
+    title: "Night brushing is the most important",
+    content:
+      "Saliva production decreases during sleep, increasing cavity risk. Brushing before bed offers critical protection.",
+    source: "Journal of Clinical Dentistry"
+  },
+  {
+    title: "Electric toothbrushes can improve plaque removal",
+    content:
+      "Studies show oscillating electric toothbrushes remove more plaque and reduce gingivitis compared to manual brushing.",
+    source: "Cochrane Review"
+  },
+  {
+    title: "Wait before brushing after acidic foods",
+    content:
+      "Brushing immediately after acidic foods can damage softened enamel. Waiting 30–60 minutes reduces erosion.",
+    source: "Journal of the American Dental Association"
+  },
+  {
+    title: "Consistency matters more than perfection",
+    content:
+      "Behavioral research shows maintaining a routine is more effective long-term than aiming for perfection.",
+    source: "Behavior Research and Therapy"
   }
 ];
 

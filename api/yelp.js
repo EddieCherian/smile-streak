@@ -15,10 +15,6 @@ export default async function handler(req, res) {
       }
     );
 
-    if (!yelpRes.ok) {
-      throw new Error("Yelp API failed");
-    }
-
     const data = await yelpRes.json();
     res.status(200).json(data);
   } catch (err) {

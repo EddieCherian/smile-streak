@@ -5,6 +5,7 @@ import Tips from "./components/Tips";
 import Reminders from "./components/Reminders";
 import Dentists from "./components/Dentists";
 import Insights from "./components/Insights"; // ✅ ADDED
+import Mission from "./components/Mission";
 import { storage } from "./utils/storage";
 import { scheduleDailyNotifications } from "./utils/scheduleNotifications";
 import "./App.css";

@@ -5,7 +5,7 @@ import Tips from "./components/Tips";
 import Reminders from "./components/Reminders";
 import Dentists from "./components/Dentists";
 import Insights from "./components/Insights"; // ✅ ADDED
-import Mission from "./components/Mission";
+import Mission from "./components/Mission"; // ✅ ADDED
 import { storage } from "./utils/storage";
 import { scheduleDailyNotifications } from "./utils/scheduleNotifications";
 import "./App.css";
@@ -46,22 +46,28 @@ export default function App() {
 
       {/* TABS */}
       <nav className="flex gap-2 px-4 py-2 overflow-x-auto">
-        {["today", "progress", "tips", "reminders", "dentists", "insights"].map(
-          (tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-5 py-2 rounded-full text-sm font-semibold transition
-                ${
-                  activeTab === tab
-                    ? "bg-cyan-500 text-white shadow"
-                    : "bg-white text-gray-600 shadow-sm"
-                }`}
-            >
-              {tab[0].toUpperCase() + tab.slice(1)}
-            </button>
-          )
-        )}
+        {[
+          "today",
+          "progress",
+          "tips",
+          "reminders",
+          "dentists",
+          "insights",
+          "mission"
+        ].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-5 py-2 rounded-full text-sm font-semibold transition
+              ${
+                activeTab === tab
+                  ? "bg-cyan-500 text-white shadow"
+                  : "bg-white text-gray-600 shadow-sm"
+              }`}
+          >
+            {tab[0].toUpperCase() + tab.slice(1)}
+          </button>
+        ))}
       </nav>
 
       {/* CONTENT */}
@@ -75,7 +81,8 @@ export default function App() {
         {activeTab === "dentists" && <Dentists />}
         {activeTab === "insights" && (
           <Insights habitData={habitData} />
-        )} {/* ✅ ADDED */}
+        )}
+        {activeTab === "mission" && <Mission />} {/* ✅ ADDED */}
       </main>
     </div>
   );

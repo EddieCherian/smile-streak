@@ -113,10 +113,10 @@ export default function Today({ habitData, setHabitData }) {
       )}
 
       {/* HEADER */}
-      <div className="rounded-3xl p-6 bg-gradient-to-r from-cyan-500 to-blue-500 text-white mb-6 relative">
+      <div className="rounded-3xl p-6 bg-gradient-to-r from-cyan-500 to-blue-500 text-white mb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/icon-512.png" alt="Smile Streak" className="h-8 w-8" />
+            <img src="/icon-512.png" alt="Smile Streak" className="h-16 w-16" />
             <div>
               <h1 className="text-2xl font-extrabold">Smile Streak</h1>
               <p className="text-sm opacity-90">Complete your routine today</p>
@@ -145,7 +145,7 @@ export default function Today({ habitData, setHabitData }) {
       </div>
 
       {/* PROGRESS BAR */}
-      <div className="mb-6">
+      <div className="mb-6 relative">
         <p className="text-sm text-gray-600 mb-1">Daily Progress</p>
         <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
           <div
@@ -154,25 +154,26 @@ export default function Today({ habitData, setHabitData }) {
           />
         </div>
         <p className="text-right text-xs text-gray-500 mt-1">{percent}%</p>
-      </div>
 
-      {/* TIMER BUTTON (MOVED HERE) */}
-      <div className="mb-6">
-        <button
-          onClick={() =>
-            setTimerEnabled((v) => {
-              if (v && activeTimer) {
-                toggleTask(activeTimer);
-                setActiveTimer(null);
-                setTimeLeft(BRUSH_TIME);
-              }
-              return !v;
-            })
-          }
-          className="bg-gray-100 text-gray-800 rounded-xl px-4 py-2 text-sm shadow font-semibold"
-        >
-          Timer: {timerEnabled ? "ON" : "OFF"}
-        </button>
+        {/* TIMER BUTTON — TOP RIGHT OF MORNING TASK AREA */}
+        <div className="absolute right-0 mt-3">
+          <button
+            onClick={() =>
+              setTimerEnabled((v) => {
+                if (v && activeTimer) {
+                  toggleTask(activeTimer);
+                  setActiveTimer(null);
+                  setTimeLeft(BRUSH_TIME);
+                }
+                return !v;
+              })
+            }
+            className="flex items-center gap-2 bg-gray-100 text-gray-800 rounded-xl px-3 py-2 text-xs shadow font-semibold"
+          >
+            <span>Timer {timerEnabled ? "ON" : "OFF"}</span>
+            <span>🪥</span>
+          </button>
+        </div>
       </div>
 
       {/* TASKS */}
@@ -194,10 +195,14 @@ export default function Today({ habitData, setHabitData }) {
               className={`w-full flex justify-between items-center p-5 rounded-2xl border
                 ${isDone ? "bg-green-50 border-green-400" : "bg-white"}`}
             >
-              <span className="capitalize font-semibold">🪥 {task} brushing</span>
-              <span className="text-sm">
-                {isRunning ? formatTime(timeLeft) : isDone ? "Done" : ""}
-              </span>
+              <span className="capitalize font-semibold">{task} brushing</span>
+
+              <div className="flex items-center gap-3">
+                <span className="text-sm">
+                  {isRunning ? formatTime(timeLeft) : isDone ? "Done" : ""}
+                </span>
+                <span>🪥</span>
+              </div>
             </button>
           );
         })}
@@ -207,8 +212,11 @@ export default function Today({ habitData, setHabitData }) {
           className={`w-full flex justify-between items-center p-5 rounded-2xl border
             ${todayData.floss ? "bg-green-50 border-green-400" : "bg-white"}`}
         >
-          <span className="font-semibold">🪥 Floss</span>
-          <span>{todayData.floss ? "Done" : ""}</span>
+          <span className="font-semibold">Floss</span>
+          <div className="flex items-center gap-3">
+            <span>{todayData.floss ? "Done" : ""}</span>
+            <span>🧵</span>
+          </div>
         </button>
       </section>
     </>

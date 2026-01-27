@@ -116,7 +116,7 @@ export default function Today({ habitData, setHabitData }) {
       <div className="rounded-3xl p-6 bg-gradient-to-r from-cyan-500 to-blue-500 text-white mb-6 relative">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/icon-512.png" alt="Smile Streak" className="h-8 w-8" />
+            <img src="/icon-512.png" alt="Smile Streak" className="h-16 w-16" />
             <div>
               <h1 className="text-2xl font-extrabold">Smile Streak</h1>
               <p className="text-sm opacity-90">Complete your routine today</p>

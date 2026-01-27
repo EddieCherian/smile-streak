@@ -41,6 +41,14 @@ export default function Today({ habitData, setHabitData }) {
   const [showStreak, setShowStreak] = useState(false);
   const [timerEnabled, setTimerEnabled] = useState(false);
 
+  // ✅ ADDED — force Today page to re-render when habitData changes
+  const [, forceUpdate] = useState(0);
+
+  useEffect(() => {
+    forceUpdate((v) => v + 1);
+  }, [habitData]);
+  // ⬆️ END OF ONLY ADDITION
+
   const formatTime = (s) =>
     `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 
@@ -97,7 +105,7 @@ export default function Today({ habitData, setHabitData }) {
 
   const percent = Math.round((completedCount / 3) * 100);
 
-  // ✅ FIX: derive streaks (same logic as Progress tab)
+  // derive streaks (same logic as Progress tab)
   const { current, longest } = calculateStreaks(habitData);
 
   return (
@@ -109,7 +117,9 @@ export default function Today({ habitData, setHabitData }) {
               Day Complete
             </p>
             <p className="text-sm text-gray-500 text-center mt-2">
-              {isRecoveryDay ? "Recovered and back on track" : "Perfect consistency"}
+              {isRecoveryDay
+                ? "Recovered and back on track"
+                : "Perfect consistency"}
             </p>
           </div>
         </div>
@@ -127,9 +137,7 @@ export default function Today({ habitData, setHabitData }) {
 
           <div className="text-right">
             <p className="text-xs opacity-80">Current Streak</p>
-            <p className="text-2xl font-extrabold">
-              {current}
-            </p>
+            <p className="text-2xl font-extrabold">{current}</p>
           </div>
         </div>
       </div>
@@ -197,7 +205,11 @@ export default function Today({ habitData, setHabitData }) {
 
               <div className="flex items-center gap-3">
                 <span className="text-sm">
-                  {isRunning ? formatTime(timeLeft) : isDone ? "Done" : ""}
+                  {isRunning
+                    ? formatTime(timeLeft)
+                    : isDone
+                    ? "Done"
+                    : ""}
                 </span>
                 <span>🪥</span>
               </div>

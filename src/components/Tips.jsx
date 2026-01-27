@@ -16,7 +16,7 @@ export default function Tips() {
           <p className="text-xs text-cyan-600 mt-2">
             Source:{" "}
             <a
-              href={tip.source}
+              href={tip.sourceLink}
               target="_blank"
               rel="noopener noreferrer"
               className="underline"

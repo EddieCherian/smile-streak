@@ -98,7 +98,6 @@ export default function Today({ habitData, setHabitData }) {
 
   return (
     <>
-      {/* STREAK MODAL */}
       {showStreak && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 pointer-events-none">
           <div className="bg-white px-10 py-8 rounded-3xl shadow-2xl animate-[scaleFade_0.6s_ease-out]">
@@ -112,7 +111,6 @@ export default function Today({ habitData, setHabitData }) {
         </div>
       )}
 
-      {/* HEADER */}
       <div className="rounded-3xl p-6 bg-gradient-to-r from-cyan-500 to-blue-500 text-white mb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -132,7 +130,6 @@ export default function Today({ habitData, setHabitData }) {
         </div>
       </div>
 
-      {/* STATS */}
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="bg-white rounded-2xl p-4 text-center border">
           <p className="text-sm text-gray-500">Current Streak</p>
@@ -144,7 +141,6 @@ export default function Today({ habitData, setHabitData }) {
         </div>
       </div>
 
-      {/* PROGRESS BAR */}
       <div className="mb-6 relative">
         <p className="text-sm text-gray-600 mb-1">Daily Progress</p>
         <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
@@ -155,7 +151,6 @@ export default function Today({ habitData, setHabitData }) {
         </div>
         <p className="text-right text-xs text-gray-500 mt-1">{percent}%</p>
 
-        {/* TIMER BUTTON — TOP RIGHT OF MORNING TASK AREA */}
         <div className="absolute right-0 mt-3">
           <button
             onClick={() =>
@@ -176,8 +171,8 @@ export default function Today({ habitData, setHabitData }) {
         </div>
       </div>
 
-      {/* TASKS */}
-      <section className="space-y-4 mt-14">
+      {/* TASKS — ONLY CHANGE IS mt-24 */}
+      <section className="space-y-4 mt-24">
         {["morning", "night"].map((task) => {
           const isDone = todayData[task];
           const isRunning = activeTimer === task;

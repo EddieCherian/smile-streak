@@ -1,4 +1,3 @@
-
 // src/utils/insights.js
 
 const TASKS = ["morning", "night", "floss"];
@@ -12,6 +11,10 @@ const REFLECTION_KEYWORDS = [
   "exam",
   "travel"
 ];
+
+// ✅ Minimum data thresholds (added)
+const MIN_DAYS_FOR_PATTERNS = 7;
+const MIN_DAYS_FOR_REFLECTIONS = 3;
 
 export function generateInsights(habitData) {
   const dates = Object.keys(habitData).filter(
@@ -64,24 +67,44 @@ export function generateInsights(habitData) {
   const completionRate =
     totalDays === 0 ? 0 : Math.round((completedDays / totalDays) * 100);
 
-  const mostMissedTask = Object.entries(missedTaskCount).sort(
+  const rawMostMissedTask = Object.entries(missedTaskCount).sort(
     (a, b) => b[1] - a[1]
   )[0]?.[0];
 
-  const mostMissedDay = Object.entries(weekdayMisses).sort(
+  const rawMostMissedDay = Object.entries(weekdayMisses).sort(
     (a, b) => b[1] - a[1]
   )[0]?.[0];
 
-  const commonReflectionReason = Object.entries(reflectionCounts).sort(
+  const rawCommonReflectionReason = Object.entries(reflectionCounts).sort(
     (a, b) => b[1] - a[1]
   )[0]?.[0];
+
+  // ✅ Confidence evaluation (added)
+  const patternsReliable = totalDays >= MIN_DAYS_FOR_PATTERNS;
+  const reflectionsReliable =
+    Object.values(reflectionCounts).reduce((a, b) => a + b, 0) >=
+    MIN_DAYS_FOR_REFLECTIONS;
 
   return {
+    // existing outputs (unchanged names)
     totalDays,
     completedDays,
     completionRate,
-    mostMissedTask,
-    mostMissedDay,
-    commonReflectionReason
+
+    // uncertainty-aware gating (added behavior)
+    mostMissedTask: patternsReliable ? rawMostMissedTask : null,
+    mostMissedDay: patternsReliable ? rawMostMissedDay : null,
+    commonReflectionReason: reflectionsReliable
+      ? rawCommonReflectionReason
+      : null,
+
+    // ✅ confidence metadata (added)
+    confidence: {
+      patternsReliable,
+      reflectionsReliable,
+      totalDays,
+      minDaysForPatterns: MIN_DAYS_FOR_PATTERNS,
+      minReflectionsForInsights: MIN_DAYS_FOR_REFLECTIONS
+    }
   };
 }

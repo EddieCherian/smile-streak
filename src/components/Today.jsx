@@ -116,7 +116,7 @@ export default function Today({ habitData, setHabitData }) {
       <div className="rounded-3xl p-6 bg-gradient-to-r from-cyan-500 to-blue-500 text-white mb-6 relative">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/icon-512.png" alt="Smile Streak" className="h-16 w-16" />
+            <img src="/icon-512.png" alt="Smile Streak" className="h-8 w-8" />
             <div>
               <h1 className="text-2xl font-extrabold">Smile Streak</h1>
               <p className="text-sm opacity-90">Complete your routine today</p>
@@ -129,25 +129,6 @@ export default function Today({ habitData, setHabitData }) {
               {habitData?.currentStreak || 0}
             </p>
           </div>
-        </div>
-
-        {/* TIMER SMALL BOX */}
-        <div className="absolute top-4 right-4 bg-gray-100 text-gray-800 rounded-xl px-3 py-2 text-xs shadow">
-          <button
-            onClick={() =>
-              setTimerEnabled((v) => {
-                if (v && activeTimer) {
-                  toggleTask(activeTimer);
-                  setActiveTimer(null);
-                  setTimeLeft(BRUSH_TIME);
-                }
-                return !v;
-              })
-            }
-            className="font-semibold"
-          >
-            Timer: {timerEnabled ? "ON" : "OFF"}
-          </button>
         </div>
       </div>
 
@@ -175,6 +156,25 @@ export default function Today({ habitData, setHabitData }) {
         <p className="text-right text-xs text-gray-500 mt-1">{percent}%</p>
       </div>
 
+      {/* TIMER BUTTON (MOVED HERE) */}
+      <div className="mb-6">
+        <button
+          onClick={() =>
+            setTimerEnabled((v) => {
+              if (v && activeTimer) {
+                toggleTask(activeTimer);
+                setActiveTimer(null);
+                setTimeLeft(BRUSH_TIME);
+              }
+              return !v;
+            })
+          }
+          className="bg-gray-100 text-gray-800 rounded-xl px-4 py-2 text-sm shadow font-semibold"
+        >
+          Timer: {timerEnabled ? "ON" : "OFF"}
+        </button>
+      </div>
+
       {/* TASKS */}
       <section className="space-y-4">
         {["morning", "night"].map((task) => {
@@ -194,7 +194,7 @@ export default function Today({ habitData, setHabitData }) {
               className={`w-full flex justify-between items-center p-5 rounded-2xl border
                 ${isDone ? "bg-green-50 border-green-400" : "bg-white"}`}
             >
-              <span className="capitalize font-semibold">{task} brushing</span>
+              <span className="capitalize font-semibold">🪥 {task} brushing</span>
               <span className="text-sm">
                 {isRunning ? formatTime(timeLeft) : isDone ? "Done" : ""}
               </span>
@@ -207,7 +207,7 @@ export default function Today({ habitData, setHabitData }) {
           className={`w-full flex justify-between items-center p-5 rounded-2xl border
             ${todayData.floss ? "bg-green-50 border-green-400" : "bg-white"}`}
         >
-          <span className="font-semibold">Floss</span>
+          <span className="font-semibold">🪥 Floss</span>
           <span>{todayData.floss ? "Done" : ""}</span>
         </button>
       </section>

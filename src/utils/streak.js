@@ -31,4 +31,3 @@ export const calculateStreaks = (days) => {
 
   return { current, longest };
 };
-export { calculateStreaks };

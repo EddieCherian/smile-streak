@@ -1,5 +1,3 @@
-import { getDateString, getLocalMidnight } from "./dates";
-
 export const calculateStreaks = (days) => {
   const today = getDateString();
   let current = 0;
@@ -12,7 +10,11 @@ export const calculateStreaks = (days) => {
   for (let i = 0; i < 365; i++) {
     const dateStr = getDateString(cursor);
     const day = days[dateStr];
-    const complete = day?.completed === true;
+
+    const complete =
+      day?.morning === true &&
+      day?.night === true &&
+      day?.floss === true;
 
     if (complete) {
       temp++;

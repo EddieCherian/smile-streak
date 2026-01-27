@@ -1,7 +1,7 @@
-import { getDateString, getLocalMidnight } from "./date.js";
+import { getDateKey, getLocalMidnight } from "./date.js";
 
 export const calculateStreaks = (days) => {
-  const today = getDateString();
+  const today = getDateKey();
   let current = 0;
   let longest = 0;
   let temp = 0;
@@ -10,19 +10,16 @@ export const calculateStreaks = (days) => {
   const cursor = getLocalMidnight();
 
   for (let i = 0; i < 365; i++) {
-    const dateStr = getDateString(cursor);
-    const day = days[dateStr];
+    const dateKey = getDateKey(cursor);
+    const day = days[dateKey];
     const complete = day?.completed === true;
 
     if (complete) {
       temp++;
       longest = Math.max(longest, temp);
-
-      if (allowTodayIncomplete) {
-        current = temp;
-      }
+      if (allowTodayIncomplete) current = temp;
     } else {
-      if (dateStr !== today) {
+      if (dateKey !== today) {
         allowTodayIncomplete = false;
         temp = 0;
       }

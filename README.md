@@ -67,7 +67,7 @@ What I Learned
 
 Building Smile Streak highlighted how much behavior change depends on design decisions rather than raw functionality. Small choices — such as limiting recovery, avoiding false certainty, and reducing friction — have a disproportionate impact on whether a user stays engaged.
 
-The project also revealed the challenges of working with real-world healthcare data, where imperfect information must be handled responsibly and transparently.
+The project also revealed the challenges of working with real-world healthcare data, where imperfect information must be handled responsibly and transparently. This project grew out of my own difficulty maintaining routines after missed days, and my frustration with how hard it is to evaluate dental care options responsibly.
 
 ⸻
 

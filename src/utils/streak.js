@@ -1,3 +1,5 @@
+import { getDateString, getLocalMidnight } from "./dates";
+
 export const calculateStreaks = (days) => {
   const today = getDateString();
   let current = 0;

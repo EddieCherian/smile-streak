@@ -1,5 +1,6 @@
 // src/utils/insights.js
-
+// We intentionally gate insights behind minimum data thresholds
+// to avoid premature or misleading behavioral conclusions.
 const TASKS = ["morning", "night", "floss"];
 const REFLECTION_KEYWORDS = [
   "tired",

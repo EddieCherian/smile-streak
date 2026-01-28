@@ -34,6 +34,22 @@ export default function Insights({ habitData }) {
         )}
       </div>
 
+      {/* ✅ Synthesized Insight (added) */}
+      {insights.summaryInsight && (
+        <div className="bg-white p-6 rounded-3xl shadow-md">
+          <h2 className="font-bold text-lg mb-2">Overview</h2>
+          <p className="text-sm text-gray-700">{insights.summaryInsight}</p>
+
+          {insights.confidence &&
+            !insights.confidence.patternsReliable && (
+              <p className="mt-3 text-xs text-gray-500">
+                This overview is based on early trends and will refine as more
+                data is collected.
+              </p>
+            )}
+        </div>
+      )}
+
       {/* Patterns */}
       {(insights.mostMissedTask || insights.mostMissedDay) && (
         <div className="bg-white p-6 rounded-3xl shadow-md">

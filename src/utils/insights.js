@@ -85,6 +85,12 @@ export function generateInsights(habitData) {
     Object.values(reflectionCounts).reduce((a, b) => a + b, 0) >=
     MIN_DAYS_FOR_REFLECTIONS;
 
+  // ✅ Longitudinal synthesis (added)
+  let summaryInsight = null;
+  if (patternsReliable && rawMostMissedTask && rawMostMissedDay) {
+    summaryInsight = `Missed routines most often involve ${rawMostMissedTask} care and tend to occur on ${rawMostMissedDay}s.`;
+  }
+
   return {
     // existing outputs (unchanged names)
     totalDays,
@@ -105,6 +111,9 @@ export function generateInsights(habitData) {
       totalDays,
       minDaysForPatterns: MIN_DAYS_FOR_PATTERNS,
       minReflectionsForInsights: MIN_DAYS_FOR_REFLECTIONS
-    }
+    },
+
+    // ✅ synthesized insight (added)
+    summaryInsight
   };
 }

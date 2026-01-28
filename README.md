@@ -76,6 +76,31 @@ Yelp provides ratings and social proof, while OpenStreetMap ensures the app cont
 
 ⸻
 
+Design Rationale & Interpretability
+
+Throughout development, design decisions were guided not only by functionality, but by how users interpret feedback.
+
+Rather than maximizing metrics or visualizing every available data point, Smile Streak prioritizes:
+	•	Trends over single-day judgments
+	•	Explanations over raw scores
+	•	Transparency over false precision
+
+This framing is intended to reduce anxiety-driven disengagement and promote reflective habit formation rather than performance pressure.
+
+⸻
+
+Limitations & Open Questions
+
+Smile Streak intentionally acknowledges its constraints:
+	•	Insights are derived from small, self-reported datasets
+	•	Reflection keyword analysis is coarse and non-diagnostic
+	•	Insurance inference is probabilistic and may vary by region
+	•	Habit data reflects consistency, not clinical outcomes
+
+These limitations highlight opportunities for future refinement and emphasize that behavioral tools must be interpreted cautiously.
+
+⸻
+
 Ethical Boundaries & Medical Disclaimer
 
 Smile Streak is designed for education and habit awareness only.

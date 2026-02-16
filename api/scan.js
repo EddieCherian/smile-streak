@@ -13,6 +13,10 @@ const client = new OpenAI({
 });
 
 export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
   try {
     const { image } = req.body;
 
@@ -21,7 +25,7 @@ export default async function handler(req, res) {
     }
 
     const response = await client.responses.create({
-      model: "gpt-4.1-mini",
+      model: "gpt-4o-mini",
       input: [
         {
           role: "user",
@@ -29,16 +33,14 @@ export default async function handler(req, res) {
             {
               type: "input_text",
               text:
-                "You are a dental hygiene assistant. Give short practical feedback on brushing, plaque visibility, and gum care. Do NOT diagnose disease."
+                "You are a dental hygiene assistant. Give short practical feedback on brushing, plaque visibility, and gum care. Do NOT diagnose disease.",
             },
             {
               type: "input_image",
-              image_url: {
-                url: image
-              }
-            }
-          ]
-        }
+              image_url: image,
+            },
+          ],
+        },
       ],
       max_output_tokens: 200,
     });
@@ -51,6 +53,6 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error("SCAN ERROR:", err);
-    res.status(500).json({ error: "AI analysis failed" });
+    res.status(500).json({ error: err.message });
   }
 }

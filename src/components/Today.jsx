@@ -41,13 +41,11 @@ export default function Today({ habitData, setHabitData }) {
   const [showStreak, setShowStreak] = useState(false);
   const [timerEnabled, setTimerEnabled] = useState(false);
 
-  // ✅ ADDED — force Today page to re-render when habitData changes
   const [, forceUpdate] = useState(0);
 
   useEffect(() => {
     forceUpdate((v) => v + 1);
   }, [habitData]);
-  // ⬆️ END OF ONLY ADDITION
 
   const formatTime = (s) =>
     `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
@@ -105,7 +103,6 @@ export default function Today({ habitData, setHabitData }) {
 
   const percent = Math.round((completedCount / 3) * 100);
 
-  // derive streaks (same logic as Progress tab)
   const { current, longest } = calculateStreaks(habitData);
 
   return (
@@ -222,7 +219,7 @@ export default function Today({ habitData, setHabitData }) {
           className={`w-full flex justify-between items-center p-5 rounded-2xl border
             ${todayData.floss ? "bg-green-50 border-green-400" : "bg-white"}`}
         >
-          <span className="font-semibold">Floss</span>
+          <span className="font-semibold">Floss / Water Pick</span>
           <div className="flex items-center gap-3">
             <span>{todayData.floss ? "Done" : ""}</span>
             <span>🧵</span>

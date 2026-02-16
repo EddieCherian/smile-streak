@@ -29,26 +29,27 @@ export default async function handler(req, res) {
             {
               type: "input_text",
               text:
-                "You are a dental hygiene assistant. Give short practical feedback on brushing, plaque visibility, and gum care. Do NOT diagnose disease."
+                "You are a dental hygiene assistant. Give short practical feedback on brushing, plaque visibility, and gum care. Do NOT diagnose disease.",
             },
             {
               type: "input_image",
-              image_url: image
-            }
-          ]
-        }
+              image_url: image,
+            },
+          ],
+        },
       ],
       max_output_tokens: 200,
     });
 
+    // ✅ Correct way to read text from Responses API
     const feedback =
-      response.output[0]?.content[0]?.text ||
+      response.output_text ||
       "AI returned no feedback";
 
     res.status(200).json({ feedback });
 
   } catch (err) {
-    console.error(err);
+    console.error("SCAN API ERROR:", err);
     res.status(500).json({ error: "AI analysis failed" });
   }
 }

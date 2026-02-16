@@ -82,6 +82,7 @@ export default function App() {
         {activeTab === "progress" && <Progress habitData={habitData} />}
         {activeTab === "tips" && <Tips />}
         {activeTab === "reminders" && <Reminders />}
+        {activeTab === "scan" && <Scan />} {/* ✅ FIX ADDED */}
         {activeTab === "dentists" && <Dentists />}
         {activeTab === "report" && (
           <Report habitData={habitData} />

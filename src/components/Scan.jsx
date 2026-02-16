@@ -1,50 +1,85 @@
-import OpenAI from "openai";
+import { useState } from "react";
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+export default function Scan() {
+  const [image, setImage] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState(null);
 
-export default async function handler(req, res) {
-  try {
-    const { image } = req.body;
+  const handleCapture = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-    if (!image) {
-      return res.status(400).json({ error: "No image provided" });
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImage(reader.result);
+      setFeedback(null);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const analyzePhoto = async () => {
+    if (!image) return;
+
+    setLoading(true);
+    setFeedback(null);
+
+    try {
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ image }),
+      });
+
+      const data = await res.json();
+      setFeedback(data.feedback || data.error || "No response");
+    } catch (err) {
+      setFeedback("Failed to analyze image.");
     }
 
-    const response = await client.chat.completions.create({
-      model: "gpt-4.1-mini",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a dental hygiene assistant. Give short, practical feedback on brushing, gum health, plaque visibility, and technique. Do not diagnose disease. Be encouraging and concise."
-        },
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: "Analyze this photo of teeth and give hygiene feedback."
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: image
-              }
-            }
-          ]
-        }
-      ],
-      max_tokens: 200,
-    });
+    setLoading(false);
+  };
 
-    const feedback = response.choices[0].message.content;
+  return (
+    <div className="space-y-6">
+      <h2 className="text-xl font-bold">Dental Scan</h2>
 
-    res.status(200).json({ feedback });
+      <p className="text-sm text-gray-600">
+        Take a photo of your teeth to get AI feedback on brushing and gum health.
+      </p>
 
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "AI analysis failed" });
-  }
+      <input
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleCapture}
+        className="block w-full text-sm"
+      />
+
+      {image && (
+        <div className="space-y-4">
+          <img
+            src={image}
+            alt="preview"
+            className="rounded-xl border shadow"
+          />
+
+          <button
+            onClick={analyzePhoto}
+            disabled={loading}
+            className="bg-cyan-500 text-white px-4 py-2 rounded-xl font-semibold"
+          >
+            {loading ? "Analyzing..." : "Analyze Photo"}
+          </button>
+        </div>
+      )}
+
+      {feedback && (
+        <div className="bg-white border rounded-xl p-4 shadow text-sm">
+          {feedback}
+        </div>
+      )}
+    </div>
+  );
 }

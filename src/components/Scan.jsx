@@ -24,7 +24,7 @@ export default function Scan() {
     setFeedback(null);
 
     try {
-      const res = await fetch("/api/analyze", {
+      const res = await fetch("/api/scan", {   // ✅ fixed endpoint
         method: "POST",
         headers: {
           "Content-Type": "application/json",

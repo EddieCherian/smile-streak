@@ -14,6 +14,21 @@ export default function Scan() {
     reader.readAsDataURL(file);
   };
 
+  const handleAnalyze = async () => {
+    if (!image) return;
+
+    const res = await fetch("/api/analyze", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ image }),
+    });
+
+    const data = await res.json();
+    console.log(data);
+  };
+
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-bold">Dental Scan</h2>
@@ -37,7 +52,10 @@ export default function Scan() {
             alt="preview"
             className="rounded-xl border shadow"
           />
-          <button className="bg-cyan-500 text-white px-4 py-2 rounded-xl font-semibold">
+          <button
+            onClick={handleAnalyze}
+            className="bg-cyan-500 text-white px-4 py-2 rounded-xl font-semibold"
+          >
             Analyze Photo
           </button>
         </div>

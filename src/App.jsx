@@ -3,6 +3,7 @@ import Today from "./components/Today";
 import Progress from "./components/Progress";
 import Tips from "./components/Tips";
 import Reminders from "./components/Reminders";
+import Scan from "./components/Scan";
 import Dentists from "./components/Dentists";
 import Report from "./components/Report";
 import Insights from "./components/Insights"; // ✅ ADDED
@@ -52,6 +53,7 @@ export default function App() {
           "progress",
           "tips",
           "reminders",
+          "scan",
           "dentists",
           "report",
           "insights",

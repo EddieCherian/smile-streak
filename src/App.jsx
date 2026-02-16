@@ -53,6 +53,7 @@ export default function App() {
           "tips",
           "reminders",
           "dentists",
+          "report",
           "insights",
           "mission"
         ].map((tab) => (
@@ -80,6 +81,9 @@ export default function App() {
         {activeTab === "tips" && <Tips />}
         {activeTab === "reminders" && <Reminders />}
         {activeTab === "dentists" && <Dentists />}
+        {activeTab === "report" && (
+          <Report habitData={habitData} />
+        )}
         {activeTab === "insights" && (
           <Insights habitData={habitData} />
         )}

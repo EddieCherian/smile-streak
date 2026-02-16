@@ -41,6 +41,9 @@ export default function Today({ habitData, setHabitData }) {
   const [showStreak, setShowStreak] = useState(false);
   const [timerEnabled, setTimerEnabled] = useState(false);
 
+  // ✅ ADDED state for interdental selector
+  const [interdentalType, setInterdentalType] = useState("Floss");
+
   const [, forceUpdate] = useState(0);
 
   useEffect(() => {
@@ -219,9 +222,25 @@ export default function Today({ habitData, setHabitData }) {
           className={`w-full flex justify-between items-center p-5 rounded-2xl border
             ${todayData.floss ? "bg-green-50 border-green-400" : "bg-white"}`}
         >
-          <span className="font-semibold">Floss / Water Pick</span>
+          <div className="flex flex-col items-start">
+            <span className="font-semibold">Interdental Care</span>
+
+            <select
+              value={interdentalType}
+              onChange={(e) => setInterdentalType(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              className="text-xs mt-1 border rounded-lg px-2 py-1"
+            >
+              <option>Floss</option>
+              <option>Water Pick</option>
+              <option>Interdental Brush</option>
+            </select>
+          </div>
+
           <div className="flex items-center gap-3">
-            <span>{todayData.floss ? "Done" : ""}</span>
+            <span>
+              {todayData.floss ? `Done • ${interdentalType}` : ""}
+            </span>
             <span>🧵</span>
           </div>
         </button>

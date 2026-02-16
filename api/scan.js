@@ -1,9 +1,3 @@
-import OpenAI from "openai";
-
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 export default async function handler(req, res) {
   try {
     const { image } = req.body;
@@ -12,31 +6,44 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "No image provided" });
     }
 
-    const response = await client.responses.create({
-      model: "gpt-4.1-mini",
-      input: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "input_text",
-              text:
-                "You are a dental hygiene assistant. Give short practical feedback on brushing, plaque visibility, and gum care. Do NOT diagnose disease."
-            },
-            {
-              type: "input_image",
-              image_url: image   // ✅ fixed here
-            }
-          ]
-        }
-      ],
-      max_output_tokens: 200,
-    });
+    // remove "data:image/...;base64," prefix
+    const base64 = image.split(",")[1];
 
-    const feedback = response.output_text || "No feedback returned";
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text:
+                    "You are a dental hygiene assistant. Give short practical feedback on brushing, plaque visibility, and gum care. Do NOT diagnose disease.",
+                },
+                {
+                  inline_data: {
+                    mime_type: "image/jpeg",
+                    data: base64,
+                  },
+                },
+              ],
+            },
+          ],
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    const feedback =
+      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "No feedback returned";
 
     res.status(200).json({ feedback });
-
   } catch (err) {
     console.error("SCAN ERROR:", err);
     res.status(500).json({ error: "AI analysis failed" });

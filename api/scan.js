@@ -25,7 +25,9 @@ export default async function handler(req, res) {
             },
             {
               type: "input_image",
-              image_url: image
+              image_url: {
+                url: image
+              }
             }
           ]
         }
@@ -33,7 +35,9 @@ export default async function handler(req, res) {
       max_output_tokens: 200,
     });
 
-    const feedback = response.output_text || "No feedback returned";
+    const feedback =
+      response.output?.[0]?.content?.[0]?.text ||
+      "No feedback returned";
 
     res.status(200).json({ feedback });
 

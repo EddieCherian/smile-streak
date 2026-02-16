@@ -43,12 +43,14 @@ export default async function handler(req, res) {
       max_output_tokens: 200,
     });
 
-    const feedback = response.output_text || "AI returned no feedback";
+    const feedback =
+      response.output?.[0]?.content?.[0]?.text ||
+      "AI returned no feedback";
 
     res.status(200).json({ feedback });
 
   } catch (err) {
-    console.error(err);
+    console.error("SCAN ERROR:", err);
     res.status(500).json({ error: "AI analysis failed" });
   }
 }

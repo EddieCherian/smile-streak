@@ -1,8 +1,10 @@
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
+import OpenAI from "openai";
 
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+export default async function handler(req, res) {
   try {
     const { image } = req.body;
 
@@ -10,44 +12,33 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "No image provided" });
     }
 
-    const response = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4.1-mini",
-        input: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "input_text",
-                text: `Analyze this photo of teeth and gums.
-Give short, actionable feedback on:
-- plaque visibility
-- gum redness/inflammation
-- brushing coverage
-- improvement tips`
-              },
-              {
-                type: "input_image",
-                image_url: image
-              }
-            ]
-          }
-        ]
-      })
+    const response = await client.responses.create({
+      model: "gpt-4.1-mini",
+      input: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text:
+                "You are a dental hygiene assistant. Give short practical feedback on brushing, plaque visibility, and gum care. Do NOT diagnose disease."
+            },
+            {
+              type: "input_image",
+              image_url: image
+            }
+          ]
+        }
+      ],
+      max_output_tokens: 200,
     });
 
-    const data = await response.json();
+    const feedback =
+      response.output[0]?.content[0]?.text ||
+      "AI returned no feedback";
 
-    const text =
-      data.output?.[0]?.content?.[0]?.text ||
-      "No analysis returned";
+    res.status(200).json({ feedback });
 
-    res.status(200).json({ result: text });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "AI analysis failed" });

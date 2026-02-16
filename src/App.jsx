@@ -4,6 +4,7 @@ import Progress from "./components/Progress";
 import Tips from "./components/Tips";
 import Reminders from "./components/Reminders";
 import Dentists from "./components/Dentists";
+import Report from "./components/Report";
 import Insights from "./components/Insights"; // ✅ ADDED
 import Mission from "./components/Mission"; // ✅ ADDED
 import { storage } from "./utils/storage";

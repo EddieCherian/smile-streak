@@ -40,7 +40,9 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       console.error("GEMINI ERROR:", data);
-      return res.status(500).json({ error: "Gemini request failed" });
+      console.error("STATUS:", response.status);
+      console.error("API KEY EXISTS:", !!process.env.GEMINI_API_KEY);
+      return res.status(500).json({ error: "Gemini request failed", details: data });
     }
 
     const feedback =

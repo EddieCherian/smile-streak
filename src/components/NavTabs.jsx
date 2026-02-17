@@ -30,8 +30,8 @@ export default function NavTabs({ activeTab, setActiveTab }) {
                 transition-all duration-200 border
                 ${
                   active
-                    ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md border-transparent scale-[1.03]"
-                    : "bg-gradient-to-r from-blue-50 to-cyan-50 text-blue-700 border-blue-100 hover:from-blue-100 hover:to-cyan-100"
+                    ? "bg-blue-600 text-white border-blue-600 shadow-md"
+                    : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200"
                 }
               `}
             >

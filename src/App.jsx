@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Home from "./components/Home";
 import Today from "./components/Today";
 import Progress from "./components/Progress";
 import Tips from "./components/Tips";

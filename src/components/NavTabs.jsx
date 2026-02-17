@@ -14,8 +14,9 @@ export default function NavTabs({ activeTab, setActiveTab }) {
   ];
 
   return (
-    <div className="w-full overflow-x-auto pb-2">
+    <div className="w-full overflow-x-auto pb-3">
       <div className="flex gap-2 px-2">
+
         {tabs.map((tab) => {
           const value = tab.toLowerCase();
           const active = activeTab === value;
@@ -26,11 +27,11 @@ export default function NavTabs({ activeTab, setActiveTab }) {
               onClick={() => setActiveTab(value)}
               className={`
                 px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap
-                transition-all duration-200
+                transition-all duration-200 border
                 ${
                   active
-                    ? "bg-blue-600 text-white shadow-md scale-[1.02]"
-                    : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                    ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md border-transparent scale-[1.03]"
+                    : "bg-gradient-to-r from-blue-50 to-cyan-50 text-blue-700 border-blue-100 hover:from-blue-100 hover:to-cyan-100"
                 }
               `}
             >
@@ -38,6 +39,7 @@ export default function NavTabs({ activeTab, setActiveTab }) {
             </button>
           );
         })}
+
       </div>
     </div>
   );

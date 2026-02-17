@@ -1,4 +1,4 @@
-export default function Home() {
+export default function Home({ setActiveTab }) {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-3xl mx-auto space-y-10">
@@ -16,7 +16,6 @@ export default function Home() {
           <h2 className="font-semibold text-lg">What this app does</h2>
 
           <ul className="text-sm text-gray-700 space-y-2">
-
             <li>
               <strong>AI Dental Scan:</strong> Upload a photo of your teeth to get feedback on brushing quality, plaque visibility, and gum care.
             </li>
@@ -32,32 +31,43 @@ export default function Home() {
             <li>
               <strong>Progress Tracking:</strong> Monitor improvement over time and review past feedback.
             </li>
-
           </ul>
         </div>
 
         {/* Navigation cards */}
         <div className="grid grid-cols-2 gap-4">
 
-          <Link to="/scan" className="bg-white border rounded-xl p-5 shadow hover:bg-gray-50">
+          <button
+            onClick={() => setActiveTab("scan")}
+            className="bg-white border rounded-xl p-5 shadow hover:bg-gray-50 text-left"
+          >
             <p className="font-semibold">Scan Teeth</p>
             <p className="text-xs text-gray-500">Get AI hygiene feedback</p>
-          </Link>
+          </button>
 
-          <Link to="/streaks" className="bg-white border rounded-xl p-5 shadow hover:bg-gray-50">
+          <button
+            onClick={() => setActiveTab("today")}
+            className="bg-white border rounded-xl p-5 shadow hover:bg-gray-50 text-left"
+          >
             <p className="font-semibold">Streaks</p>
             <p className="text-xs text-gray-500">Track daily brushing consistency</p>
-          </Link>
+          </button>
 
-          <Link to="/dentists" className="bg-white border rounded-xl p-5 shadow hover:bg-gray-50">
+          <button
+            onClick={() => setActiveTab("dentists")}
+            className="bg-white border rounded-xl p-5 shadow hover:bg-gray-50 text-left"
+          >
             <p className="font-semibold">Find Dentists</p>
             <p className="text-xs text-gray-500">See nearby dentists & accepted insurance</p>
-          </Link>
+          </button>
 
-          <Link to="/history" className="bg-white border rounded-xl p-5 shadow hover:bg-gray-50">
+          <button
+            onClick={() => setActiveTab("progress")}
+            className="bg-white border rounded-xl p-5 shadow hover:bg-gray-50 text-left"
+          >
             <p className="font-semibold">Progress</p>
             <p className="text-xs text-gray-500">Review past feedback</p>
-          </Link>
+          </button>
 
         </div>
 

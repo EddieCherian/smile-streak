@@ -1,5 +1,3 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
 export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -11,19 +9,27 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Initialize the Gemini API
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    console.log("Fetching available models...");
     
-    // LIST ALL AVAILABLE MODELS
-    console.log("Listing available models...");
-    const models = await genAI.listModels();
-    console.log("Available models:", JSON.stringify(models, null, 2));
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GEMINI_API_KEY}`
+    );
     
-    // Return the list so you can see it
+    const data = await response.json();
+    
+    console.log("Models response:", JSON.stringify(data, null, 2));
+    
+    if (!response.ok) {
+      console.error("Error fetching models:", data);
+      return res.status(500).json({ error: "Failed to fetch models", details: data });
+    }
+    
+    const modelNames = data.models?.map(m => m.name) || [];
+    
     return res.status(200).json({ 
-      message: "Check Vercel logs for available models",
-      modelCount: models.length,
-      models: models.map(m => m.name)
+      message: "Available models",
+      models: modelNames,
+      fullData: data
     });
 
   } catch (err) {

@@ -9,7 +9,6 @@ import Dentists from "./components/Dentists";
 import Report from "./components/Report";
 import Insights from "./components/Insights";
 import Mission from "./components/Mission";
-import Terms from "./components/Terms";
 import { storage } from "./utils/storage";
 import { scheduleDailyNotifications } from "./utils/scheduleNotifications";
 import "./App.css";

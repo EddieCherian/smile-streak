@@ -77,7 +77,7 @@ export default function App() {
 
       {/* PAGE CONTENT */}
       <main className="p-4 space-y-6 pb-24">
-        {activeTab === "home" && <Home />}
+        {activeTab === "home" && <Home setActiveTab={setActiveTab} />}
         {activeTab === "today" && (
           <Today habitData={habitData} setHabitData={setHabitData} />
         )}

@@ -10,7 +10,7 @@ import Dentists from "./components/Dentists";
 import Report from "./components/Report";
 import Insights from "./components/Insights";
 import Mission from "./components/Mission";
-import Legal from "./components/Legal"; // ✅ ADDED
+import Legal from "./components/Legal";
 import { storage } from "./utils/storage";
 import { scheduleDailyNotifications } from "./utils/scheduleNotifications";
 import "./App.css";
@@ -49,34 +49,10 @@ export default function App() {
         </p>
       </header>
 
-      {/* NAV TABS */}
-      <nav className="flex gap-2 px-4 py-2 overflow-x-auto">
-        {[
-          "home",
-          "today",
-          "progress",
-          "tips",
-          "reminders",
-          "scan",
-          "dentists",
-          "report",
-          "insights",
-          "mission",
-          "legal" // ✅ ADDED
-        ].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-5 py-2 rounded-full text-sm font-semibold transition ${
-              activeTab === tab
-                ? "bg-cyan-500 text-white shadow"
-                : "bg-white text-gray-600 shadow-sm"
-            }`}
-          >
-            {tab[0].toUpperCase() + tab.slice(1)}
-          </button>
-        ))}
-      </nav>
+      {/* NAV TABS (NOW USING COMPONENT) */}
+      <div className="px-4 py-2">
+        <NavTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+      </div>
 
       {/* PAGE CONTENT */}
       <main className="p-4 space-y-6 pb-24">
@@ -92,7 +68,7 @@ export default function App() {
         {activeTab === "report" && <Report habitData={habitData} />}
         {activeTab === "insights" && <Insights habitData={habitData} />}
         {activeTab === "mission" && <Mission />}
-        {activeTab === "legal" && <Legal />} {/* ✅ ADDED */}
+        {activeTab === "legal" && <Legal />}
       </main>
 
     </div>

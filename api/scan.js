@@ -1,3 +1,5 @@
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
 export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -15,53 +17,32 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "No image provided" });
     }
 
+    // Initialize the Gemini API
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+
     const base64 = image.split(",")[1];
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`,
+    const imageParts = [
       {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+        inlineData: {
+          data: base64,
+          mimeType: "image/jpeg",
         },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text:
-                    "You are a dental hygiene assistant. Give short practical feedback on brushing, plaque visibility, and gum care. Do NOT diagnose disease.",
-                },
-                {
-                  inline_data: {
-                    mime_type: "image/jpeg",
-                    data: base64,
-                  },
-                },
-              ],
-            },
-          ],
-        }),
-      }
-    );
+      },
+    ];
 
-    const data = await response.json();
+    const prompt = "You are a dental hygiene assistant. Give short practical feedback on brushing, plaque visibility, and gum care. Do NOT diagnose disease.";
 
-    if (!response.ok) {
-      console.error("GEMINI ERROR:", data);
-      console.error("STATUS:", response.status);
-      console.error("API KEY EXISTS:", !!process.env.GEMINI_API_KEY);
-      return res.status(500).json({ error: "Gemini request failed", details: data });
-    }
-
-    const feedback =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "No feedback returned";
+    const result = await model.generateContent([prompt, ...imageParts]);
+    const response = await result.response;
+    const feedback = response.text();
 
     res.status(200).json({ feedback });
 
   } catch (err) {
     console.error("SCAN ERROR:", err);
-    res.status(500).json({ error: "AI analysis failed" });
+    console.error("ERROR DETAILS:", err.message);
+    res.status(500).json({ error: "AI analysis failed", details: err.message });
   }
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import NavTabs from "./components/NavTabs";
 import Home from "./components/Home";
 import Today from "./components/Today";
 import Progress from "./components/Progress";

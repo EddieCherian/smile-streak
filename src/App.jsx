@@ -14,7 +14,6 @@ import { scheduleDailyNotifications } from "./utils/scheduleNotifications";
 import "./App.css";
 
 export default function App() {
-  // ✅ start on home instead of today
   const [activeTab, setActiveTab] = useState("home");
 
   const [habitData, setHabitData] = useState(() =>
@@ -37,6 +36,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-cyan-50 text-gray-800">
+      
       {/* HEADER */}
       <header className="px-6 pt-8 pb-4">
         <h1 className="text-3xl font-extrabold tracking-tight">
@@ -47,10 +47,10 @@ export default function App() {
         </p>
       </header>
 
-      {/* TABS */}
+      {/* NAV TABS */}
       <nav className="flex gap-2 px-4 py-2 overflow-x-auto">
         {[
-          "home",        // ✅ ADDED
+          "home",
           "today",
           "progress",
           "tips",
@@ -64,21 +64,20 @@ export default function App() {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-5 py-2 rounded-full text-sm font-semibold transition
-              ${
-                activeTab === tab
-                  ? "bg-cyan-500 text-white shadow"
-                  : "bg-white text-gray-600 shadow-sm"
-              }`}
+            className={`px-5 py-2 rounded-full text-sm font-semibold transition ${
+              activeTab === tab
+                ? "bg-cyan-500 text-white shadow"
+                : "bg-white text-gray-600 shadow-sm"
+            }`}
           >
             {tab[0].toUpperCase() + tab.slice(1)}
           </button>
         ))}
       </nav>
 
-      {/* CONTENT */}
+      {/* PAGE CONTENT */}
       <main className="p-4 space-y-6 pb-24">
-        {activeTab === "home" && <Home />} {/* ✅ ADDED */}
+        {activeTab === "home" && <Home />}
         {activeTab === "today" && (
           <Today habitData={habitData} setHabitData={setHabitData} />
         )}
@@ -87,14 +86,11 @@ export default function App() {
         {activeTab === "reminders" && <Reminders />}
         {activeTab === "scan" && <Scan />}
         {activeTab === "dentists" && <Dentists />}
-        {activeTab === "report" && (
-          <Report habitData={habitData} />
-        )}
-        {activeTab === "insights" && (
-          <Insights habitData={habitData} />
-        )}
+        {activeTab === "report" && <Report habitData={habitData} />}
+        {activeTab === "insights" && <Insights habitData={habitData} />}
         {activeTab === "mission" && <Mission />}
       </main>
+
     </div>
   );
 }

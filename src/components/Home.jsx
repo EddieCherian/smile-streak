@@ -32,7 +32,7 @@ export default function Home({ setActiveTab }) {
             className="w-14 h-14 rounded-xl shadow object-cover"
           />
           <div>
-            <h1 className="text-2xl font-bold text-blue-700">SmileStreak</h1>
+            <h1 className="text-2xl font-bold text-gray-900">SmileStreak</h1>
             <p className="text-sm text-gray-600">
               Build smarter dental habits with AI feedback and real-world care tools.
             </p>

@@ -7,24 +7,24 @@ import Reminders from "./components/Reminders";
 import Scan from "./components/Scan";
 import Dentists from "./components/Dentists";
 import Report from "./components/Report";
-import Insights from "./components/Insights"; // ✅ ADDED
-import Mission from "./components/Mission"; // ✅ ADDED
+import Insights from "./components/Insights";
+import Mission from "./components/Mission";
 import { storage } from "./utils/storage";
 import { scheduleDailyNotifications } from "./utils/scheduleNotifications";
 import "./App.css";
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState("today");
+  // ✅ start on home instead of today
+  const [activeTab, setActiveTab] = useState("home");
+
   const [habitData, setHabitData] = useState(() =>
     storage.get("habitData", {})
   );
 
-  // persist habit data
   useEffect(() => {
     storage.set("habitData", habitData);
   }, [habitData]);
 
-  // notifications (MOBILE SAFE)
   useEffect(() => {
     if (
       typeof window !== "undefined" &&
@@ -50,6 +50,7 @@ export default function App() {
       {/* TABS */}
       <nav className="flex gap-2 px-4 py-2 overflow-x-auto">
         {[
+          "home",        // ✅ ADDED
           "today",
           "progress",
           "tips",
@@ -77,13 +78,14 @@ export default function App() {
 
       {/* CONTENT */}
       <main className="p-4 space-y-6 pb-24">
+        {activeTab === "home" && <Home />} {/* ✅ ADDED */}
         {activeTab === "today" && (
           <Today habitData={habitData} setHabitData={setHabitData} />
         )}
         {activeTab === "progress" && <Progress habitData={habitData} />}
         {activeTab === "tips" && <Tips />}
         {activeTab === "reminders" && <Reminders />}
-        {activeTab === "scan" && <Scan />} {/* ✅ FIX ADDED */}
+        {activeTab === "scan" && <Scan />}
         {activeTab === "dentists" && <Dentists />}
         {activeTab === "report" && (
           <Report habitData={habitData} />
@@ -91,7 +93,7 @@ export default function App() {
         {activeTab === "insights" && (
           <Insights habitData={habitData} />
         )}
-        {activeTab === "mission" && <Mission />} {/* ✅ ADDED */}
+        {activeTab === "mission" && <Mission />}
       </main>
     </div>
   );

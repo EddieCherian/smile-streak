@@ -1,14 +1,27 @@
 export default function Home({ setActiveTab }) {
+
+  // helper so buttons never crash if prop missing
+  const go = (tab) => {
+    if (setActiveTab) setActiveTab(tab);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-3xl mx-auto space-y-10">
 
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold">SmileStreak</h1>
-          <p className="text-gray-600">
-            Improve dental habits with AI feedback, streak tracking, and real-world care guidance.
-          </p>
+        {/* Header with logo */}
+        <div className="flex items-center gap-4">
+          <img
+            src="/icon-511.png"
+            alt="SmileStreak logo"
+            className="w-14 h-14 rounded-xl shadow"
+          />
+          <div>
+            <h1 className="text-3xl font-bold">SmileStreak</h1>
+            <p className="text-gray-600">
+              Improve dental habits with AI feedback, streak tracking, and real-world care guidance.
+            </p>
+          </div>
         </div>
 
         {/* Features overview */}
@@ -38,32 +51,32 @@ export default function Home({ setActiveTab }) {
         <div className="grid grid-cols-2 gap-4">
 
           <button
-            onClick={() => setActiveTab("scan")}
-            className="bg-white border rounded-xl p-5 shadow hover:bg-gray-50 text-left"
+            onClick={() => go("scan")}
+            className="bg-white border rounded-xl p-5 shadow hover:bg-gray-50 text-left transition"
           >
             <p className="font-semibold">Scan Teeth</p>
             <p className="text-xs text-gray-500">Get AI hygiene feedback</p>
           </button>
 
           <button
-            onClick={() => setActiveTab("today")}
-            className="bg-white border rounded-xl p-5 shadow hover:bg-gray-50 text-left"
+            onClick={() => go("today")}
+            className="bg-white border rounded-xl p-5 shadow hover:bg-gray-50 text-left transition"
           >
             <p className="font-semibold">Streaks</p>
             <p className="text-xs text-gray-500">Track daily brushing consistency</p>
           </button>
 
           <button
-            onClick={() => setActiveTab("dentists")}
-            className="bg-white border rounded-xl p-5 shadow hover:bg-gray-50 text-left"
+            onClick={() => go("dentists")}
+            className="bg-white border rounded-xl p-5 shadow hover:bg-gray-50 text-left transition"
           >
             <p className="font-semibold">Find Dentists</p>
             <p className="text-xs text-gray-500">See nearby dentists & accepted insurance</p>
           </button>
 
           <button
-            onClick={() => setActiveTab("progress")}
-            className="bg-white border rounded-xl p-5 shadow hover:bg-gray-50 text-left"
+            onClick={() => go("progress")}
+            className="bg-white border rounded-xl p-5 shadow hover:bg-gray-50 text-left transition"
           >
             <p className="font-semibold">Progress</p>
             <p className="text-xs text-gray-500">Review past feedback</p>

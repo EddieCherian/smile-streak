@@ -49,7 +49,7 @@ export default function App() {
         </p>
       </header>
 
-      {/* NAV TABS (NOW USING COMPONENT) */}
+      {/* NAV TABS (uses your NavTabs.jsx now) */}
       <div className="px-4 py-2">
         <NavTabs activeTab={activeTab} setActiveTab={setActiveTab} />
       </div>

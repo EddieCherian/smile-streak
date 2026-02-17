@@ -9,6 +9,7 @@ import Dentists from "./components/Dentists";
 import Report from "./components/Report";
 import Insights from "./components/Insights";
 import Mission from "./components/Mission";
+import Legal from "./components/Legal"; // ✅ ADDED
 import { storage } from "./utils/storage";
 import { scheduleDailyNotifications } from "./utils/scheduleNotifications";
 import "./App.css";
@@ -59,7 +60,8 @@ export default function App() {
           "dentists",
           "report",
           "insights",
-          "mission"
+          "mission",
+          "legal" // ✅ ADDED
         ].map((tab) => (
           <button
             key={tab}
@@ -89,6 +91,7 @@ export default function App() {
         {activeTab === "report" && <Report habitData={habitData} />}
         {activeTab === "insights" && <Insights habitData={habitData} />}
         {activeTab === "mission" && <Mission />}
+        {activeTab === "legal" && <Legal />} {/* ✅ ADDED */}
       </main>
 
     </div>

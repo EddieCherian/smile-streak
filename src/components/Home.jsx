@@ -25,7 +25,7 @@ export default function Home({ setActiveTab }) {
       <div className="max-w-3xl mx-auto space-y-8">
 
         {/* HEADER */}
-        <div className="flex items-center gap-4 bg-white rounded-2xl shadow p-5 border border-blue-100">
+        <div className="flex items-center gap-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl shadow p-5 border border-blue-100">
           <img
             src="/icon-511.png"
             alt="SmileStreak logo"
@@ -40,7 +40,7 @@ export default function Home({ setActiveTab }) {
         </div>
 
         {/* CURRENT STREAK CARD */}
-        <div className="bg-blue-600 text-white rounded-2xl shadow p-6 flex justify-between items-center">
+        <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-2xl shadow p-6 flex justify-between items-center">
           <div>
             <p className="text-sm opacity-90">Current Streak</p>
             <p className="text-3xl font-bold">{streak} days</p>
@@ -54,7 +54,7 @@ export default function Home({ setActiveTab }) {
         </div>
 
         {/* FEATURE SUMMARY */}
-        <div className="bg-white border border-blue-100 rounded-2xl shadow p-6 space-y-3">
+        <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-100 rounded-2xl shadow p-6 space-y-3">
           <h2 className="font-semibold text-blue-700">Your Dental Companion</h2>
 
           <ul className="text-sm text-gray-700 space-y-1">
@@ -70,7 +70,7 @@ export default function Home({ setActiveTab }) {
 
           <button
             onClick={() => go("scan")}
-            className="bg-white border border-blue-100 rounded-2xl p-5 shadow hover:shadow-md hover:bg-blue-50 transition text-left"
+            className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-100 rounded-2xl p-5 shadow hover:shadow-md hover:from-blue-100 hover:to-cyan-100 transition text-left"
           >
             <p className="font-semibold text-blue-700">Scan Teeth</p>
             <p className="text-xs text-gray-500">AI brushing feedback</p>
@@ -78,7 +78,7 @@ export default function Home({ setActiveTab }) {
 
           <button
             onClick={() => go("today")}
-            className="bg-white border border-blue-100 rounded-2xl p-5 shadow hover:shadow-md hover:bg-blue-50 transition text-left"
+            className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-100 rounded-2xl p-5 shadow hover:shadow-md hover:from-blue-100 hover:to-cyan-100 transition text-left"
           >
             <p className="font-semibold text-blue-700">Streaks</p>
             <p className="text-xs text-gray-500">Track daily habits</p>
@@ -86,7 +86,7 @@ export default function Home({ setActiveTab }) {
 
           <button
             onClick={() => go("dentists")}
-            className="bg-white border border-blue-100 rounded-2xl p-5 shadow hover:shadow-md hover:bg-blue-50 transition text-left"
+            className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-100 rounded-2xl p-5 shadow hover:shadow-md hover:from-blue-100 hover:to-cyan-100 transition text-left"
           >
             <p className="font-semibold text-blue-700">Find Dentists</p>
             <p className="text-xs text-gray-500">Nearby care + insurance</p>
@@ -94,7 +94,7 @@ export default function Home({ setActiveTab }) {
 
           <button
             onClick={() => go("progress")}
-            className="bg-white border border-blue-100 rounded-2xl p-5 shadow hover:shadow-md hover:bg-blue-50 transition text-left"
+            className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-100 rounded-2xl p-5 shadow hover:shadow-md hover:from-blue-100 hover:to-cyan-100 transition text-left"
           >
             <p className="font-semibold text-blue-700">Progress</p>
             <p className="text-xs text-gray-500">Review improvements</p>

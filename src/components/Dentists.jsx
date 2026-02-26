@@ -35,25 +35,24 @@ export default function Dentists() {
   const [dentists, setDentists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [insurance, setInsurance] = useState("");
-  const [userLoc, setUserLoc] = useState(null);
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(async (pos) => {
       const { latitude, longitude } = pos.coords;
-      setUserLoc({ latitude, longitude });
 
       try {
+        const res = await fetch(
+          `/api/places?lat=${encodeURIComponent(latitude)}&lng=${encodeURIComponent(longitude)}`
+        );
 
-        /* ✅ FIXED: call your actual API route */
-        const res = await fetch(`/api/places?lat=${encodeURIComponent(latitude)}&lng=${encodeURIComponent(longitude)}`);
+        if (!res.ok) throw new Error("API request failed");
 
-        if (!res.ok) {
-          throw new Error("API request failed");
-        }
+        const raw = await res.json();
 
-        const data = await res.json();
+        // ✅ compatibility: handle either array OR { places: [] }
+        const data = Array.isArray(raw) ? raw : raw.places || [];
 
-        const enriched = (data || []).map((d) => {
+        const enriched = data.map((d) => {
           const lat = d.location?.latitude;
           const lng = d.location?.longitude;
 
@@ -71,30 +70,19 @@ export default function Dentists() {
               null,
             openNow: d.currentOpeningHours?.openNow,
             mapsLink: `https://www.google.com/maps/place/?q=place_id:${d.id}`,
+            distance:
+              lat && lng
+                ? getDistanceMiles(latitude, longitude, lat, lng)
+                : null,
           };
         });
 
-        const withDistance = enriched.map((d) => ({
-          ...d,
-          distance:
-            userLoc && d.lat
-              ? getDistanceMiles(
-                  latitude,
-                  longitude,
-                  d.lat,
-                  d.lng
-                )
-              : null,
-        }));
-
-        withDistance.sort((a, b) => {
-          if (a.distance && b.distance) {
-            return a.distance - b.distance;
-          }
+        enriched.sort((a, b) => {
+          if (a.distance && b.distance) return a.distance - b.distance;
           return (b.rating || 0) - (a.rating || 0);
         });
 
-        setDentists(withDistance);
+        setDentists(enriched);
       } catch (err) {
         console.error("Dentist fetch failed:", err);
         setDentists([]);
@@ -134,14 +122,15 @@ export default function Dentists() {
 
         return (
           <div key={d.id} className="bg-white p-5 rounded-2xl border shadow-sm space-y-2">
-
             <div className="flex justify-between items-start">
               <p className="font-semibold">{d.name}</p>
 
               {d.openNow !== undefined && (
                 <span
                   className={`text-xs px-2 py-1 rounded-full ${
-                    d.openNow ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-600"
+                    d.openNow
+                      ? "bg-green-100 text-green-700"
+                      : "bg-gray-200 text-gray-600"
                   }`}
                 >
                   {d.openNow ? "Open now" : "Closed"}

@@ -13,10 +13,8 @@ export default async function handler(req, res) {
         headers: {
           "Content-Type": "application/json",
           "X-Goog-Api-Key": process.env.GOOGLE_MAPS_KEY,
-
-          // ⚠️ MUST be one line, comma separated
           "X-Goog-FieldMask":
-            "places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.currentOpeningHours",
+            "places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.currentOpeningHours,places.reviews",
         },
         body: JSON.stringify({
           includedTypes: ["dentist"],
@@ -24,8 +22,8 @@ export default async function handler(req, res) {
           locationRestriction: {
             circle: {
               center: {
-                latitude: Number(lat),
-                longitude: Number(lng),
+                latitude: parseFloat(lat),
+                longitude: parseFloat(lng),
               },
               radius: 5000,
             },
@@ -35,12 +33,6 @@ export default async function handler(req, res) {
     );
 
     const data = await googleRes.json();
-
-    // helpful debug if Google errors
-    if (!googleRes.ok) {
-      console.error("Google error:", data);
-      return res.status(googleRes.status).json(data);
-    }
 
     res.status(200).json(data.places || []);
   } catch (err) {

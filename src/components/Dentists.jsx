@@ -43,7 +43,14 @@ export default function Dentists() {
       setUserLoc({ latitude, longitude });
 
       try {
+
+        /* ✅ FIXED FETCH — only thing changed */
         const res = await fetch(`/api/dentists?lat=${latitude}&lng=${longitude}`);
+
+        if (!res.ok) {
+          throw new Error("API request failed");
+        }
+
         const data = await res.json();
 
         const enriched = (data || []).map((d) => {

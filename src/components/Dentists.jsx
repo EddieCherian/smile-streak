@@ -62,7 +62,7 @@ export default function Dentists() {
                     latitude,
                     longitude,
                   },
-                  radius: 5000,
+                  radius: 16521,
                 },
               },
             }),

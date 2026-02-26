@@ -44,8 +44,8 @@ export default function Dentists() {
 
       try {
 
-        /* ✅ ONLY CHANGE: use absolute-safe API path */
-        const res = await fetch(`/api/dentists?lat=${encodeURIComponent(latitude)}&lng=${encodeURIComponent(longitude)}`);
+        /* ✅ FIXED: call your actual API route */
+        const res = await fetch(`/api/places?lat=${encodeURIComponent(latitude)}&lng=${encodeURIComponent(longitude)}`);
 
         if (!res.ok) {
           throw new Error("API request failed");
@@ -87,7 +87,6 @@ export default function Dentists() {
               : null,
         }));
 
-        // sort by distance then rating
         withDistance.sort((a, b) => {
           if (a.distance && b.distance) {
             return a.distance - b.distance;

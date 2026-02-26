@@ -41,16 +41,38 @@ export default function Dentists() {
       const { latitude, longitude } = pos.coords;
 
       try {
+
+        /* ✅ DIRECT GOOGLE PLACES CALL */
         const res = await fetch(
-          `/api/places?lat=${encodeURIComponent(latitude)}&lng=${encodeURIComponent(longitude)}`
+          "https://places.googleapis.com/v1/places:searchNearby",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Goog-Api-Key": import.meta.env.VITE_GOOGLE_MAPS_KEY,
+              "X-Goog-FieldMask":
+                "places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.currentOpeningHours,places.reviews",
+            },
+            body: JSON.stringify({
+              includedTypes: ["dentist"],
+              maxResultCount: 12,
+              locationRestriction: {
+                circle: {
+                  center: {
+                    latitude,
+                    longitude,
+                  },
+                  radius: 5000,
+                },
+              },
+            }),
+          }
         );
 
-        if (!res.ok) throw new Error("API request failed");
+        if (!res.ok) throw new Error("Google Places request failed");
 
-        const raw = await res.json();
-
-        // ✅ compatibility: handle either array OR { places: [] }
-        const data = Array.isArray(raw) ? raw : raw.places || [];
+        const json = await res.json();
+        const data = json.places || [];
 
         const enriched = data.map((d) => {
           const lat = d.location?.latitude;

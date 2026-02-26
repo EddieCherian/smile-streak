@@ -44,8 +44,8 @@ export default function Dentists() {
 
       try {
 
-        /* ✅ FIXED FETCH — only thing changed */
-        const res = await fetch(`/api/dentists?lat=${latitude}&lng=${longitude}`);
+        /* ✅ ONLY CHANGE: use absolute-safe API path */
+        const res = await fetch(`/api/dentists?lat=${encodeURIComponent(latitude)}&lng=${encodeURIComponent(longitude)}`);
 
         if (!res.ok) {
           throw new Error("API request failed");

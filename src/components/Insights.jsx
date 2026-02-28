@@ -1,149 +1,212 @@
 import { generateInsights } from "../utils/insights";
 import { useState } from "react";
-import { TrendingUp, TrendingDown, Target, Award, Calendar, Clock, Zap, Brain, Heart, AlertCircle, CheckCircle2, Flame, Trophy, BarChart3, Activity, Sun, Moon } from "lucide-react";
+import { TrendingUp, TrendingDown, Target, Award, Calendar, Clock, Zap, Brain, Heart, AlertCircle, CheckCircle2, Flame, Trophy, BarChart3, Activity, Sun, Moon, Sparkles } from "lucide-react";
 
 export default function Insights({ habitData }) {
-  const insights = generateInsights(habitData);
   const [selectedMetric, setSelectedMetric] = useState(null);
+  
+  // Safety check for habitData
+  if (!habitData || Object.keys(habitData).length === 0) {
+    return (
+      <div className="space-y-6 pb-8">
+        <div className="bg-gradient-to-br from-blue-600 via-cyan-500 to-blue-500 text-white rounded-3xl p-6 shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16" />
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-12 -translate-x-12" />
+          
+          <div className="relative z-10">
+            <div className="flex items-center gap-2 mb-2">
+              <Brain className="w-6 h-6" />
+              <h2 className="text-2xl font-black">Smart Insights</h2>
+            </div>
+            <p className="text-sm opacity-90">AI-powered analysis of your habits</p>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-3xl p-8 shadow-lg border border-blue-100 text-center">
+          <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-xl font-bold text-gray-900 mb-2">No Data Yet</h3>
+          <p className="text-sm text-gray-600">
+            Start tracking your dental habits to see personalized insights and analytics!
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const insights = generateInsights(habitData);
 
   // Calculate health score (0-100)
   const calculateHealthScore = () => {
-    const weights = {
-      completionRate: 0.4,
-      consistency: 0.3,
-      balance: 0.2,
-      improvement: 0.1
-    };
+    try {
+      const weights = {
+        completionRate: 0.4,
+        consistency: 0.3,
+        balance: 0.2,
+        improvement: 0.1
+      };
 
-    const completionScore = insights.completionRate;
-    
-    // Consistency: how many days in a row completed
-    const dates = Object.keys(habitData).filter(k => !k.startsWith("__")).sort();
-    let currentStreak = 0;
-    let maxStreak = 0;
-    let tempStreak = 0;
-    
-    dates.forEach(date => {
-      const d = habitData[date];
-      if (d?.morning && d?.night && d?.floss) {
-        tempStreak++;
-        maxStreak = Math.max(maxStreak, tempStreak);
-      } else {
-        tempStreak = 0;
+      const completionScore = insights.completionRate || 0;
+      
+      // Consistency: how many days in a row completed
+      const dates = Object.keys(habitData).filter(k => !k.startsWith("__")).sort();
+      
+      if (dates.length === 0) {
+        return {
+          total: 0,
+          breakdown: { completion: 0, consistency: 0, balance: 0, improvement: 0 },
+          streak: 0,
+          maxStreak: 0
+        };
       }
-    });
-    
-    currentStreak = tempStreak;
-    const consistencyScore = Math.min((maxStreak / 30) * 100, 100);
+      
+      let maxStreak = 0;
+      let tempStreak = 0;
+      
+      dates.forEach(date => {
+        const d = habitData[date];
+        if (d?.morning && d?.night && d?.floss) {
+          tempStreak++;
+          maxStreak = Math.max(maxStreak, tempStreak);
+        } else {
+          tempStreak = 0;
+        }
+      });
+      
+      const currentStreak = tempStreak;
+      const consistencyScore = Math.min((maxStreak / 30) * 100, 100);
 
-    // Balance: how evenly distributed are completions across tasks
-    const morningRate = insights.taskStats?.morning || 0;
-    const nightRate = insights.taskStats?.night || 0;
-    const flossRate = insights.taskStats?.floss || 0;
-    const avgRate = (morningRate + nightRate + flossRate) / 3;
-    const variance = ((Math.abs(morningRate - avgRate) + Math.abs(nightRate - avgRate) + Math.abs(flossRate - avgRate)) / 3);
-    const balanceScore = Math.max(100 - variance, 0);
+      // Balance: how evenly distributed are completions across tasks
+      const morningRate = insights.taskStats?.morning || 0;
+      const nightRate = insights.taskStats?.night || 0;
+      const flossRate = insights.taskStats?.floss || 0;
+      const avgRate = (morningRate + nightRate + flossRate) / 3;
+      const variance = ((Math.abs(morningRate - avgRate) + Math.abs(nightRate - avgRate) + Math.abs(flossRate - avgRate)) / 3);
+      const balanceScore = Math.max(100 - variance, 0);
 
-    // Improvement: trend over time
-    const recentDays = dates.slice(-7);
-    const olderDays = dates.slice(-14, -7);
-    
-    const recentCompletion = recentDays.filter(d => {
-      const day = habitData[d];
-      return day?.morning && day?.night && day?.floss;
-    }).length / recentDays.length * 100;
-    
-    const olderCompletion = olderDays.length > 0 ? olderDays.filter(d => {
-      const day = habitData[d];
-      return day?.morning && day?.night && day?.floss;
-    }).length / olderDays.length * 100 : recentCompletion;
-    
-    const improvementScore = Math.min(Math.max(50 + (recentCompletion - olderCompletion), 0), 100);
+      // Improvement: trend over time
+      const recentDays = dates.slice(-7);
+      const olderDays = dates.slice(-14, -7);
+      
+      const recentCompletion = recentDays.length > 0 ? (recentDays.filter(d => {
+        const day = habitData[d];
+        return day?.morning && day?.night && day?.floss;
+      }).length / recentDays.length * 100) : 0;
+      
+      const olderCompletion = olderDays.length > 0 ? (olderDays.filter(d => {
+        const day = habitData[d];
+        return day?.morning && day?.night && day?.floss;
+      }).length / olderDays.length * 100) : recentCompletion;
+      
+      const improvementScore = Math.min(Math.max(50 + (recentCompletion - olderCompletion), 0), 100);
 
-    const totalScore = Math.round(
-      completionScore * weights.completionRate +
-      consistencyScore * weights.consistency +
-      balanceScore * weights.balance +
-      improvementScore * weights.improvement
-    );
+      const totalScore = Math.round(
+        completionScore * weights.completionRate +
+        consistencyScore * weights.consistency +
+        balanceScore * weights.balance +
+        improvementScore * weights.improvement
+      );
 
-    return {
-      total: totalScore,
-      breakdown: {
-        completion: Math.round(completionScore),
-        consistency: Math.round(consistencyScore),
-        balance: Math.round(balanceScore),
-        improvement: Math.round(improvementScore)
-      },
-      streak: currentStreak,
-      maxStreak
-    };
+      return {
+        total: isNaN(totalScore) ? 0 : totalScore,
+        breakdown: {
+          completion: isNaN(completionScore) ? 0 : Math.round(completionScore),
+          consistency: isNaN(consistencyScore) ? 0 : Math.round(consistencyScore),
+          balance: isNaN(balanceScore) ? 0 : Math.round(balanceScore),
+          improvement: isNaN(improvementScore) ? 0 : Math.round(improvementScore)
+        },
+        streak: currentStreak,
+        maxStreak
+      };
+    } catch (error) {
+      console.error("Error calculating health score:", error);
+      return {
+        total: 0,
+        breakdown: { completion: 0, consistency: 0, balance: 0, improvement: 0 },
+        streak: 0,
+        maxStreak: 0
+      };
+    }
   };
 
   const healthScore = calculateHealthScore();
 
   // Time-of-day analysis
   const getTimePatterns = () => {
-    const dates = Object.keys(habitData).filter(k => !k.startsWith("__"));
-    let morningSuccessful = 0;
-    let nightSuccessful = 0;
-    
-    dates.forEach(date => {
-      const d = habitData[date];
-      if (d?.morning) morningSuccessful++;
-      if (d?.night) nightSuccessful++;
-    });
+    try {
+      const dates = Object.keys(habitData).filter(k => !k.startsWith("__"));
+      
+      if (dates.length === 0) {
+        return { morningRate: 0, nightRate: 0, betterTime: 'morning' };
+      }
+      
+      let morningSuccessful = 0;
+      let nightSuccessful = 0;
+      
+      dates.forEach(date => {
+        const d = habitData[date];
+        if (d?.morning) morningSuccessful++;
+        if (d?.night) nightSuccessful++;
+      });
 
-    return {
-      morningRate: Math.round((morningSuccessful / dates.length) * 100),
-      nightRate: Math.round((nightSuccessful / dates.length) * 100),
-      betterTime: morningSuccessful > nightSuccessful ? 'morning' : 'night'
-    };
+      return {
+        morningRate: Math.round((morningSuccessful / dates.length) * 100) || 0,
+        nightRate: Math.round((nightSuccessful / dates.length) * 100) || 0,
+        betterTime: morningSuccessful >= nightSuccessful ? 'morning' : 'night'
+      };
+    } catch (error) {
+      console.error("Error getting time patterns:", error);
+      return { morningRate: 0, nightRate: 0, betterTime: 'morning' };
+    }
   };
 
   const timePatterns = getTimePatterns();
 
   // Predictive insights
   const getPredictions = () => {
-    const predictions = [];
-    
-    if (healthScore.streak >= 3) {
-      predictions.push({
-        type: 'success',
-        icon: <Flame className="w-5 h-5 text-orange-500" />,
-        title: 'Momentum Building',
-        message: `You're on a ${healthScore.streak}-day streak! Keep this up for ${7 - healthScore.streak} more days to hit a week.`
-      });
-    }
+    try {
+      const predictions = [];
+      
+      if (healthScore.streak >= 3) {
+        predictions.push({
+          type: 'success',
+          icon: <Flame className="w-5 h-5 text-orange-500" />,
+          title: 'Momentum Building',
+          message: `You're on a ${healthScore.streak}-day streak! Keep this up for ${Math.max(7 - healthScore.streak, 0)} more days to hit a week.`
+        });
+      }
 
-    if (insights.mostMissedDay) {
-      predictions.push({
-        type: 'warning',
-        icon: <AlertCircle className="w-5 h-5 text-yellow-500" />,
-        title: 'Watch Out',
-        message: `${insights.mostMissedDay}s are challenging for you. Set an extra reminder for this day.`
-      });
-    }
+      if (insights.mostMissedDay) {
+        predictions.push({
+          type: 'warning',
+          icon: <AlertCircle className="w-5 h-5 text-yellow-500" />,
+          title: 'Watch Out',
+          message: `${insights.mostMissedDay}s are challenging for you. Set an extra reminder for this day.`
+        });
+      }
 
-    if (timePatterns.morningRate < 60) {
-      predictions.push({
-        type: 'tip',
-        icon: <Sun className="w-5 h-5 text-orange-400" />,
-        title: 'Morning Opportunity',
-        message: 'Morning brushing needs attention. Try placing your toothbrush next to your phone charger.'
-      });
-    }
+      if (timePatterns.morningRate < 60) {
+        predictions.push({
+          type: 'tip',
+          icon: <Sun className="w-5 h-5 text-orange-400" />,
+          title: 'Morning Opportunity',
+          message: 'Morning brushing needs attention. Try placing your toothbrush next to your phone charger.'
+        });
+      }
 
-    if (healthScore.total >= 80) {
-      predictions.push({
-        type: 'success',
-        icon: <Trophy className="w-5 h-5 text-yellow-500" />,
-        title: 'Excellence Achieved',
-        message: 'Your dental care is in the top 20% of users. Your dentist will be impressed!'
-      });
-    }
+      if (healthScore.total >= 80) {
+        predictions.push({
+          type: 'success',
+          icon: <Trophy className="w-5 h-5 text-yellow-500" />,
+          title: 'Excellence Achieved',
+          message: 'Your dental care is in the top 20% of users. Your dentist will be impressed!'
+        });
+      }
 
-    return predictions;
+      return predictions;
+    } catch (error) {
+      console.error("Error getting predictions:", error);
+      return [];
+    }
   };
 
   const predictions = getPredictions();
@@ -154,7 +217,7 @@ export default function Insights({ habitData }) {
       excellent: 90,
       good: 70,
       needsWork: 50,
-      userScore: insights.completionRate
+      userScore: insights.completionRate || 0
     };
   };
 
@@ -277,13 +340,13 @@ export default function Insights({ habitData }) {
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-white rounded-2xl p-4 shadow-md border border-blue-100 text-center">
           <Calendar className="w-6 h-6 text-blue-500 mx-auto mb-2" />
-          <p className="text-2xl font-black text-gray-900">{insights.totalDays}</p>
+          <p className="text-2xl font-black text-gray-900">{insights.totalDays || 0}</p>
           <p className="text-xs text-gray-500">Days Tracked</p>
         </div>
         
         <div className="bg-white rounded-2xl p-4 shadow-md border border-blue-100 text-center">
           <CheckCircle2 className="w-6 h-6 text-green-500 mx-auto mb-2" />
-          <p className="text-2xl font-black text-gray-900">{insights.completedDays}</p>
+          <p className="text-2xl font-black text-gray-900">{insights.completedDays || 0}</p>
           <p className="text-xs text-gray-500">Perfect Days</p>
         </div>
         
@@ -363,7 +426,7 @@ export default function Insights({ habitData }) {
               </div>
               <div 
                 className="absolute top-0 bottom-0 w-1 bg-white shadow-lg"
-                style={{ left: `${benchmarks.userScore}%` }}
+                style={{ left: `${Math.min(benchmarks.userScore, 100)}%` }}
               />
             </div>
             <div className="flex justify-between text-xs text-gray-500 mt-1">

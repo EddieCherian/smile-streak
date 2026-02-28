@@ -105,29 +105,7 @@ export default function Mission() {
           drawing conclusions from insufficient data.
         </p>
       </div>
-
-      {/* Stats/Impact (if you want to add) */}
-      <div className="bg-white rounded-3xl p-6 shadow-lg border border-blue-100">
-        <div className="flex items-center gap-2 mb-4">
-          <Users className="w-6 h-6 text-blue-600" />
-          <h3 className="text-lg font-black text-gray-900">Our Community</h3>
-        </div>
-        <div className="grid grid-cols-3 gap-4 text-center">
-          <div className="p-4 rounded-2xl bg-blue-50">
-            <p className="text-3xl font-black text-blue-600">100+</p>
-            <p className="text-xs text-gray-600 mt-1">Active Users</p>
-          </div>
-          <div className="p-4 rounded-2xl bg-green-50">
-            <p className="text-3xl font-black text-green-600">10K+</p>
-            <p className="text-xs text-gray-600 mt-1">Scans Completed</p>
-          </div>
-          <div className="p-4 rounded-2xl bg-purple-50">
-            <p className="text-3xl font-black text-purple-600">85%</p>
-            <p className="text-xs text-gray-600 mt-1">Avg. Completion</p>
-          </div>
-        </div>
-      </div>
-
+      
       {/* Get Involved */}
       <div className="bg-white rounded-3xl p-6 shadow-lg border border-blue-100">
         <h3 className="text-lg font-black text-gray-900 mb-4">Get Involved</h3>

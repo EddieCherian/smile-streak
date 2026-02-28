@@ -168,7 +168,7 @@ export default function Mission() {
                 onClick={async () => {
                   const msg = document.getElementById("feedbackBox")?.value || "";
 
-                  await fetch("https://formspree.io/f/XXXXXXXX", {
+                  await fetch("https://formspree.io/f/mqedoavq", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ message: msg })

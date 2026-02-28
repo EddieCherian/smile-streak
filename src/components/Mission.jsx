@@ -153,6 +153,7 @@ export default function Mission() {
               Your input helps make Smile Streak better for everyone. What would you like to see improved?
             </p>
             <textarea
+              id="feedbackBox"
               className="w-full h-32 p-3 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:outline-none resize-none"
               placeholder="Share your thoughts, suggestions, or report issues..."
             />
@@ -165,8 +166,10 @@ export default function Mission() {
               </button>
               <button
                 onClick={() => {
-                  // You'd implement actual feedback submission here
-                  alert("Thank you for your feedback!");
+                  const msg = document.getElementById("feedbackBox")?.value || "";
+                  const subject = encodeURIComponent("Smile Streak Feedback");
+                  const body = encodeURIComponent(msg);
+                  window.location.href = `mailto:eddiecherianj@gmail.com?subject=${subject}&body=${body}`;
                   setShowFeedback(false);
                 }}
                 className="flex-1 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold hover:shadow-lg transition-all"

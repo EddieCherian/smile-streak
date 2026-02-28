@@ -14,8 +14,8 @@ export async function POST(req) {
     }
 
     await resend.emails.send({
-      from: "Smile Streak <onboarding@resend.dev>", // keep this unless you verified a domain
-      to: "eddiecherianj@gmail.com",
+      from: "Smile Streak <anything>@yaniiriel.resend.app", // keep this unless you verified a domain
+      to: "edwincherianj@gmail.com",
       subject: "New Smile Streak Feedback",
       text: message,
     });

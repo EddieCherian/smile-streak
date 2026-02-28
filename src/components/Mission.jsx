@@ -146,8 +146,8 @@ export default function Mission() {
 
       {/* Feedback Modal */}
       {showFeedback && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-[fadeIn_0.2s_ease-out]">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 animate-[scaleBounce_0.3s_ease-out]">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6">
             <h3 className="text-xl font-black text-gray-900 mb-4">Share Your Feedback</h3>
             <p className="text-sm text-gray-600 mb-4">
               Your input helps make Smile Streak better for everyone. What would you like to see improved?
@@ -168,7 +168,7 @@ export default function Mission() {
                 onClick={async () => {
                   const msg = document.getElementById("feedbackBox")?.value || "";
 
-                  await fetch("/api/send-feedback", {
+                  await fetch("https://formspree.io/f/XXXXXXXX", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ message: msg })

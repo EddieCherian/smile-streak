@@ -51,24 +51,11 @@ const MYTHS = [
 export default function Tips() {
   const [selectedMyth, setSelectedMyth] = useState(null);
   const [revealedMyths, setRevealedMyths] = useState(new Set());
-  const [filterCategory, setFilterCategory] = useState("all");
 
   const handleMythClick = (mythId) => {
     setSelectedMyth(mythId);
     setRevealedMyths(prev => new Set([...prev, mythId]));
   };
-
-  // Enhanced tips with categories
-  const categorizedTips = TIPS.map(tip => ({
-    ...tip,
-    category: tip.category || "general"
-  }));
-
-  const categories = ["all", ...new Set(categorizedTips.map(t => t.category))];
-
-  const filteredTips = filterCategory === "all" 
-    ? categorizedTips 
-    : categorizedTips.filter(t => t.category === filterCategory);
 
   return (
     <div className="space-y-6 pb-8">
@@ -175,28 +162,9 @@ export default function Tips() {
         </div>
       </div>
 
-      {/* Filter Tabs (if you add categories to TIPS data) */}
-      {categories.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {categories.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setFilterCategory(cat)}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${
-                filterCategory === cat
-                  ? "bg-blue-500 text-white shadow-md"
-                  : "bg-white text-gray-600 border border-gray-200 hover:border-blue-300"
-              }`}
-            >
-              {cat.charAt(0).toUpperCase() + cat.slice(1)}
-            </button>
-          ))}
-        </div>
-      )}
-
       {/* Tips Grid */}
       <div className="grid grid-cols-1 gap-4">
-        {filteredTips.map((tip, index) => (
+        {TIPS.map((tip, index) => (
           <div
             key={tip.id}
             className="group bg-white p-5 rounded-2xl shadow-md border border-blue-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-200"

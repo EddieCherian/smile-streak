@@ -1,165 +1,170 @@
-⸻
+# Smile Streak
 
-Smile Streak
+Smile Streak is a behavioral health web application designed to help users build consistent daily dental habits while reducing friction to real-world dental care. The project integrates habit formation research, uncertainty-aware analytics, AI-assisted interpretation, and location-based provider discovery into a single, focused experience.
 
-Smile Streak is a habit-building web application designed to help users maintain a consistent daily dental routine while lowering friction to real-world dental care. The project combines behavioral design, lightweight intelligence, and location-based discovery into a single, focused experience.
+Rather than maximizing features, Smile Streak emphasizes consistency, recovery, interpretability, and responsible guidance.
 
-Rather than overwhelming users with features, Smile Streak emphasizes consistency, recovery, and informed decision-making.
+The project originated from my own difficulty maintaining routines after missed days, alongside frustration with how difficult it is to evaluate dental care options transparently and responsibly.
 
-This project grew out of my own difficulty maintaining routines after missed days, as well as my frustration with how difficult it can be to evaluate dental care options responsibly.
+---
 
-⸻
+## Problem Statement
 
-Problem Statement
-
-Many people understand the importance of daily dental care but struggle with consistency. Missed days often lead to discouragement, broken streaks, and eventual abandonment. At the same time, finding a dentist that aligns with one’s insurance, location, and trust expectations is unnecessarily difficult and fragmented.
+Many people understand the importance of daily dental care yet struggle with consistency. Missed days often lead to discouragement, broken streaks, and eventual abandonment. At the same time, identifying a trustworthy dentist aligned with one’s insurance, location, and expectations remains fragmented and opaque.
 
 Smile Streak addresses both problems by:
-•	Helping users build sustainable habits without perfection pressure
-•	Making dental care more approachable through nearby provider discovery and contextual signals
 
-⸻
+- Supporting sustainable habit formation without perfection pressure  
+- Making dental care more accessible through contextual provider discovery  
+- Using AI responsibly to interpret behavioral patterns rather than replace professional care  
 
-Core Features
+---
 
-Daily Habit Tracking
+## Core Features
 
-•	Morning brushing, night brushing, and flossing  
-•	Built-in timers to encourage proper brushing duration  
-•	Visual progress indicators to reinforce completion  
+### Daily Habit Tracking
+- Morning brushing, night brushing, and flossing  
+- Built-in timers encouraging correct brushing duration  
+- Visual indicators reinforcing completion  
 
-Recovery System
+### Recovery System
+- One recovery day per week  
+- Preserves streak continuity without enabling abuse  
+- Encourages long-term consistency instead of all-or-nothing behavior  
 
-•	Users can recover from a missed day once per week  
-•	Prevents streak loss while avoiding abuse  
-•	Designed to encourage long-term consistency rather than all-or-nothing behavior  
+### Reflection Intelligence
+- Recovery triggers a brief reflection prompt  
+- Responses stored locally to promote self-awareness  
+- Prompts intentionally lightweight to avoid friction  
+- Designed to reinforce metacognition rather than impose judgment  
 
-Reflection Intelligence
+### AI Pattern Scan (New)  
+- Uses the Gemini API to analyze behavioral patterns after sufficient data is collected  
+- Generates natural-language summaries of routines, trends, and missed behaviors  
+- Explicitly communicates uncertainty when confidence is low  
+- Designed to simulate responsible human interpretation rather than automated scoring  
 
-•	When a recovery day is triggered, users are asked a brief reflection question  
-•	Responses are stored locally to promote self-awareness  
-•	Reflections are intentionally lightweight to avoid friction  
-•	A prompt system that encourages users to articulate why a day was missed, reinforcing metacognition without adding cognitive or emotional overhead  
+### Nearby Dentist Discovery
+- Uses Google Places API for reliable, global provider search  
+- Surfaces ratings, proximity, and contextual signals  
+- Designed to reduce search friction while avoiding medical claims  
 
-Nearby Dentist Discovery
+### Feedback System (New)
+- In-app feedback modal allows users to submit suggestions or issues  
+- Currently routed through Formspree  
+- Structured for future database storage to enable anonymized insight aggregation  
+- Designed to support research-driven iteration and portfolio analysis  
 
-•	Finds dentists near the user using location data  
-•	Displays Yelp ratings when available  
-•	Uses probabilistic inference to suggest likely accepted insurance plans  
-•	Includes a fallback data source to ensure reliability across regions and API limitations  
+---
 
-⸻
-
-Uncertainty-Aware Insights
+## Uncertainty-Aware Insights
 
 Smile Streak deliberately avoids drawing conclusions from insufficient data.
-•	Insights are only surfaced after a minimum data threshold is met
-•	When data is limited, the app communicates uncertainty rather than making claims
-•	Patterns such as commonly missed tasks or days are withheld until statistically meaningful
-•	Confidence messaging is shown alongside insights to prevent overinterpretation
+
+- Insights appear only after minimum thresholds are met  
+- Limited data triggers explicit uncertainty messaging  
+- Behavioral patterns withheld until statistically meaningful  
+- Confidence framing prevents overinterpretation  
 
 This approach prioritizes responsible interpretation over premature analytics.
 
-⸻
+---
 
-Longitudinal Insight Synthesis
+## Longitudinal Insight Synthesis
 
-In addition to individual metrics, Smile Streak generates a high-level summary insight when sufficient data is available.
+When sufficient data exists, Smile Streak generates a concise behavioral overview.
 
-Rather than listing isolated statistics, the app synthesizes patterns across time to produce a concise, human-readable overview of behavioral trends.
-•	Summary insights are generated only when minimum reliability thresholds are met
-•	The synthesis combines task-level and temporal patterns (e.g., routines and days)
-•	Language is intentionally descriptive, not prescriptive
-•	When data is limited, the overview is withheld or accompanied by confidence messaging
+- Synthesizes task-level and temporal patterns  
+- Generated only when reliability thresholds are met  
+- Uses descriptive, non-prescriptive language  
+- Withheld entirely when confidence is insufficient  
 
-This synthesis layer is designed to mirror how a human analyst would responsibly summarize small behavioral datasets, prioritizing clarity and caution over exhaustiveness.
+This mirrors how a human analyst would responsibly summarize small behavioral datasets.
 
-⸻
+---
 
-Design Decisions
+## Design Decisions
 
-Probabilistic Insurance Matching
+### AI as Interpreter, Not Authority  
+Gemini is used to translate behavioral data into understandable insights, not to provide diagnosis or prescriptive health guidance.
 
-Insurance acceptance data is fragmented and often inaccurate. Instead of claiming certainty, Smile Streak infers likely acceptance based on clinic characteristics and clearly communicates uncertainty to the user.
+### Limited Recovery Days  
+Unlimited forgiveness undermines habit formation. Weekly limits balance compassion with accountability.
 
-Recovery Days Are Limited
+### Reflection Over Punishment  
+Missed days trigger reflection instead of streak loss, shifting focus from guilt to learning.
 
-Unlimited forgiveness undermines habit formation. Limiting recovery to once per week balances compassion with accountability.
+### Places API for Reliability  
+Google Places provides consistent global coverage and structured provider data, reducing fragmentation and improving user trust.
 
-Reflection Over Punishment
+---
 
-Missed days trigger reflection instead of streak loss, shifting the focus from guilt to learning.
+## Design Rationale & Interpretability
 
-Yelp + OpenStreetMap Fallback
+Throughout development, decisions were guided by how users interpret feedback.
 
-Yelp provides ratings and social proof, while OpenStreetMap ensures the app continues functioning even when API limits are reached.
+Smile Streak prioritizes:
 
-⸻
+- Trends over single-day judgments  
+- Explanations over raw metrics  
+- Transparency over false precision  
 
-Design Rationale & Interpretability
+This framing reduces anxiety-driven disengagement and promotes reflective habit formation.
 
-Throughout development, design decisions were guided not only by functionality, but by how users interpret feedback.
+---
 
-Rather than maximizing metrics or visualizing every available data point, Smile Streak prioritizes:
-•	Trends over single-day judgments
-•	Explanations over raw scores
-•	Transparency over false precision
-
-This framing is intended to reduce anxiety-driven disengagement and promote reflective habit formation rather than performance pressure.
-
-⸻
-
-Limitations & Open Questions
+## Limitations & Open Questions
 
 Smile Streak intentionally acknowledges its constraints:
-•	Insights are derived from small, self-reported datasets
-•	Reflection keyword analysis is coarse and non-diagnostic
-•	Insurance inference is probabilistic and may vary by region
-•	Habit data reflects consistency, not clinical outcomes
 
-These limitations highlight opportunities for future refinement and emphasize that behavioral tools must be interpreted cautiously.
+- Insights rely on small, self-reported datasets  
+- AI summaries reflect patterns, not medical conclusions  
+- Insurance inference remains probabilistic  
+- Habit consistency does not equate to clinical outcomes  
 
-⸻
+These constraints reinforce the need for cautious interpretation in behavioral tools.
 
-Ethical Boundaries & Medical Disclaimer
+---
 
-Smile Streak is designed for education and habit awareness only.
+## Ethical Boundaries & Medical Disclaimer
+
+Smile Streak is designed for education and habit awareness only.  
 It does not provide medical diagnosis or treatment recommendations.
 
-All educational content is based on published dental research and public health guidance. Users are encouraged to consult licensed dental professionals for personalized advice or concerns.
+AI-generated insights are interpretive summaries, not professional advice. Users should consult licensed dental professionals for personalized guidance.
 
-⸻
+---
 
-Tech Stack
+## Tech Stack
 
-•	React  
-•	Vite  
-•	Tailwind CSS  
-•	Yelp Places API  
-•	OpenStreetMap / Overpass API  
-•	Local storage persistence  
+- React  
+- Vite  
+- Tailwind CSS  
+- Google Places API  
+- Gemini API (behavioral insight generation)  
+- Formspree (feedback routing)  
+- Local storage persistence  
 
-⸻
+---
 
-What I Learned
+## What I Learned
 
-Building Smile Streak highlighted how much behavior change depends on design decisions rather than raw functionality. Small choices — such as limiting recovery, avoiding false certainty, and reducing friction — have a disproportionate impact on user retention.
+Building Smile Streak demonstrated that behavior change depends more on design choices than raw functionality. Small decisions — limiting recovery, reducing friction, communicating uncertainty — meaningfully affect engagement.
 
-The project also revealed the challenges of working with real-world healthcare data, where imperfect information must be handled responsibly and transparently.
+The project also highlighted the responsibility required when integrating AI into health-adjacent tools, where interpretability and restraint matter more than automation.
 
-⸻
+---
 
-Future Improvements
+## Future Improvements
 
-•	Aggregated reflection insights to surface long-term patterns  
-•	Optional account system for cross-device synchronization  
-•	Accessibility and localization improvements  
-•	Expanded provider data sources  
+- Database-backed feedback storage for longitudinal analysis  
+- Optional account system for cross-device synchronization  
+- Expanded provider data sources and insurance validation  
+- Accessibility and localization improvements  
+- Research evaluation of behavioral retention outcomes  
 
-⸻
+---
 
-Status
+## Status
 
-Actively maintained and open to iteration.
-
-⸻
+Actively maintained and evolving.

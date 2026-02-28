@@ -169,7 +169,7 @@ export default function Mission() {
                   const msg = document.getElementById("feedbackBox")?.value || "";
                   const subject = encodeURIComponent("Smile Streak Feedback");
                   const body = encodeURIComponent(msg);
-                  window.location.href = `mailto:eddiecherianj@gmail.com?subject=${subject}&body=${body}`;
+                  window.location.href = `mailto:edwincherianj@gmail.com?subject=${subject}&body=${body}`;
                   setShowFeedback(false);
                 }}
                 className="flex-1 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold hover:shadow-lg transition-all"

@@ -126,7 +126,7 @@ export default function Mission() {
           </button>
 
           <a
-            href="https://github.com/yourusername/smile-streak"
+            href="https://github.com/EddieCherian/smile-streak"
             target="_blank"
             rel="noopener noreferrer"
             className="w-full flex items-center justify-between p-4 rounded-2xl bg-gray-50 border-2 border-gray-200 hover:bg-gray-100 hover:border-gray-300 transition-all group"

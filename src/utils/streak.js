@@ -12,10 +12,10 @@ export const calculateStreaks = (days) => {
   for (let i = 0; i < 365; i++) {
     const dateKey = getDateKey(cursor);
     const day = days[dateKey];
-   const complete =
-  day?.morning === true &&
-  day?.night === true &&
-  day?.floss === true;
+    const complete =
+      day?.morning === true &&
+      day?.night === true &&
+      day?.floss === true;
 
     if (complete) {
       temp++;
@@ -32,4 +32,13 @@ export const calculateStreaks = (days) => {
   }
 
   return { current, longest };
+};
+
+// Export getCurrentStreak for Home component
+export const getCurrentStreak = (habitData) => {
+  const data = habitData || JSON.parse(localStorage.getItem("habitData") || "{}");
+  const habits = data.habits || data;
+  
+  const streaks = calculateStreaks(habits);
+  return streaks.current;
 };

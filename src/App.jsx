@@ -14,13 +14,15 @@ import Legal from "./components/Legal";
 import { storage } from "./utils/storage";
 import { scheduleDailyNotifications } from "./utils/scheduleNotifications";
 import { auth, provider, db } from "./firebase";
-import { signInWithPopup, onAuthStateChanged } from "firebase/auth";
+import { signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
+import { LogOut, UserCircle, RefreshCw } from "lucide-react";
 import "./App.css";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("home");
   const [user, setUser] = useState(null);
+  const [showAccountMenu, setShowAccountMenu] = useState(false);
 
   const [habitData, setHabitData] = useState(() =>
     storage.get("habitData", {})
@@ -84,6 +86,29 @@ export default function App() {
       });
   }
 
+  // LOGOUT
+  function logout() {
+    signOut(auth)
+      .then(() => {
+        setUser(null);
+        setShowAccountMenu(false);
+        console.log("User signed out");
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }
+
+  // SWITCH ACCOUNTS
+  function switchAccount() {
+    signOut(auth).then(() => {
+      setUser(null);
+      setShowAccountMenu(false);
+      // Immediately trigger login again
+      setTimeout(() => login(), 100);
+    });
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
       <header className="sticky top-0 z-50 bg-gradient-to-r from-blue-50 via-white to-cyan-50">
@@ -108,16 +133,60 @@ export default function App() {
             </div>
 
             {user ? (
-              <div className="flex items-center gap-3">
-                <div className="hidden sm:block text-right">
-                  <p className="text-sm font-semibold text-gray-900">{user.displayName}</p>
-                  <p className="text-xs text-gray-500">Logged in</p>
-                </div>
-                <img 
-                  src={user.photoURL} 
-                  alt={user.displayName}
-                  className="w-10 h-10 rounded-full border-2 border-blue-200 shadow-md"
-                />
+              <div className="relative">
+                <button
+                  onClick={() => setShowAccountMenu(!showAccountMenu)}
+                  className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                >
+                  <div className="hidden sm:block text-right">
+                    <p className="text-sm font-semibold text-gray-900">{user.displayName}</p>
+                    <p className="text-xs text-gray-500">Logged in</p>
+                  </div>
+                  <img 
+                    src={user.photoURL} 
+                    alt={user.displayName}
+                    className="w-10 h-10 rounded-full border-2 border-blue-200 shadow-md cursor-pointer"
+                  />
+                </button>
+
+                {/* Account Menu Dropdown */}
+                {showAccountMenu && (
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-gray-200 py-2 z-50">
+                    {/* User Info */}
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <div className="flex items-center gap-3">
+                        <img 
+                          src={user.photoURL} 
+                          alt={user.displayName}
+                          className="w-12 h-12 rounded-full border-2 border-blue-200"
+                        />
+                        <div className="flex-1 overflow-hidden">
+                          <p className="font-bold text-gray-900 truncate">{user.displayName}</p>
+                          <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Menu Options */}
+                    <div className="py-1">
+                      <button
+                        onClick={switchAccount}
+                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
+                      >
+                        <RefreshCw className="w-4 h-4 text-blue-600" />
+                        <span className="text-sm font-medium text-gray-700">Switch Account</span>
+                      </button>
+
+                      <button
+                        onClick={logout}
+                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4 text-red-600" />
+                        <span className="text-sm font-medium text-red-600">Sign Out</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <button
@@ -139,6 +208,14 @@ export default function App() {
           <NavTabs activeTab={activeTab} setActiveTab={setActiveTab} />
         </div>
       </header>
+
+      {/* Click outside to close menu */}
+      {showAccountMenu && (
+        <div 
+          className="fixed inset-0 z-40" 
+          onClick={() => setShowAccountMenu(false)}
+        />
+      )}
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24">
         {activeTab === "home" && <Home setActiveTab={setActiveTab} />}

@@ -62,9 +62,9 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
       {/* PROFESSIONAL HEADER WITH NAV COMBINED - NO LINES */}
-      <header className="sticky top-0 z-50 bg-gradient-to-r from-blue-50 via-white to-cyan-50 shadow-sm">
+      <header className="sticky top-0 z-50 bg-gradient-to-r from-blue-50 via-white to-cyan-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* TOP BAR - NO BORDER */}
+          {/* TOP BAR */}
           <div className="flex items-center justify-between h-16">
             {/* LEFT: LOGO + BRAND */}
             <div className="flex items-center gap-3">
@@ -125,12 +125,12 @@ export default function App() {
             )}
           </div>
 
-          {/* NAV TABS - NO SEPARATION */}
+          {/* NAV TABS */}
           <NavTabs activeTab={activeTab} setActiveTab={setActiveTab} />
         </div>
       </header>
 
-      {/* PAGE CONTENT */}
+      {/* PAGE CONTENT - NO GAP */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24">
         {activeTab === "home" && <Home setActiveTab={setActiveTab} />}
         {activeTab === "today" && (

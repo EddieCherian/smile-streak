@@ -13,6 +13,8 @@ import Mission from "./components/Mission";
 import Legal from "./components/Legal";
 import { storage } from "./utils/storage";
 import { scheduleDailyNotifications } from "./utils/scheduleNotifications";
+import { auth, provider } from "./firebase";
+import { signInWithPopup } from "firebase/auth";
 import "./App.css";
 
 export default function App() {
@@ -36,20 +38,42 @@ export default function App() {
     }
   }, []);
 
+  // GOOGLE LOGIN FUNCTION
+  function login() {
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        console.log("User:", result.user);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-cyan-50 text-gray-800">
-      
-      {/* HEADER */}
-      <header className="px-6 pt-8 pb-4">
-        <h1 className="text-3xl font-extrabold tracking-tight">
-          Smile Streak 😁
+
+      {/* CLEAN CLAUDE-STYLE HEADER */}
+      <header className="px-6 pt-10 pb-6 flex flex-col items-center gap-3 border-b border-gray-100 bg-white/70 backdrop-blur">
+        
+        <h1 className="text-3xl font-semibold tracking-tight">
+          Smile Streak
         </h1>
+
         <p className="text-sm text-gray-500">
           Build a perfect daily dental routine
         </p>
+
+        {/* GOOGLE SIGN IN BUTTON */}
+        <button
+          onClick={login}
+          className="mt-2 px-4 py-2 rounded-xl bg-black text-white text-sm font-medium hover:opacity-90 transition"
+        >
+          Sign in with Google
+        </button>
+
       </header>
 
-      {/* NAV TABS (uses your NavTabs.jsx now) */}
+      {/* NAV TABS */}
       <div className="px-4 py-2">
         <NavTabs activeTab={activeTab} setActiveTab={setActiveTab} />
       </div>

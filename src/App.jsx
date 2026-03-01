@@ -16,7 +16,7 @@ import { scheduleDailyNotifications } from "./utils/scheduleNotifications";
 import { auth, provider, db } from "./firebase";
 import { signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, setDoc, getDoc, onSnapshot } from "firebase/firestore";
-import { LogOut, UserCircle, RefreshCw } from "lucide-react";
+import { LogOut, RefreshCw, MessageCircle, X } from "lucide-react";
 import "./App.css";
 
 export default function App() {
@@ -24,6 +24,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [cloudLoaded, setCloudLoaded] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
 
   const [habitData, setHabitData] = useState(() =>
     storage.get("habitData", {})
@@ -256,6 +257,123 @@ export default function App() {
         {activeTab === "mission" && <Mission />}
         {activeTab === "legal" && <Legal />}
       </main>
+
+      {/* FLOATING FEEDBACK BUTTON */}
+      <button
+        onClick={() => setShowFeedback(true)}
+        className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-blue-600 to-cyan-600 text-white p-4 rounded-full shadow-2xl hover:shadow-xl hover:scale-110 transition-all duration-200 group"
+        title="Give Feedback"
+      >
+        <MessageCircle className="w-6 h-6" />
+        <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+      </button>
+
+      {/* FEEDBACK MODAL */}
+      {showFeedback && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <MessageCircle className="w-6 h-6 text-blue-600" />
+                <h3 className="text-xl font-black text-gray-900">Share Your Feedback</h3>
+              </div>
+              <button
+                onClick={() => setShowFeedback(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-sm text-gray-600 mb-4">
+              Your feedback helps make SmileStreak better for everyone! What do you think?
+            </p>
+
+            <form
+              action="https://formspree.io/f/mqedoavq"
+              method="POST"
+              className="space-y-4"
+            >
+              {/* Name (optional) */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Name (optional)
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Your name"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:outline-none"
+                />
+              </div>
+
+              {/* Email (optional) */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Email (optional)
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="your@email.com"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:outline-none"
+                />
+              </div>
+
+              {/* Feedback */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Your Feedback <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  name="feedback"
+                  required
+                  rows={5}
+                  placeholder="What do you like? What should we improve? Any bugs?"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:outline-none resize-none"
+                />
+              </div>
+
+              {/* Quick Rating */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  How useful is SmileStreak?
+                </label>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map((rating) => (
+                    <label key={rating} className="cursor-pointer">
+                      <input
+                        type="radio"
+                        name="rating"
+                        value={rating}
+                        className="sr-only peer"
+                      />
+                      <div className="w-12 h-12 flex items-center justify-center border-2 border-gray-200 rounded-xl peer-checked:border-blue-500 peer-checked:bg-blue-50 hover:border-blue-300 transition-all">
+                        <span className="text-lg font-bold text-gray-700">
+                          {rating}
+                        </span>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">1 = Not useful, 5 = Very useful</p>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-4 rounded-xl font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all"
+              >
+                Send Feedback
+              </button>
+            </form>
+
+            <p className="text-xs text-gray-500 text-center mt-4">
+              Thanks for helping us improve! 💙
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

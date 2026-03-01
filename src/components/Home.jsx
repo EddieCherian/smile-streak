@@ -2,18 +2,18 @@ import { useEffect, useState } from "react";
 import { Scan, Calendar, MapPin, TrendingUp, Sparkles, Flame } from "lucide-react";
 import { getCurrentStreak } from "../utils/streak";
 
-export default function Home({ setActiveTab }) {
+export default function Home({ setActiveTab, user, habitData }) {
   const [streak, setStreak] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
     // Get the current streak from the streak utility
-    const currentStreak = getCurrentStreak();
+    const currentStreak = getCurrentStreak(habitData);
     setStreak(currentStreak);
     
     // Trigger animation on mount
     setIsAnimating(true);
-  }, []);
+  }, [habitData, user]); // Re-run when habitData or user changes
 
   const go = (tab) => {
     if (typeof setActiveTab === "function") {

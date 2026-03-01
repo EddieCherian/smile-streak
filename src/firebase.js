@@ -4,6 +4,9 @@ import { initializeApp } from "firebase/app";
 // Import Auth
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
+// Import Firestore (for saving user data)
+import { getFirestore } from "firebase/firestore";
+
 // Import Analytics (optional)
 import { getAnalytics } from "firebase/analytics";
 
@@ -22,6 +25,7 @@ const app = initializeApp(firebaseConfig);
 // Initialize services
 export const auth = getAuth(app);
 export const provider = new GoogleAuthProvider();
+export const db = getFirestore(app);   // ⭐ THIS is what lets you store user data
 
 // Optional analytics
 export const analytics = getAnalytics(app);

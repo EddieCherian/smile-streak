@@ -61,11 +61,11 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
-      {/* PROFESSIONAL HEADER WITH NAV COMBINED */}
+      {/* PROFESSIONAL HEADER WITH NAV COMBINED - NO LINES */}
       <header className="sticky top-0 z-50 bg-gradient-to-r from-blue-50 via-white to-cyan-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* TOP BAR */}
-          <div className="flex items-center justify-between h-16 border-b border-gray-200">
+          {/* TOP BAR - NO BORDER */}
+          <div className="flex items-center justify-between h-16">
             {/* LEFT: LOGO + BRAND */}
             <div className="flex items-center gap-3">
               <img 
@@ -125,7 +125,7 @@ export default function App() {
             )}
           </div>
 
-          {/* NAV TABS - NO SEPARATION LINE */}
+          {/* NAV TABS - NO SEPARATION */}
           <NavTabs activeTab={activeTab} setActiveTab={setActiveTab} />
         </div>
       </header>

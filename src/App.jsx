@@ -63,7 +63,18 @@ export default function App() {
     if (!user || !cloudLoaded) return;
 
     const ref = doc(db, "users", user.uid);
-    setDoc(ref, { habitData }, { merge: true });
+    
+    // Save habitData + user profile
+    setDoc(ref, { 
+      habitData,
+      userProfile: {
+        displayName: user.displayName,
+        email: user.email,
+        photoURL: user.photoURL,
+        uid: user.uid,
+        lastUpdated: new Date().toISOString()
+      }
+    }, { merge: true });
 
   }, [habitData, user, cloudLoaded]);
 
@@ -231,14 +242,14 @@ export default function App() {
       )}
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24">
-        {activeTab === "home" && <Home setActiveTab={setActiveTab} />}
+        {activeTab === "home" && <Home setActiveTab={setActiveTab} user={user} />}
         {activeTab === "today" && (
           <Today habitData={habitData} setHabitData={setHabitData} />
         )}
         {activeTab === "progress" && <Progress habitData={habitData} />}
         {activeTab === "tips" && <Tips />}
         {activeTab === "reminders" && <Reminders />}
-        {activeTab === "scan" && <Scan />}
+        {activeTab === "scan" && <Scan habitData={habitData} setHabitData={setHabitData} />}
         {activeTab === "dentists" && <Dentists />}
         {activeTab === "report" && <Report habitData={habitData} />}
         {activeTab === "insights" && <Insights habitData={habitData} />}

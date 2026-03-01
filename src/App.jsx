@@ -15,7 +15,7 @@ import { storage } from "./utils/storage";
 import { scheduleDailyNotifications } from "./utils/scheduleNotifications";
 import { auth, provider, db } from "./firebase";
 import { signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, onSnapshot } from "firebase/firestore";
 import { LogOut, UserCircle, RefreshCw } from "lucide-react";
 import "./App.css";
 
@@ -23,6 +23,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("home");
   const [user, setUser] = useState(null);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
+  const [cloudLoaded, setCloudLoaded] = useState(false);
 
   const [habitData, setHabitData] = useState(() =>
     storage.get("habitData", {})
@@ -44,18 +45,27 @@ export default function App() {
       if (snap.exists()) {
         setHabitData(snap.data().habitData || {});
       }
+      setCloudLoaded(true);
     });
+
+    // REALTIME LISTENER
+    const unsub = onSnapshot(ref, (snap) => {
+      if (snap.exists()) {
+        setHabitData(snap.data().habitData || {});
+      }
+    });
+    return () => unsub();
 
   }, [user]);
 
   // SAVE TO FIRESTORE WHEN DATA CHANGES
   useEffect(() => {
-    if (!user) return;
+    if (!user || !cloudLoaded) return;
 
     const ref = doc(db, "users", user.uid);
     setDoc(ref, { habitData }, { merge: true });
 
-  }, [habitData, user]);
+  }, [habitData, user, cloudLoaded]);
 
   useEffect(() => {
     if (
@@ -71,6 +81,7 @@ export default function App() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      setCloudLoaded(false);
     });
     return () => unsubscribe();
   }, []);
@@ -92,6 +103,7 @@ export default function App() {
       .then(() => {
         setUser(null);
         setShowAccountMenu(false);
+        setCloudLoaded(false);
         console.log("User signed out");
       })
       .catch((error) => {
@@ -104,6 +116,7 @@ export default function App() {
     signOut(auth).then(() => {
       setUser(null);
       setShowAccountMenu(false);
+      setCloudLoaded(false);
       // Immediately trigger login again
       setTimeout(() => login(), 100);
     });

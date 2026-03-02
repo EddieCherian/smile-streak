@@ -5,7 +5,8 @@ import {
   Download, Share2, Printer, Calendar, Clock, MapPin, Phone,
   Mail, User, Star, FileText, PieChart, BarChart3, Brain,
   Thermometer, Droplets, Activity, Shield, Award, Target,
-  Users, Globe, Lock, Eye, EyeOff, Bell, RefreshCw
+  Users, Globe, Lock, Eye, EyeOff, Bell, RefreshCw,
+  BookOpen   // ✅ added
 } from "lucide-react";
 import { TranslationContext } from "../App";
 

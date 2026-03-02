@@ -1,12 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { getDateKey, getYesterdayKey } from "../utils/date.js";
 import { calculateStreaks } from "../utils/streak.js";
 import { Flame, Trophy, Clock, CheckCircle2, Circle, Sparkles } from "lucide-react";
+import { TranslationContext } from "../App";
 
 const BRUSH_TIME = 120;
 const RECOVERY_KEY = "__lastRecoveryUsed";
 
 export default function Today({ habitData, setHabitData }) {
+  const { t, currentLanguage } = useContext(TranslationContext);
+  const [texts, setTexts] = useState({});
+
   const today = getDateKey();
   const yesterday = getYesterdayKey(today);
 
@@ -39,6 +43,44 @@ export default function Today({ habitData, setHabitData }) {
   useEffect(() => {
     forceUpdate((v) => v + 1);
   }, [habitData]);
+
+  useEffect(() => {
+    const translateAll = async () => {
+      setTexts({
+        dayComplete: await t("Day Complete!"),
+        recoverySaved: await t("Recovery streak saved!"),
+        perfectConsistency: await t("Perfect consistency!"),
+        todaysRoutine: await t("Today's Routine"),
+        currentStreak: await t("Current Streak"),
+        current: await t("Current"),
+        best: await t("Best"),
+        today: await t("Today"),
+        dailyProgress: await t("Daily Progress"),
+        timer: await t("Timer"),
+        on: await t("ON"),
+        off: await t("OFF"),
+        recoveryAvailable: await t("Recovery day available! Complete all tasks to restore your streak."),
+        morningBrushing: await t("Morning Brushing"),
+        nightBrushing: await t("Night Brushing"),
+        brushCircular: await t("Brush in circular motions..."),
+        complete: await t("Complete"),
+        interdentalCare: await t("Interdental Care"),
+        floss: await t("Floss"),
+        waterPick: await t("Water Pick"),
+        interdentalBrush: await t("Interdental Brush"),
+        dailyTip: await t("Daily Tip"),
+        tip0: await t("Start with your morning brush to set a positive tone for the day!"),
+        tip1: await t("Don't forget to angle your brush at 45° towards the gum line."),
+        tip2: await t("Great job! Remember to replace your toothbrush every 3 months."),
+        tip3: await t("Perfect! Regular flossing reduces your risk of gum disease by 40%."),
+        motivate0: await t("Let's start your day right! 💪"),
+        motivate1: await t("Great start! Keep going! 🌟"),
+        motivate2: await t("Almost there! One more to go! 🎯"),
+        motivate3: await t("Perfect day! You're unstoppable! 🔥")
+      });
+    };
+    translateAll();
+  }, [currentLanguage, t]);
 
   const formatTime = (s) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 
@@ -87,12 +129,11 @@ export default function Today({ habitData, setHabitData }) {
   const percent = Math.round((completedCount / 3) * 100);
   const { current, longest } = calculateStreaks(habitData);
 
-  // Motivational messages based on progress
   const getMotivationMessage = () => {
-    if (completedCount === 0) return "Let's start your day right! 💪";
-    if (completedCount === 1) return "Great start! Keep going! 🌟";
-    if (completedCount === 2) return "Almost there! One more to go! 🎯";
-    return "Perfect day! You're unstoppable! 🔥";
+    if (completedCount === 0) return texts.motivate0 || "Let's start your day right! 💪";
+    if (completedCount === 1) return texts.motivate1 || "Great start! Keep going! 🌟";
+    if (completedCount === 2) return texts.motivate2 || "Almost there! One more to go! 🎯";
+    return texts.motivate3 || "Perfect day! You're unstoppable! 🔥";
   };
 
   return (
@@ -105,10 +146,10 @@ export default function Today({ habitData, setHabitData }) {
             <div className="relative z-10 text-center">
               <Sparkles className="w-16 h-16 text-yellow-500 mx-auto mb-4 animate-pulse" />
               <p className="text-4xl font-black bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-                Day Complete!
+                {texts.dayComplete || "Day Complete!"}
               </p>
               <p className="text-sm text-gray-600 mt-3">
-                {isRecoveryDay ? "🎉 Recovery streak saved!" : "🔥 Perfect consistency!"}
+                {isRecoveryDay ? `🎉 ${texts.recoverySaved || "Recovery streak saved!"}` : `🔥 ${texts.perfectConsistency || "Perfect consistency!"}`}
               </p>
             </div>
           </div>
@@ -117,7 +158,6 @@ export default function Today({ habitData, setHabitData }) {
 
       {/* Hero Header */}
       <div className="relative rounded-3xl p-6 bg-gradient-to-br from-blue-600 via-cyan-500 to-blue-500 text-white mb-6 shadow-xl overflow-hidden">
-        {/* Decorative background elements */}
         <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-20 translate-x-20" />
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full translate-y-16 -translate-x-16" />
         
@@ -133,7 +173,7 @@ export default function Today({ habitData, setHabitData }) {
                 )}
               </div>
               <div>
-                <h1 className="text-2xl font-black">Today's Routine</h1>
+                <h1 className="text-2xl font-black">{texts.todaysRoutine || "Today's Routine"}</h1>
                 <p className="text-sm opacity-90">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</p>
               </div>
             </div>
@@ -141,13 +181,12 @@ export default function Today({ habitData, setHabitData }) {
             <div className="text-right">
               <div className="flex items-center gap-2 justify-end mb-1">
                 <Flame className="w-5 h-5 text-orange-300 animate-pulse" />
-                <p className="text-xs opacity-80 font-medium">Current Streak</p>
+                <p className="text-xs opacity-80 font-medium">{texts.currentStreak || "Current Streak"}</p>
               </div>
               <p className="text-3xl font-black">{current}</p>
             </div>
           </div>
 
-          {/* Motivation message */}
           <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 text-center">
             <p className="text-sm font-medium">{getMotivationMessage()}</p>
           </div>
@@ -160,7 +199,7 @@ export default function Today({ habitData, setHabitData }) {
           <div className="flex justify-center mb-2">
             <Flame className="w-5 h-5 text-orange-500" />
           </div>
-          <p className="text-xs text-gray-500 mb-1">Current</p>
+          <p className="text-xs text-gray-500 mb-1">{texts.current || "Current"}</p>
           <p className="text-2xl font-black text-gray-900">{current}</p>
         </div>
         
@@ -168,7 +207,7 @@ export default function Today({ habitData, setHabitData }) {
           <div className="flex justify-center mb-2">
             <Trophy className="w-5 h-5 text-yellow-500" />
           </div>
-          <p className="text-xs text-gray-500 mb-1">Best</p>
+          <p className="text-xs text-gray-500 mb-1">{texts.best || "Best"}</p>
           <p className="text-2xl font-black text-gray-900">{longest}</p>
         </div>
 
@@ -176,7 +215,7 @@ export default function Today({ habitData, setHabitData }) {
           <div className="flex justify-center mb-2">
             <CheckCircle2 className="w-5 h-5 text-green-500" />
           </div>
-          <p className="text-xs text-gray-500 mb-1">Today</p>
+          <p className="text-xs text-gray-500 mb-1">{texts.today || "Today"}</p>
           <p className="text-2xl font-black text-gray-900">{completedCount}/3</p>
         </div>
       </div>
@@ -184,7 +223,7 @@ export default function Today({ habitData, setHabitData }) {
       {/* Progress Bar */}
       <div className="bg-white rounded-2xl p-5 mb-6 border border-blue-100 shadow-sm">
         <div className="flex justify-between items-center mb-3">
-          <p className="text-sm font-semibold text-gray-700">Daily Progress</p>
+          <p className="text-sm font-semibold text-gray-700">{texts.dailyProgress || "Daily Progress"}</p>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setTimerEnabled((v) => {
@@ -202,7 +241,7 @@ export default function Today({ habitData, setHabitData }) {
               }`}
             >
               <Clock className="w-3.5 h-3.5" />
-              <span>Timer {timerEnabled ? "ON" : "OFF"}</span>
+              <span>{texts.timer || "Timer"} {timerEnabled ? (texts.on || "ON") : (texts.off || "OFF")}</span>
             </button>
           </div>
         </div>
@@ -226,7 +265,7 @@ export default function Today({ habitData, setHabitData }) {
         {isRecoveryDay && (
           <p className="text-xs text-orange-600 mt-2 flex items-center gap-1">
             <Sparkles className="w-3 h-3" />
-            Recovery day available! Complete all tasks to restore your streak.
+            {texts.recoveryAvailable || "Recovery day available! Complete all tasks to restore your streak."}
           </p>
         )}
       </div>
@@ -263,10 +302,10 @@ export default function Today({ habitData, setHabitData }) {
                 )}
                 <div className="text-left">
                   <span className="capitalize font-bold text-gray-900 block">
-                    {task} Brushing
+                    {task === "morning" ? (texts.morningBrushing || "Morning Brushing") : (texts.nightBrushing || "Night Brushing")}
                   </span>
                   {isRunning && (
-                    <span className="text-xs text-blue-600 font-medium">Brush in circular motions...</span>
+                    <span className="text-xs text-blue-600 font-medium">{texts.brushCircular || "Brush in circular motions..."}</span>
                   )}
                 </div>
               </div>
@@ -278,7 +317,7 @@ export default function Today({ habitData, setHabitData }) {
                     {formatTime(timeLeft)}
                   </div>
                 ) : isDone ? (
-                  <span className="text-sm font-semibold text-green-600">Complete ✓</span>
+                  <span className="text-sm font-semibold text-green-600">{texts.complete || "Complete"} ✓</span>
                 ) : null}
                 <span className="text-2xl">🪥</span>
               </div>
@@ -302,23 +341,23 @@ export default function Today({ habitData, setHabitData }) {
               <Circle className="w-6 h-6 text-gray-300 group-hover:text-blue-400 transition-colors" />
             )}
             <div className="text-left">
-              <span className="font-bold text-gray-900 block">Interdental Care</span>
+              <span className="font-bold text-gray-900 block">{texts.interdentalCare || "Interdental Care"}</span>
               <select
                 value={interdentalType}
                 onChange={(e) => setInterdentalType(e.target.value)}
                 onClick={(e) => e.stopPropagation()}
                 className="text-xs mt-1 border border-gray-300 rounded-lg px-2 py-1 bg-white hover:border-blue-400 transition-colors"
               >
-                <option>Floss</option>
-                <option>Water Pick</option>
-                <option>Interdental Brush</option>
+                <option>{texts.floss || "Floss"}</option>
+                <option>{texts.waterPick || "Water Pick"}</option>
+                <option>{texts.interdentalBrush || "Interdental Brush"}</option>
               </select>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             {todayData.floss && (
-              <span className="text-sm font-semibold text-green-600">Complete ✓</span>
+              <span className="text-sm font-semibold text-green-600">{texts.complete || "Complete"} ✓</span>
             )}
             <span className="text-2xl">🧵</span>
           </div>
@@ -332,12 +371,12 @@ export default function Today({ habitData, setHabitData }) {
             <Sparkles className="w-4 h-4 text-white" />
           </div>
           <div>
-            <p className="font-semibold text-gray-900 text-sm mb-1">Daily Tip</p>
+            <p className="font-semibold text-gray-900 text-sm mb-1">{texts.dailyTip || "Daily Tip"}</p>
             <p className="text-xs text-gray-600">
-              {completedCount === 0 && "Start with your morning brush to set a positive tone for the day!"}
-              {completedCount === 1 && "Don't forget to angle your brush at 45° towards the gum line."}
-              {completedCount === 2 && "Great job! Remember to replace your toothbrush every 3 months."}
-              {completedCount === 3 && "Perfect! Regular flossing reduces your risk of gum disease by 40%."}
+              {completedCount === 0 && (texts.tip0 || "Start with your morning brush to set a positive tone for the day!")}
+              {completedCount === 1 && (texts.tip1 || "Don't forget to angle your brush at 45° towards the gum line.")}
+              {completedCount === 2 && (texts.tip2 || "Great job! Remember to replace your toothbrush every 3 months.")}
+              {completedCount === 3 && (texts.tip3 || "Perfect! Regular flossing reduces your risk of gum disease by 40%.")}
             </p>
           </div>
         </div>

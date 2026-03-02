@@ -1,23 +1,20 @@
-import { 
-  Heart, Shield, Target, Users, Lightbulb, Mail, Github, Award, Sparkles, 
-  CheckCircle2, Globe, Star, TrendingUp, Clock, Zap, Brain, BookOpen, Code, 
-  Coffee, Palette, Rocket, Smile, ThumbsUp, HelpCircle, MessageCircle, Share2, 
-  Download, ExternalLink, Lock, Eye, EyeOff, Bell, Calendar, Filter, RefreshCw, 
-  AlertTriangle, Gift, Crown, Medal, Users2, Building, Microscope, Newspaper, 
-  BookMarked, Video, Headphones, Instagram, Twitter, Linkedin, Youtube, Facebook, 
-  MapPin, Camera, Flame, X, Flask, Atom, Link, Image as ImageIcon, Briefcase, 
-  Dna, Milk, Flower, Bacteria, Sunrise, Sunset, Cloud, CloudRain, CloudSnow, 
-  CloudLightning, Wind, Thermometer, Droplets, PieChart, Radar, Apple, Type, 
-  ToggleLeft, ToggleRight, ChevronDown, Database, Smartphone, Android 
+import {
+  Heart, Shield, Target, Users, Lightbulb, Mail, Github, Award, Sparkles,
+  CheckCircle2, Globe, Star, TrendingUp, Clock, Zap, Brain, BookOpen, Code,
+  Coffee, Palette, Rocket, Smile, ThumbsUp, HelpCircle, MessageCircle, Share2,
+  Download, ExternalLink, Lock, Eye, EyeOff, Bell, Calendar, Filter, RefreshCw,
+  AlertTriangle, Gift, Crown, Medal, Users2, Building, Microscope, Newspaper,
+  BookMarked, Video, Headphones, Instagram, Twitter, Linkedin, Youtube, Facebook,
+  MapPin, Camera, Flame, X
 } from "lucide-react";
 import { useState, useContext, useEffect } from "react";
 import { TranslationContext } from "../App";
 
-// Create fallbacks for any icons that might not exist in your version
-const Apple = ({ className }) => <span className={className}>🍎</span>;
-const Android = ({ className }) => <span className={className}>🤖</span>;
-const Smartphone = ({ className }) => <span className={className}>📱</span>;
-const Database = ({ className }) => <span className={className}>💾</span>;
+// Fallback components for icons not in your lucide-react version
+const Apple = ({ className }) => <span className={className} role="img" aria-label="Apple">🍎</span>;
+const Android = ({ className }) => <span className={className} role="img" aria-label="Android">🤖</span>;
+const Smartphone = ({ className }) => <span className={className} role="img" aria-label="Smartphone">📱</span>;
+const Database = ({ className }) => <span className={className} role="img" aria-label="Database">💾</span>;
 const ChevronDown = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M6 9l6 6 6-6" />
@@ -38,7 +35,7 @@ export default function Mission() {
   const [expandedFaq, setExpandedFaq] = useState(null);
   const [translatedText, setTranslatedText] = useState({});
 
-  // Translation keys (keeping your existing translationKeys object)
+  // Translation keys
   const translationKeys = {
     title: "Our Mission",
     subtitle: "Building better dental habits, together",

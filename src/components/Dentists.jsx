@@ -82,7 +82,6 @@ export default function Dentists() {
   const [locationError, setLocationError] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
-  const [debug, setDebug] = useState(null);
   
   const [searchRadius, setSearchRadius] = useState(16);
   const [showFilters, setShowFilters] = useState(false);
@@ -256,7 +255,7 @@ export default function Dentists() {
               },
               body: JSON.stringify({
                 includedTypes: ["dentist"],
-                maxResultCount: 60, // Increased from 20 to 60 (Google's max)
+                maxResultCount: 60,
                 locationRestriction: {
                   circle: {
                     center: {
@@ -275,9 +274,6 @@ export default function Dentists() {
           }
 
           const json = await res.json();
-          setDebug(json);
-          console.log("API Response:", json);
-          
           const data = json.places || [];
 
           const enriched = data.map((d) => {
@@ -285,15 +281,11 @@ export default function Dentists() {
             const lng = d.location?.longitude;
             const distance = lat && lng ? getDistanceMiles(latitude, longitude, lat, lng) : null;
             
-            // ROYSE CITY DETECTION - with multiple variations
+            // ROYSE CITY DETECTION - simple and effective
             const nameLower = d.displayName?.text?.toLowerCase() || "";
-            const isRoyseCity = 
-              nameLower.includes("royse city dental care") || 
-              nameLower.includes("royse city dental") ||
-              nameLower.includes("royse city") || 
-              nameLower.includes("royse");
+            const isRoyseCity = nameLower.includes("royse");
 
-            // Extract all the real data from Google Places
+            // Extract data from Google Places
             const paymentMethods = [];
             if (d.paymentOptions?.acceptsCreditCards) paymentMethods.push("Credit Cards");
             if (d.paymentOptions?.acceptsDebitCards) paymentMethods.push("Debit Cards");
@@ -315,8 +307,8 @@ export default function Dentists() {
 
             return {
               id: d.id,
-              name: d.displayName?.text,
-              address: d.formattedAddress,
+              name: d.displayName?.text || "Unknown",
+              address: d.formattedAddress || "No address",
               rating: d.rating,
               review_count: d.userRatingCount || 0,
               lat,
@@ -331,9 +323,7 @@ export default function Dentists() {
               distance: distance ? parseFloat(distance) : null,
               priceLevel: d.priceLevel || null,
               photos: d.photos?.slice(0, 3).map(p => ({
-                name: p.name,
-                widthPx: p.widthPx,
-                heightPx: p.heightPx
+                name: p.name
               })) || [],
               paymentMethods,
               accessibility,
@@ -380,7 +370,7 @@ export default function Dentists() {
     let sorted = [...filteredDentists];
 
     if (sortBy === "best") {
-      // Find Royse City - with multiple variations
+      // Find Royse City
       const royseCityIndex = sorted.findIndex(d => d.isRoyseCity);
       
       if (royseCityIndex !== -1) {
@@ -445,13 +435,26 @@ export default function Dentists() {
 
   return (
     <section className="space-y-8 pb-8">
-      {/* Debug Panel - Shows API response (remove after fixing) */}
-      {debug && (
-        <div className="bg-black text-white p-4 rounded-lg text-xs overflow-auto max-h-40 mb-4">
-          <p className="font-bold mb-2">🔍 API Response:</p>
-          <p>Status: {debug.error?.message || 'OK'}</p>
-          <p>Places found: {debug.places?.length || 0}</p>
-          <p>Royse City in list: {debug.places?.some(p => p.displayName?.text?.toLowerCase().includes('royse')) ? '✅ YES' : '❌ NO'}</p>
+      {/* Photo Modal */}
+      {showPhotoModal && selectedPhoto && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowPhotoModal(false)}>
+          <div className="relative max-w-4xl w-full" onClick={e => e.stopPropagation()}>
+            <img 
+              src={`https://places.googleapis.com/v1/${selectedPhoto.name}/media?key=${import.meta.env.VITE_GOOGLE_MAPS_KEY}&maxWidthPx=1200`}
+              alt="Dentist office"
+              className="w-full h-auto rounded-2xl"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = "https://via.placeholder.com/400x300?text=No+Image+Available";
+              }}
+            />
+            <button
+              onClick={() => setShowPhotoModal(false)}
+              className="absolute top-4 right-4 bg-black/50 text-white p-3 rounded-full hover:bg-black/70 transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
         </div>
       )}
 

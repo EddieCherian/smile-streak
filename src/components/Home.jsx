@@ -1,10 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { Scan, Calendar, MapPin, TrendingUp, Sparkles, Flame } from "lucide-react";
 import { getCurrentStreak } from "../utils/streak";
+import { TranslationContext } from "../App";
 
 export default function Home({ setActiveTab, user, habitData }) {
   const [streak, setStreak] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const { t, currentLanguage } = useContext(TranslationContext);
+  const [texts, setTexts] = useState({});
 
   useEffect(() => {
     // Get the current streak from the streak utility
@@ -14,6 +17,33 @@ export default function Home({ setActiveTab, user, habitData }) {
     // Trigger animation on mount
     setIsAnimating(true);
   }, [habitData, user]); // Re-run when habitData or user changes
+
+  useEffect(() => {
+    const translateAll = async () => {
+      setTexts({
+        title: await t("SmileStreak"),
+        subtitle: await t("Build smarter dental habits with AI feedback"),
+        currentStreak: await t("Current Streak"),
+        days: await t("days"),
+        keepItUp: await t("Keep it up!"),
+        updateToday: await t("Update Today"),
+        companion: await t("Your Dental Companion"),
+        aiScan: await t("AI-powered scan feedback"),
+        dailyStreak: await t("Daily streak tracking"),
+        dentistFinder: await t("Dentist finder tool"),
+        progressInsights: await t("Progress insights"),
+        scanTeeth: await t("Scan Teeth"),
+        aiFeedback: await t("AI brushing feedback"),
+        streaks: await t("Streaks"),
+        trackHabits: await t("Track daily habits"),
+        findDentists: await t("Find Dentists"),
+        nearbyCare: await t("Nearby care + insurance"),
+        progress: await t("Progress"),
+        reviewImprovements: await t("Review improvements")
+      });
+    };
+    translateAll();
+  }, [currentLanguage, t]);
 
   const go = (tab) => {
     if (typeof setActiveTab === "function") {
@@ -37,10 +67,10 @@ export default function Home({ setActiveTab, user, habitData }) {
           </div>
           <div>
             <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-              SmileStreak
+              {texts.title || "SmileStreak"}
             </h1>
             <p className="text-sm text-gray-600">
-              Build smarter dental habits with AI feedback
+              {texts.subtitle || "Build smarter dental habits with AI feedback"}
             </p>
           </div>
         </div>
@@ -55,16 +85,16 @@ export default function Home({ setActiveTab, user, habitData }) {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Flame className="w-5 h-5 text-orange-300 animate-pulse" />
-                <p className="text-sm font-medium opacity-90">Current Streak</p>
+                <p className="text-sm font-medium opacity-90">{texts.currentStreak || "Current Streak"}</p>
               </div>
               <div className="flex items-end gap-2">
                 <p className="text-5xl font-black tracking-tight">{streak}</p>
-                <p className="text-2xl font-semibold opacity-80 pb-1">days</p>
+                <p className="text-2xl font-semibold opacity-80 pb-1">{texts.days || "days"}</p>
               </div>
               {streak >= 7 && (
                 <div className="flex items-center gap-1 text-xs bg-white/20 rounded-full px-3 py-1 w-fit">
                   <Sparkles className="w-3 h-3" />
-                  <span>Keep it up!</span>
+                  <span>{texts.keepItUp || "Keep it up!"}</span>
                 </div>
               )}
             </div>
@@ -73,7 +103,7 @@ export default function Home({ setActiveTab, user, habitData }) {
               onClick={() => go("today")}
               className="group relative bg-white text-blue-600 text-sm font-bold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
             >
-              <span className="relative z-10">Update Today</span>
+              <span className="relative z-10">{texts.updateToday || "Update Today"}</span>
               <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity" />
             </button>
           </div>
@@ -85,7 +115,7 @@ export default function Home({ setActiveTab, user, habitData }) {
             <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
               <Sparkles className="w-4 h-4 text-white" />
             </div>
-            <h2 className="font-bold text-gray-900">Your Dental Companion</h2>
+            <h2 className="font-bold text-gray-900">{texts.companion || "Your Dental Companion"}</h2>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -93,25 +123,25 @@ export default function Home({ setActiveTab, user, habitData }) {
               <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                 <div className="w-2 h-2 rounded-full bg-blue-500" />
               </div>
-              <span className="text-gray-700">AI-powered scan feedback</span>
+              <span className="text-gray-700">{texts.aiScan || "AI-powered scan feedback"}</span>
             </div>
             <div className="flex items-start gap-2 text-sm">
               <div className="w-5 h-5 rounded-full bg-cyan-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                 <div className="w-2 h-2 rounded-full bg-cyan-500" />
               </div>
-              <span className="text-gray-700">Daily streak tracking</span>
+              <span className="text-gray-700">{texts.dailyStreak || "Daily streak tracking"}</span>
             </div>
             <div className="flex items-start gap-2 text-sm">
               <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                 <div className="w-2 h-2 rounded-full bg-blue-500" />
               </div>
-              <span className="text-gray-700">Dentist finder tool</span>
+              <span className="text-gray-700">{texts.dentistFinder || "Dentist finder tool"}</span>
             </div>
             <div className="flex items-start gap-2 text-sm">
               <div className="w-5 h-5 rounded-full bg-cyan-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                 <div className="w-2 h-2 rounded-full bg-cyan-500" />
               </div>
-              <span className="text-gray-700">Progress insights</span>
+              <span className="text-gray-700">{texts.progressInsights || "Progress insights"}</span>
             </div>
           </div>
         </div>
@@ -128,8 +158,8 @@ export default function Home({ setActiveTab, user, habitData }) {
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
                 <Scan className="w-5 h-5 text-white" />
               </div>
-              <p className="font-bold text-gray-900">Scan Teeth</p>
-              <p className="text-xs text-gray-500">AI brushing feedback</p>
+              <p className="font-bold text-gray-900">{texts.scanTeeth || "Scan Teeth"}</p>
+              <p className="text-xs text-gray-500">{texts.aiFeedback || "AI brushing feedback"}</p>
             </div>
           </button>
 
@@ -142,8 +172,8 @@ export default function Home({ setActiveTab, user, habitData }) {
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
                 <Calendar className="w-5 h-5 text-white" />
               </div>
-              <p className="font-bold text-gray-900">Streaks</p>
-              <p className="text-xs text-gray-500">Track daily habits</p>
+              <p className="font-bold text-gray-900">{texts.streaks || "Streaks"}</p>
+              <p className="text-xs text-gray-500">{texts.trackHabits || "Track daily habits"}</p>
             </div>
           </button>
 
@@ -156,8 +186,8 @@ export default function Home({ setActiveTab, user, habitData }) {
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
                 <MapPin className="w-5 h-5 text-white" />
               </div>
-              <p className="font-bold text-gray-900">Find Dentists</p>
-              <p className="text-xs text-gray-500">Nearby care + insurance</p>
+              <p className="font-bold text-gray-900">{texts.findDentists || "Find Dentists"}</p>
+              <p className="text-xs text-gray-500">{texts.nearbyCare || "Nearby care + insurance"}</p>
             </div>
           </button>
 
@@ -170,8 +200,8 @@ export default function Home({ setActiveTab, user, habitData }) {
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
                 <TrendingUp className="w-5 h-5 text-white" />
               </div>
-              <p className="font-bold text-gray-900">Progress</p>
-              <p className="text-xs text-gray-500">Review improvements</p>
+              <p className="font-bold text-gray-900">{texts.progress || "Progress"}</p>
+              <p className="text-xs text-gray-500">{texts.reviewImprovements || "Review improvements"}</p>
             </div>
           </button>
 

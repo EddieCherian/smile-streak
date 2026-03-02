@@ -1,38 +1,81 @@
 import {
   Shield, FileText, Lock, AlertTriangle,
-  Download, Mail, Trash2, Database, CheckCircle
+  Download, Trash2, Database, CheckCircle
 } from "lucide-react";
 import { useState } from "react";
+import { signOut } from "firebase/auth";
+import { auth } from "../firebase"; // adjust path if needed
 
 export default function Legal() {
-  const [open, setOpen] = useState(null);
   const [exported, setExported] = useState(false);
   const [deleted, setDeleted] = useState(false);
   const [sent, setSent] = useState(false);
 
-  const toggle = (section) => {
-    setOpen(open === section ? null : section);
-  };
-
   /* ---------------------------
-     DATA EXPORT FUNCTION
-     --------------------------- */
+     CLAUDE-STYLE EXPORT
+  --------------------------- */
   const exportData = () => {
-    const data = {
-      habits: JSON.parse(localStorage.getItem("habits") || "[]"),
-      streaks: JSON.parse(localStorage.getItem("streaks") || "[]"),
-      scans: JSON.parse(localStorage.getItem("scans") || "[]"),
-      exportedAt: new Date().toISOString()
+    const habits = JSON.parse(localStorage.getItem("habits") || "[]");
+    const streaks = JSON.parse(localStorage.getItem("streaks") || "[]");
+    const scans = JSON.parse(localStorage.getItem("scans") || "[]");
+
+    const totalCompletions = streaks.length;
+    const longestStreak = Math.max(0, ...streaks.map(s => s.length || 0));
+    const avgStreak =
+      streaks.length === 0
+        ? 0
+        : streaks.reduce((a, b) => a + (b.length || 0), 0) / streaks.length;
+
+    const report = {
+      profile: {
+        exportedAt: new Date().toISOString(),
+        app: "SmileStreak"
+      },
+
+      summary: {
+        habitsTracked: habits.length,
+        totalCheckins: totalCompletions,
+        longestStreak,
+        averageStreak: Math.round(avgStreak * 10) / 10,
+        scansUploaded: scans.length
+      },
+
+      behavioralInsights: {
+        consistencyScore:
+          longestStreak > 14
+            ? "High"
+            : longestStreak > 5
+            ? "Moderate"
+            : "Developing",
+
+        engagementLevel:
+          totalCompletions > 50
+            ? "Active"
+            : totalCompletions > 10
+            ? "Growing"
+            : "New user"
+      },
+
+      timeline: {
+        firstRecordedActivity: streaks[0]?.date || null,
+        lastRecordedActivity: streaks[streaks.length - 1]?.date || null
+      },
+
+      rawData: {
+        habits,
+        streaks,
+        scans
+      }
     };
 
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
+    const blob = new Blob([JSON.stringify(report, null, 2)], {
       type: "application/json"
     });
 
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "smilestreak-data.json";
+    a.download = "smilestreak-report.json";
     a.click();
 
     setExported(true);
@@ -40,102 +83,59 @@ export default function Legal() {
   };
 
   /* ---------------------------
-     DELETE DATA FUNCTION
-     --------------------------- */
-  const deleteData = () => {
-    if (!confirm("This will permanently delete your SmileStreak data. Continue?"))
-      return;
+     TRUE RESET FUNCTION
+  --------------------------- */
+  const deleteData = async () => {
+    if (!confirm("This will completely reset SmileStreak. Continue?")) return;
 
-    localStorage.removeItem("habits");
-    localStorage.removeItem("streaks");
-    localStorage.removeItem("scans");
+    // clear localStorage
+    localStorage.clear();
 
-    // If you later store data in Firestore,
-    // this is where you'd also delete cloud docs.
+    // clear indexedDB (offline cache)
+    indexedDB.databases?.().then(dbs => {
+      dbs.forEach(db => indexedDB.deleteDatabase(db.name));
+    });
+
+    // sign user out
+    try {
+      await signOut(auth);
+    } catch {}
 
     setDeleted(true);
-    setTimeout(() => setDeleted(false), 4000);
+
+    setTimeout(() => {
+      window.location.reload();
+    }, 1500);
   };
 
-  const sections = [
-    {
-      id: 1,
-      title: "Educational Purpose",
-      icon: <FileText className="w-5 h-5" />,
-      content: `SmileStreak is an educational habit-building tool. Any AI feedback,
-      reports, or insights are informational only and do not replace professional
-      dental advice, diagnosis, or treatment.`
-    },
-    {
-      id: 2,
-      title: "User Responsibility",
-      icon: <AlertTriangle className="w-5 h-5" />,
-      content: `You are responsible for your health decisions. Always consult a
-      licensed dental professional for medical concerns.`
-    },
-    {
-      id: 3,
-      title: "Image & Scan Processing",
-      icon: <Database className="w-5 h-5" />,
-      content: `Images uploaded for scans are processed only to generate feedback.
-      SmileStreak does not sell or share scan images.`
-    },
-    {
-      id: 4,
-      title: "Privacy & Data Use",
-      icon: <Lock className="w-5 h-5" />,
-      content: `We collect only minimal usage data needed for the app to function.
-      This data improves your experience and app stability.`
-    },
-    {
-      id: 5,
-      title: "Liability Limitation",
-      icon: <Shield className="w-5 h-5" />,
-      content: `SmileStreak is not responsible for medical or dental outcomes.
-      Use of this software is voluntary.`
-    }
-  ];
+  /* ---------------------------
+     FORM SUBMIT FIX
+  --------------------------- */
+  const submitForm = async (e) => {
+    e.preventDefault();
+
+    const form = e.target;
+    const data = new FormData(form);
+
+    await fetch("https://formspree.io/f/mqedoavq", {
+      method: "POST",
+      body: data,
+      headers: { Accept: "application/json" }
+    });
+
+    setSent(true);
+    form.reset();
+  };
 
   return (
     <div className="space-y-6 pb-10">
 
-      {/* HERO */}
+      {/* HEADER */}
       <div className="bg-gradient-to-br from-blue-600 via-cyan-500 to-blue-500 text-white rounded-3xl p-6 shadow-xl">
-        <div className="flex items-center gap-2 mb-2">
-          <Shield className="w-6 h-6" />
-          <h2 className="text-2xl font-black">Legal & Privacy</h2>
-        </div>
+        <h2 className="text-2xl font-black">Legal & Data Control</h2>
         <p className="text-sm opacity-90">
-          Transparency, safety, and control over your data.
+          Full transparency and control over your SmileStreak data.
         </p>
-      </div>
-
-      {/* ACCORDION */}
-      <div className="bg-white rounded-3xl shadow-lg border border-blue-100 overflow-hidden">
-        {sections.map((s) => (
-          <div key={s.id} className="border-b last:border-none border-gray-100">
-            <button
-              onClick={() => toggle(s.id)}
-              className="w-full flex items-center justify-between p-5 hover:bg-blue-50"
-            >
-              <div className="flex items-center gap-3 text-left">
-                <div className="text-blue-600">{s.icon}</div>
-                <span className="font-bold text-gray-900 text-sm">
-                  {s.id}. {s.title}
-                </span>
-              </div>
-              <span className="text-gray-400 text-xs">
-                {open === s.id ? "Hide" : "View"}
-              </span>
-            </button>
-
-            {open === s.id && (
-              <div className="px-5 pb-5 text-sm text-gray-700">
-                {s.content}
-              </div>
-            )}
-          </div>
-        ))}
       </div>
 
       {/* DATA CONTROLS */}
@@ -148,12 +148,9 @@ export default function Legal() {
             onClick={exportData}
             className="flex items-center justify-between p-4 rounded-2xl bg-blue-50 border-2 border-blue-200 hover:bg-blue-100"
           >
-            <div className="flex items-center gap-3">
-              <Download className="w-5 h-5 text-blue-600" />
-              <span className="font-semibold text-gray-900 text-sm">
-                Export My Data
-              </span>
-            </div>
+            <span className="font-semibold text-gray-900 text-sm">
+              Export My Full Report
+            </span>
             {exported && <CheckCircle className="text-green-500 w-4 h-4" />}
           </button>
 
@@ -161,19 +158,16 @@ export default function Legal() {
             onClick={deleteData}
             className="flex items-center justify-between p-4 rounded-2xl bg-red-50 border-2 border-red-200 hover:bg-red-100"
           >
-            <div className="flex items-center gap-3">
-              <Trash2 className="w-5 h-5 text-red-600" />
-              <span className="font-semibold text-gray-900 text-sm">
-                Delete My Data
-              </span>
-            </div>
+            <span className="font-semibold text-gray-900 text-sm">
+              Reset SmileStreak Completely
+            </span>
             {deleted && <CheckCircle className="text-green-500 w-4 h-4" />}
           </button>
 
         </div>
       </div>
 
-      {/* SUPPORT FORM — CLAUDE STYLE */}
+      {/* SUPPORT FORM */}
       <div className="bg-gradient-to-r from-cyan-50 to-blue-50 border-2 border-cyan-200 rounded-3xl p-6 shadow-lg">
         <h3 className="font-black text-gray-900 mb-4">
           Contact Support
@@ -181,34 +175,29 @@ export default function Legal() {
 
         {sent ? (
           <p className="text-green-600 font-semibold text-sm">
-            Message sent. We’ll get back to you soon.
+            Message sent successfully.
           </p>
         ) : (
-          <form
-            action="https://formspree.io/f/mqedoavq"
-            method="POST"
-            onSubmit={() => setSent(true)}
-            className="space-y-3"
-          >
+          <form onSubmit={submitForm} className="space-y-3">
             <input
               type="email"
               name="email"
               placeholder="Your email"
               required
-              className="w-full p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full p-3 rounded-xl border border-gray-200"
             />
 
             <textarea
               name="message"
-              placeholder="Describe your issue or question..."
+              placeholder="Describe your issue..."
               required
               rows={4}
-              className="w-full p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full p-3 rounded-xl border border-gray-200"
             />
 
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white p-3 rounded-xl font-bold hover:bg-blue-700 transition"
+              className="w-full bg-blue-600 text-white p-3 rounded-xl font-bold hover:bg-blue-700"
             >
               Send Message
             </button>
@@ -216,10 +205,9 @@ export default function Legal() {
         )}
       </div>
 
-      {/* FOOTER */}
       <div className="text-center pt-2">
         <p className="text-xs text-gray-400">
-          SmileStreak v1.0.0 • Last updated {new Date().toLocaleDateString()}
+          SmileStreak • {new Date().toLocaleDateString()}
         </p>
       </div>
     </div>

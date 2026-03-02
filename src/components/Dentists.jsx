@@ -261,16 +261,6 @@ export default function Dentists() {
             );
           }
 
-          // Sample photos from the screenshots (using placeholder images - replace with actual URLs if available)
-          const royseCityPhotos = [
-            { name: "royse-city-1", url: "https://via.placeholder.com/400x400/4f46e5/ffffff?text=Royal+City+Dental" },
-            { name: "royse-city-2", url: "https://via.placeholder.com/400x400/2563eb/ffffff?text=Office+Front" },
-            { name: "royse-city-3", url: "https://via.placeholder.com/400x400/7c3aed/ffffff?text=Waiting+Room" },
-            { name: "royse-city-4", url: "https://via.placeholder.com/400x400/db2777/ffffff?text=Treatment+Room" },
-            { name: "royse-city-5", url: "https://via.placeholder.com/400x400/ea580c/ffffff?text=Staff" },
-            { name: "royse-city-6", url: "https://via.placeholder.com/400x400/16a34a/ffffff?text=Equipment" },
-          ];
-
           // Sample reviews from screenshots
           const royseCityReviews = [
             {
@@ -301,7 +291,7 @@ export default function Dentists() {
             website: "https://roysecitydentalcare.com",
             mapsLink: "https://www.google.com/maps/place/Royse+City+Dental+Care/@32.9751,-96.3327,15z",
             isRoyseCity: true,
-            photos: royseCityPhotos,
+            photos: [], // No photos
             businessStatus: "OPERATIONAL",
             priceLevel: 2, // $$ moderate
             lat: 32.9751,
@@ -448,9 +438,7 @@ export default function Dentists() {
             website: "https://roysecitydentalcare.com",
             mapsLink: "https://www.google.com/maps/place/Royse+City+Dental+Care",
             isRoyseCity: true,
-            photos: [
-              { name: "royse-city-1", url: "https://via.placeholder.com/400x400/4f46e5/ffffff?text=Royal+City+Dental" }
-            ],
+            photos: [],
             businessStatus: "OPERATIONAL",
             priceLevel: 2,
             lat: 32.9751,
@@ -528,9 +516,7 @@ export default function Dentists() {
           website: "https://roysecitydentalcare.com",
           mapsLink: "https://www.google.com/maps/place/Royse+City+Dental+Care",
           isRoyseCity: true,
-          photos: [
-            { name: "royse-city-1", url: "https://via.placeholder.com/400x400/4f46e5/ffffff?text=Royal+City+Dental" }
-          ],
+          photos: [],
           businessStatus: "OPERATIONAL",
           priceLevel: 2,
           lat: 32.9751,
@@ -618,10 +604,12 @@ export default function Dentists() {
   }, [dentists, searchQuery, filterOpenNow, filterMinRating, searchRadius]);
 
   const getSortedDentists = () => {
-    // Royse City is already first in the array, but let's ensure it stays first
+    let sorted = [...filteredDentists];
+    
     if (sortBy === "recommended") {
-      const royseCity = dentists.filter(d => d.isRoyseCity);
-      const others = dentists.filter(d => !d.isRoyseCity);
+      // Royse City ONLY at the top for recommended sort
+      const royseCity = sorted.filter(d => d.isRoyseCity);
+      const others = sorted.filter(d => !d.isRoyseCity);
       
       const sortedOthers = others.sort((a, b) => {
         const scoreA = (a.rating || 0) * 10 - (a.distance || 99);
@@ -633,17 +621,14 @@ export default function Dentists() {
     }
     
     if (sortBy === "rating") {
-      const royseCity = dentists.filter(d => d.isRoyseCity);
-      const others = dentists.filter(d => !d.isRoyseCity);
-      others.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-      return [...royseCity, ...others];
+      // Normal rating sort - Royse City NOT forced to top
+      return sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
     } else if (sortBy === "distance") {
-      const royseCity = dentists.filter(d => d.isRoyseCity);
-      const others = dentists.filter(d => !d.isRoyseCity);
-      others.sort((a, b) => (a.distance || 999) - (b.distance || 999));
-      return [...royseCity, ...others];
+      // Normal distance sort - Royse City NOT forced to top
+      return sorted.sort((a, b) => (a.distance || 999) - (b.distance || 999));
     }
-    return dentists;
+    
+    return sorted;
   };
 
   const sortedDentists = getSortedDentists();

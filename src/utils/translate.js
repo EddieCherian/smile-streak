@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 const GOOGLE_TRANSLATE_API_KEY = import.meta.env.VITE_GOOGLE_TRANSLATE_API_KEY;
 
 // Cache for translations
@@ -45,26 +47,23 @@ export async function translateText(text, targetLang, sourceLang = 'en') {
   }
 
   try {
-    const response = await fetch(
+    const response = await axios.post(
       `https://translation.googleapis.com/language/translate/v2?key=${GOOGLE_TRANSLATE_API_KEY}`,
       {
-        method: 'POST',
+        q: text,
+        source: sourceLang,
+        target: targetLang,
+        format: 'text'
+      },
+      {
         headers: {
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          q: text,
-          source: sourceLang,
-          target: targetLang,
-          format: 'text'
-        })
+        }
       }
     );
 
-    const data = await response.json();
-    
-    if (data.data && data.data.translations && data.data.translations[0]) {
-      const translated = data.data.translations[0].translatedText;
+    if (response.data && response.data.data && response.data.data.translations && response.data.data.translations[0]) {
+      const translated = response.data.data.translations[0].translatedText;
       translationCache.set(cacheKey, translated);
       return translated;
     }
@@ -81,26 +80,23 @@ export async function translateBatch(texts, targetLang, sourceLang = 'en') {
   if (targetLang === sourceLang) return texts;
 
   try {
-    const response = await fetch(
+    const response = await axios.post(
       `https://translation.googleapis.com/language/translate/v2?key=${GOOGLE_TRANSLATE_API_KEY}`,
       {
-        method: 'POST',
+        q: texts,
+        source: sourceLang,
+        target: targetLang,
+        format: 'text'
+      },
+      {
         headers: {
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          q: texts,
-          source: sourceLang,
-          target: targetLang,
-          format: 'text'
-        })
+        }
       }
     );
 
-    const data = await response.json();
-    
-    if (data.data && data.data.translations) {
-      return data.data.translations.map(t => t.translatedText);
+    if (response.data && response.data.data && response.data.data.translations) {
+      return response.data.data.translations.map(t => t.translatedText);
     }
     
     return texts;

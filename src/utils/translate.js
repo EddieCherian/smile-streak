@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const GOOGLE_TRANSLATE_API_KEY = import.meta.env.VITE_GOOGLE_TRANSLATE_API_KEY;
+const GOOGLE_TRANSLATE_API_KEY = import.meta.env.VITE_GOOGLE_TRANSLATE_KEY;
 
 // Cache for translations
 const translationCache = new Map();

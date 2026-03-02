@@ -96,7 +96,7 @@ export default function Dentists() {
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   
-  // FIXED: Max radius 31 miles (API limit), default 16
+  // Max radius 31 miles (API limit), default 16
   const [searchRadius, setSearchRadius] = useState(16);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedForCompare, setSelectedForCompare] = useState([]);
@@ -256,8 +256,7 @@ export default function Dentists() {
         setUserLocation({ latitude, longitude });
 
         try {
-          // FIXED: Google Places API has a limit of 50,000 meters (50km ≈ 31 miles)
-          // Cap the radius at 50,000 meters (31 miles)
+          // Google Places API has a limit of 50,000 meters (50km ≈ 31 miles)
           const radiusInMeters = Math.min(radius * 1609.34, 50000);
           
           const res = await fetch(
@@ -298,7 +297,14 @@ export default function Dentists() {
             const lat = d.location?.latitude;
             const lng = d.location?.longitude;
             const distance = lat && lng ? getDistanceMiles(latitude, longitude, lat, lng) : null;
-            const isRoyseCity = d.displayName?.text?.toLowerCase().includes("royse city dental care");
+            
+            // Better Royse City detection - check multiple variations
+            const nameLower = d.displayName?.text?.toLowerCase() || "";
+            const isRoyseCity = 
+              nameLower.includes("royse city") || 
+              nameLower.includes("royse-city") || 
+              nameLower.includes("roysecity") ||
+              (nameLower.includes("royse") && nameLower.includes("dental"));
 
             // Extract real data from Google Places
             const paymentMethods = [];
@@ -387,19 +393,23 @@ export default function Dentists() {
     let sorted = [...filteredDentists];
 
     if (sortBy === "best") {
+      // Find Royse City - case insensitive and multiple variations
       const royseCityIndex = sorted.findIndex(d => d.isRoyseCity);
+      
       if (royseCityIndex !== -1) {
         const royseCityDental = sorted.splice(royseCityIndex, 1)[0];
         sorted.unshift(royseCityDental);
       }
 
+      // Sort the rest by rating and distance
+      const royseCityDental = sorted[0];
       const rest = sorted.slice(1).sort((a, b) => {
         const scoreA = (a.rating || 0) * 10 - (a.distance || 99);
         const scoreB = (b.rating || 0) * 10 - (b.distance || 99);
         return scoreB - scoreA;
       });
 
-      return royseCityIndex !== -1 ? [sorted[0], ...rest] : rest;
+      return royseCityIndex !== -1 ? [royseCityDental, ...rest] : rest;
     }
 
     if (sortBy === "rating") {
@@ -417,10 +427,10 @@ export default function Dentists() {
     if (dentist.isRoyseCity && sortBy === "best") {
       return { text: "⭐ Royse City Dental Care", color: "bg-gradient-to-r from-yellow-400 to-orange-400 text-white" };
     }
-    if (index === 0 && sortBy === "rating") {
+    if (index === 0 && sortBy === "rating" && !dentist.isRoyseCity) {
       return { text: "🏆 Top Rated", color: "bg-yellow-100 text-yellow-700" };
     }
-    if (index === 0 && sortBy === "distance") {
+    if (index === 0 && sortBy === "distance" && !dentist.isRoyseCity) {
       return { text: "📍 Closest", color: "bg-blue-100 text-blue-700" };
     }
     if (dentist.openNow && dentist.distance < 5) {
@@ -665,12 +675,12 @@ export default function Dentists() {
         </div>
       )}
 
-      {/* Results Count */}
+      {/* Results Count - Shows actual number of dentists found */}
       {!locationError && dentists.length > 0 && (
         <div className="flex justify-between items-center px-1">
           <p className="text-sm text-gray-600 font-medium">
-            Found <span className="text-blue-600 font-bold">{filteredDentists.length}</span> dentists
-            {searchRadius > 16 && <span className="text-gray-400 ml-1">within {searchRadius} miles</span>}
+            Found <span className="text-blue-600 font-bold">{dentists.length}</span> dentists
+            {searchRadius !== 16 && <span className="text-gray-400 ml-1">within {searchRadius} miles</span>}
           </p>
           {selectedForCompare.length > 0 && (
             <button
@@ -692,7 +702,7 @@ export default function Dentists() {
       )}
 
       {/* No Results */}
-      {!loading && !locationError && filteredDentists.length === 0 && (
+      {!loading && !locationError && dentists.length === 0 && (
         <div className="text-center py-16 bg-gray-50 rounded-[2rem]">
           <MapPin className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600 font-medium text-lg">{translatedText.noDentists}</p>
@@ -752,7 +762,7 @@ export default function Dentists() {
                   </div>
                 </div>
 
-                {/* Photos - Fixed with proper image URLs */}
+                {/* Photos */}
                 {d.photos && d.photos.length > 0 && (
                   <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
                     {d.photos.map((photo, idx) => (

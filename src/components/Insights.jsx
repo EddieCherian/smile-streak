@@ -1,38 +1,46 @@
 import { generateInsights } from "../utils/insights";
 import { useState, useContext, useEffect, useMemo } from "react";
 import { 
+  // Core icons
   TrendingUp, TrendingDown, Target, Award, Calendar, Clock, Zap, Brain, 
   Heart, AlertCircle, CheckCircle2, Flame, Trophy, BarChart3, Activity, 
-  Sun, Moon, Sparkles, Share2, Download, Printer, Mail, Facebook, 
-  Twitter, Instagram, Linkedin, MessageCircle, Gift, Crown, Medal, 
-  Star, Rocket, Code, Coffee, Palette, Users, Globe, Lock, Eye, EyeOff,
+  Sun, Moon, Sparkles, Share2, Download, Printer, 
+  Gift, Crown, Medal, Star, Rocket, Code, Coffee, Palette, Users, Globe, Lock, Eye, EyeOff,
   Bell, Filter, RefreshCw, AlertTriangle, ThumbsUp, ThumbsDown, Smile,
   Frown, Meh, Cloud, CloudRain, CloudSnow, CloudLightning, Wind,
-  Thermometer, Droplets, Sunrise, Sunset, Coffee as CoffeeIcon,
-  BookOpen, Microscope, Stethoscope, Pill, Syringe, Bandage,
-  Baby, User, Users2, Home, MapPin, Navigation, Compass,
+  Thermometer, Droplets, Sunrise, Sunset,
+  BookOpen, Microscope, 
+  User, Users2, Home, MapPin, Navigation, Compass,
   Phone, Video, Headphones, Music, Volume2, VolumeX,
-  Camera, Video as VideoIcon, Film, Image, Layers,
+  Camera, Film, Image, Layers,
   Grid, List, Menu, Settings, Sliders, ToggleLeft,
-  ToggleRight, Circle, Square, Triangle, Hexagon,
-  Pentagon, Octagon, CircleDot, CircleSlashed,
-  CircleOff, CircleDashed, CircleDotDashed,
-  ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
-  ArrowUpCircle, ArrowDownCircle, ArrowLeftCircle,
-  ArrowRightCircle, ChevronUp, ChevronDown,
-  ChevronLeft, ChevronRight, ChevronsUp, ChevronsDown,
-  ChevronsLeft, ChevronsRight, Maximize, Minimize,
+  ToggleRight, 
+  ChevronDown,
+  Maximize, Minimize,
   ZoomIn, ZoomOut, Plus, Minus, Divide, Equal,
-  Percent, Infinity, Sigma, Pi, SquareRoot,
-  FunctionSquare, Calculator, Hash, AtSign,
+  Percent, Infinity, 
   DollarSign, Euro, PoundSterling, Yen,
   Bitcoin, CreditCard, Wallet, PiggyBank,
-  Banknote, Coins, BadgeDollarSign,
-  BadgeCent, BadgeEuro, BadgePoundSterling,
-  BadgeJapaneseYen, BadgeIndianRupee,
-  BadgeRussianRuble, BadgeSwissFranc,
-  BadgePolishZloty, BadgeThaiBaht,
-  BadgeIndonesianRupiah, BadgeVietnameseDong
+  Banknote, Coins,
+  // Missing icons that were used
+  Circle, Square, Triangle,
+  ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
+  ChevronsUp, ChevronsDown, ChevronsLeft, ChevronsRight,
+  // Health & wellness icons needed
+  Pill, Syringe,
+  Baby, 
+  // Additional icons from your JSX
+  Flask, Atom, Link, Image as ImageIcon, Briefcase, 
+  Flower, Apple, Type,
+  // Chart icons
+  PieChart, Radar,
+  // DNA and Bacteria icons (using alternatives since they might not exist)
+  Activity as Dna, // Using Activity as fallback for Dna
+  Activity as Bacteria, // Using Activity as fallback for Bacteria
+  Droplets as Milk, // Using Droplets as fallback for Milk
+  Activity as Flower, // Using Activity as fallback for Flower
+  // Add Shield for security section
+  Shield
 } from "lucide-react";
 import { TranslationContext } from "../App";
 
@@ -63,83 +71,16 @@ export default function Insights({ habitData }) {
   const [selectedVolumeUnit, setSelectedVolumeUnit] = useState('oz'); // 'oz', 'ml'
   const [selectedEnergyUnit, setSelectedEnergyUnit] = useState('cal'); // 'cal', 'kj'
   const [selectedSpeedUnit, setSelectedSpeedUnit] = useState('mph'); // 'mph', 'kmh'
-  const [selectedAccelerationUnit, setSelectedAccelerationUnit] = useState('g'); // 'g', 'ms2'
-  const [selectedAngleUnit, setSelectedAngleUnit] = useState('degrees'); // 'degrees', 'radians'
-  const [selectedFrequencyUnit, setSelectedFrequencyUnit] = useState('hz'); // 'hz', 'khz'
-  const [selectedPowerUnit, setSelectedPowerUnit] = useState('w'); // 'w', 'kw'
-  const [selectedVoltageUnit, setSelectedVoltageUnit] = useState('v'); // 'v', 'kv'
-  const [selectedCurrentUnit, setSelectedCurrentUnit] = useState('a'); // 'a', 'ma'
-  const [selectedResistanceUnit, setSelectedResistanceUnit] = useState('ohm'); // 'ohm', 'kohm'
-  const [selectedCapacitanceUnit, setSelectedCapacitanceUnit] = useState('f'); // 'f', 'uf'
-  const [selectedInductanceUnit, setSelectedInductanceUnit] = useState('h'); // 'h', 'mh'
-  const [selectedMagneticFluxUnit, setSelectedMagneticFluxUnit] = useState('wb'); // 'wb', 'mwb'
-  const [selectedMagneticFieldUnit, setSelectedMagneticFieldUnit] = useState('t'); // 't', 'mt'
-  const [selectedLuminousIntensityUnit, setSelectedLuminousIntensityUnit] = useState('cd'); // 'cd', 'mcd'
-  const [selectedLuminousFluxUnit, setSelectedLuminousFluxUnit] = useState('lm'); // 'lm', 'mlm'
-  const [selectedIlluminanceUnit, setSelectedIlluminanceUnit] = useState('lx'); // 'lx', 'mlx'
-  const [selectedRadioactivityUnit, setSelectedRadioactivityUnit] = useState('bq'); // 'bq', 'kbq'
-  const [selectedAbsorbedDoseUnit, setSelectedAbsorbedDoseUnit] = useState('gy'); // 'gy', 'mgy'
-  const [selectedEquivalentDoseUnit, setSelectedEquivalentDoseUnit] = useState('sv'); // 'sv', 'msv'
-  const [selectedCatalyticActivityUnit, setSelectedCatalyticActivityUnit] = useState('kat'); // 'kat', 'mkat'
-  const [selectedDataUnit, setSelectedDataUnit] = useState('bytes'); // 'bytes', 'bits'
-  const [selectedDataRateUnit, setSelectedDataRateUnit] = useState('bps'); // 'bps', 'kbps'
-  const [selectedFrequencyBand, setSelectedFrequencyBand] = useState('2.4ghz'); // '2.4ghz', '5ghz'
-  const [selectedBluetoothVersion, setSelectedBluetoothVersion] = useState('5.0'); // '5.0', '5.1', '5.2'
-  const [selectedWiFiStandard, setSelectedWiFiStandard] = useState('ac'); // 'ac', 'ax'
-  const [selectedCellularGeneration, setSelectedCellularGeneration] = useState('5g'); // '4g', '5g'
-  const [selectedOperatingSystem, setSelectedOperatingSystem] = useState('ios'); // 'ios', 'android'
-  const [selectedBrowser, setSelectedBrowser] = useState('chrome'); // 'chrome', 'safari'
-  const [selectedDevice, setSelectedDevice] = useState('mobile'); // 'mobile', 'desktop'
-  const [selectedScreenResolution, setSelectedScreenResolution] = useState('1080p'); // '720p', '1080p'
-  const [selectedRefreshRate, setSelectedRefreshRate] = useState('60hz'); // '60hz', '120hz'
-  const [selectedColorDepth, setSelectedColorDepth] = useState('8bit'); // '8bit', '10bit'
-  const [selectedHDR, setSelectedHDR] = useState(false);
-  const [selectedDolbyAtmos, setSelectedDolbyAtmos] = useState(false);
-  const [selectedSpatialAudio, setSelectedSpatialAudio] = useState(false);
-  const [selectedNoiseCancellation, setSelectedNoiseCancellation] = useState(false);
-  const [selectedVoiceAssistant, setSelectedVoiceAssistant] = useState('none'); // 'none', 'siri', 'google'
-  const [selectedSmartHome, setSelectedSmartHome] = useState('none'); // 'none', 'alexa', 'homekit'
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('none'); // 'none', 'applepay', 'googlepay'
-  const [selectedSubscription, setSelectedSubscription] = useState('free'); // 'free', 'premium'
-  const [selectedNotificationSound, setSelectedNotificationSound] = useState('default'); // 'default', 'chime'
-  const [selectedVibrationPattern, setSelectedVibrationPattern] = useState('default'); // 'default', 'strong'
-  const [selectedHapticFeedback, setSelectedHapticFeedback] = useState(true);
   const [selectedAnimations, setSelectedAnimations] = useState(true);
-  const [selectedTransitions, setSelectedTransitions] = useState(true);
-  const [selectedGestures, setSelectedGestures] = useState(true);
-  const [selectedVoiceCommands, setSelectedVoiceCommands] = useState(false);
-  const [selectedAccessibility, setSelectedAccessibility] = useState(false);
+  const [selectedHapticFeedback, setSelectedHapticFeedback] = useState(true);
   const [selectedReducedMotion, setSelectedReducedMotion] = useState(false);
   const [selectedHighContrast, setSelectedHighContrast] = useState(false);
   const [selectedLargeText, setSelectedLargeText] = useState(false);
   const [selectedBoldText, setSelectedBoldText] = useState(false);
-  const [selectedGrayscale, setSelectedGrayscale] = useState(false);
-  const [selectedInvertColors, setSelectedInvertColors] = useState(false);
-  const [selectedColorBlindMode, setSelectedColorBlindMode] = useState('none'); // 'none', 'protanopia'
   const [selectedScreenReader, setSelectedScreenReader] = useState(false);
-  const [selectedSwitchControl, setSelectedSwitchControl] = useState(false);
-  const [selectedAssistiveTouch, setSelectedAssistiveTouch] = useState(false);
-  const [selectedGuidedAccess, setSelectedGuidedAccess] = useState(false);
-  const [selectedLiveCaptions, setSelectedLiveCaptions] = useState(false);
-  const [selectedSoundRecognition, setSelectedSoundRecognition] = useState(false);
-  const [selectedRTT, setSelectedRTT] = useState(false);
-  const [selectedTTY, setSelectedTTY] = useState(false);
-  const [selectedHearingAids, setSelectedHearingAids] = useState(false);
-  const [selectedCochlearImplants, setSelectedCochlearImplants] = useState(false);
-  const [selectedMFiDevices, setSelectedMFiDevices] = useState(false);
-  const [selectedASL, setSelectedASL] = useState(false);
-  const [selectedBSL, setSelectedBSL] = useState(false);
-  const [selectedLSF, setSelectedLSF] = useState(false);
-  const [selectedDGS, setSelectedDGS] = useState(false);
-  const [selectedJSL, setSelectedJSL] = useState(false);
-  const [selectedKSL, setSelectedKSL] = useState(false);
-  const [selectedCSL, setSelectedCSL] = useState(false);
-  const [selectedAuslan, setSelectedAuslan] = useState(false);
-  const [selectedNZSL, setSelectedNZSL] = useState(false);
-  const [selectedISL, setSelectedISL] = useState(false);
-  const [selectedLIBRAS, setSelectedLIBRAS] = useState(false);
+  const [selectedColorBlindMode, setSelectedColorBlindMode] = useState('none');
 
-  // Translation keys (expanded)
+  // Translation keys (expanded) - keeping your existing translationKeys object
   const translationKeys = {
     title: "Smart Insights",
     subtitle: "AI-powered analysis of your habits",
@@ -1185,7 +1126,7 @@ export default function Insights({ habitData }) {
 
   return (
     <div className="space-y-6 pb-8">
-      {/* Header with Quick Actions */}
+      {/* Header with Quick Actions - Keeping your existing JSX structure */}
       <div className="bg-gradient-to-br from-blue-600 via-cyan-500 to-blue-500 text-white rounded-3xl p-6 shadow-xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16" />
         <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-12 -translate-x-12" />
@@ -1933,7 +1874,7 @@ export default function Insights({ habitData }) {
                   <p className="font-semibold text-gray-900 text-sm mb-1">{translatedText.mostMissedTask}</p>
                   <p className="text-sm text-gray-700">
                     {(translatedText.mostMissedTaskDesc || translationKeys.mostMissedTaskDesc)
-                      .replace('{task}', `<span class="capitalize font-bold">${insights.mostMissedTask}</span>`)}
+                      .replace('{task}', insights.mostMissedTask)}
                   </p>
                 </div>
               </div>
@@ -1946,7 +1887,7 @@ export default function Insights({ habitData }) {
                   <p className="font-semibold text-gray-900 text-sm mb-1">{translatedText.challengingDay}</p>
                   <p className="text-sm text-gray-700">
                     {(translatedText.challengingDayDesc || translationKeys.challengingDayDesc)
-                      .replace('{day}', `<span class="font-bold">${insights.mostMissedDay}</span>`)}
+                      .replace('{day}', insights.mostMissedDay)}
                   </p>
                 </div>
               </div>

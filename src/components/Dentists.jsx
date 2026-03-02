@@ -233,8 +233,7 @@ export default function Dentists() {
     viewPhoto: "View Photo",
     amenities: "Amenities",
     paymentMethods: "Payment Methods",
-    languagesSpoken: "Languages",
-    verified: "Verified on Google"
+    languagesSpoken: "Languages"
   };
 
   // Load translations
@@ -427,7 +426,7 @@ export default function Dentists() {
               name: d.displayName?.text,
               address: d.formattedAddress,
               rating: d.rating,
-              review_count: d.userRatingCount,
+              review_count: d.userRatingCount || 0,
               lat,
               lng,
               review: d.reviews?.[0]?.text?.text || d.reviews?.[0]?.originalText?.text || null,
@@ -819,7 +818,6 @@ export default function Dentists() {
             const prediction = insurancePredictions[d.id];
             const badge = getBadge(d, index);
             const isInCompare = selectedForCompare.some(s => s.id === d.id);
-            const placeDetails = reviews[d.id];
 
             return (
               <div
@@ -836,11 +834,6 @@ export default function Dentists() {
                       {badge && (
                         <span className={`inline-block text-xs font-bold px-3 py-1.5 rounded-full ${badge.color}`}>
                           {badge.text}
-                        </span>
-                      )}
-                      {d.verified && (
-                        <span className="inline-block text-xs font-bold px-3 py-1.5 rounded-full bg-blue-100 text-blue-700">
-                          ✅ {translatedText.verified}
                         </span>
                       )}
                     </div>
@@ -898,7 +891,7 @@ export default function Dentists() {
                     <div className="flex items-center gap-1 bg-yellow-50 px-3 py-1.5 rounded-full">
                       <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
                       <span className="font-bold text-gray-900">{d.rating}</span>
-                      {d.review_count && (
+                      {d.review_count > 0 && (
                         <span className="text-xs text-gray-500">({d.review_count})</span>
                       )}
                     </div>
@@ -1003,7 +996,7 @@ export default function Dentists() {
                   </div>
                 )}
 
-                {/* More Reviews Button */}
+                {/* More Reviews Button - Fixed condition */}
                 {d.review_count > 1 && (
                   <button
                     onClick={() => fetchPlaceDetails(d.id)}
@@ -1018,33 +1011,31 @@ export default function Dentists() {
                 )}
 
                 {/* Insurance Prediction */}
-                {insurance && (
+                {insurance && prediction && (
                   <div className={`flex items-start gap-3 p-4 rounded-xl mb-4 ${
-                    prediction?.accepts ? 'bg-emerald-50' : 'bg-amber-50'
+                    prediction.accepts ? 'bg-emerald-50' : 'bg-amber-50'
                   }`}>
-                    {prediction?.accepts ? (
+                    {prediction.accepts ? (
                       <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
                     ) : (
                       <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                     )}
                     <div className="flex-1">
                       <p className={`text-sm font-medium ${
-                        prediction?.accepts ? 'text-emerald-700' : 'text-amber-700'
+                        prediction.accepts ? 'text-emerald-700' : 'text-amber-700'
                       }`}>
-                        {prediction?.accepts
+                        {prediction.accepts
                           ? `${translatedText.likelyAccepts} ${insurance}`
                           : `${translatedText.mayNotAccept} ${insurance}`}
                       </p>
-                      <p className="text-xs text-gray-600 mt-1">{prediction?.reason || "Please call to verify insurance acceptance"}</p>
-                      {prediction && (
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${getConfidenceColor(prediction.confidence)}`}>
-                            {prediction.confidence} confidence
-                          </span>
-                          <span className="text-xs text-gray-400">•</span>
-                          <span className="text-xs text-gray-500">Always call to confirm</span>
-                        </div>
-                      )}
+                      <p className="text-xs text-gray-600 mt-1">{prediction.reason || "Please call to verify insurance acceptance"}</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${getConfidenceColor(prediction.confidence)}`}>
+                          {prediction.confidence} confidence
+                        </span>
+                        <span className="text-xs text-gray-400">•</span>
+                        <span className="text-xs text-gray-500">Always call to confirm</span>
+                      </div>
                     </div>
                   </div>
                 )}

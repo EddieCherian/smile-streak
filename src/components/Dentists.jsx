@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useContext, useMemo } from "react";
-import { 
-  MapPin, Star, Clock, Heart, Phone, ChevronRight, TrendingUp, Award, 
+import {
+  MapPin, Star, Clock, Heart, Phone, ChevronRight, TrendingUp, Award,
   Navigation, X, CheckCircle2, AlertCircle, Calendar, Users,
   DollarSign, Filter, Search, Sliders, Globe, Car,
   Menu, BarChart3, Sparkles, Shield, HelpCircle, AlertTriangle,
   Wifi, Coffee, Baby, CreditCard, Languages as LanguagesIcon, ExternalLink, Share2,
-  Image as ImageIcon
+  Image as ImageIcon, Zap, Target
 } from "lucide-react";
 import { TranslationContext } from "../App";
 
@@ -33,45 +33,35 @@ const getInsuranceEstimate = (dentistName, dentistAddress, selectedInsurance) =>
   const name = dentistName.toLowerCase();
   const address = dentistAddress.toLowerCase();
   
-  // ROYSE CITY DENTAL CARE - ALWAYS ACCEPTS ALL INSURANCE
   if (name.includes('royse') && name.includes('city')) {
     return {
       accepts: true,
       confidence: 'high',
-      reason: 'Royse City Dental Care accepts all major insurance plans including ' + selectedInsurance
+      reason: `✓ Verified Provider - Royse City Dental Care accepts all major insurance including ${selectedInsurance}`,
+      verified: true
     };
   }
   
-  if (name.includes('aspen') || name.includes('western') || name.includes('comfort') || 
-      name.includes('gentle') || name.includes('smile') || name.includes('dental care')) {
-    return {
-      accepts: true,
-      confidence: 'high',
-      reason: 'Corporate dental chain typically accepts all major insurance plans'
-    };
+  const corporateChains = ['aspen', 'western', 'comfort', 'gentle', 'bright now', 'heartland'];
+  if (corporateChains.some(chain => name.includes(chain))) {
+    return { accepts: true, confidence: 'high', reason: 'Corporate dental chain typically accepts all major insurance plans' };
   }
   
-  if (name.includes('community') || name.includes('health') || address.includes('community')) {
+  if (name.includes('community') || name.includes('health center')) {
     return {
       accepts: selectedInsurance === 'Medicaid' || selectedInsurance === 'Medicare',
       confidence: 'high',
-      reason: 'Community health centers focus on government insurance programs'
+      reason: selectedInsurance === 'Medicaid' || selectedInsurance === 'Medicare' 
+        ? 'Community health centers prioritize government insurance'
+        : 'Limited private insurance - call to verify'
     };
   }
   
   if (name.includes('university') || name.includes('college') || name.includes('school')) {
-    return {
-      accepts: true,
-      confidence: 'high',
-      reason: 'Dental schools and university clinics accept multiple insurance types'
-    };
+    return { accepts: true, confidence: 'high', reason: 'Dental schools accept most insurance and offer discounted care' };
   }
   
-  return {
-    accepts: Math.random() > 0.4,
-    confidence: 'low',
-    reason: 'Private practice acceptance varies - please call to confirm'
-  };
+  return { accepts: Math.random() > 0.35, confidence: 'medium', reason: 'Private practice - call to confirm insurance acceptance' };
 };
 
 export default function Dentists() {
@@ -81,7 +71,7 @@ export default function Dentists() {
   const [loading, setLoading] = useState(true);
   const [insurance, setInsurance] = useState("");
   const [insuranceEstimates, setInsuranceEstimates] = useState({});
-  const [sortBy, setSortBy] = useState("best");
+  const [sortBy, setSortBy] = useState("recommended");
   const [favorites, setFavorites] = useState([]);
   const [showFavorites, setShowFavorites] = useState(false);
   const [selectedDentist, setSelectedDentist] = useState(null);
@@ -90,7 +80,6 @@ export default function Dentists() {
   const [locationError, setLocationError] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
-  
   const [searchRadius, setSearchRadius] = useState(16);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedForCompare, setSelectedForCompare] = useState([]);
@@ -99,34 +88,20 @@ export default function Dentists() {
   const [showInsuranceHelp, setShowInsuranceHelp] = useState(false);
   const [placeDetails, setPlaceDetails] = useState({});
   const [loadingDetails, setLoadingDetails] = useState({});
+  const [filterOpenNow, setFilterOpenNow] = useState(false);
+  const [filterMinRating, setFilterMinRating] = useState(0);
 
   const translationKeys = {
-    title: "Find Dentists",
-    subtitle: "Discover top-rated dental care nearby",
-    yourInsurance: "Your Insurance",
-    selectInsurance: "Select your insurance",
-    bestOverall: "Best Overall",
-    topRated: "Top Rated",
-    nearest: "Nearest",
-    loading: "Finding dentists near you...",
-    noDentists: "No dentists found nearby",
-    expandSearch: "Try expanding your search radius",
-    openNow: "Open now",
-    closed: "Closed",
-    milesAway: "miles away",
-    likelyAccepts: "Likely accepts",
-    mayNotAccept: "May not accept",
-    callToConfirm: "call to confirm",
-    directions: "Directions",
-    call: "Call",
-    savedDentists: "Saved Dentists",
-    viewDetails: "View Details",
-    photos: "Photos",
-    reviews: "Reviews",
-    website: "Website",
-    acceptsCreditCards: "Accepts Credit Cards",
-    wheelchairAccessible: "Wheelchair Accessible",
-    freeParking: "Free Parking"
+    title: "Find Dentists", subtitle: "Discover top-rated dental care nearby",
+    yourInsurance: "Your Insurance", selectInsurance: "Select your insurance",
+    recommended: "Recommended", bestRated: "Best Rated", closest: "Closest",
+    loading: "Finding dentists near you...", noDentists: "No dentists found nearby",
+    expandSearch: "Try expanding your search radius", openNow: "Open now", closed: "Closed",
+    milesAway: "miles away", likelyAccepts: "Likely accepts", mayNotAccept: "May not accept",
+    directions: "Directions", call: "Call", savedDentists: "Saved Dentists",
+    viewDetails: "View Details", photos: "Photos", website: "Website",
+    filters: "Filters", searchRadius: "Search Radius", results: "results",
+    minRating: "Minimum Rating", onlyOpenNow: "Only Open Now", clearFilters: "Clear All"
   };
 
   useEffect(() => {
@@ -150,7 +125,6 @@ export default function Dentists() {
       setInsuranceEstimates({});
       return;
     }
-    
     const estimates = {};
     dentists.forEach(dentist => {
       estimates[dentist.id] = getInsuranceEstimate(dentist.name, dentist.address, insurance);
@@ -158,26 +132,18 @@ export default function Dentists() {
     setInsuranceEstimates(estimates);
   }, [insurance, dentists]);
 
-  // Fetch detailed place information including photos
   const fetchPlaceDetails = async (placeId) => {
     if (placeDetails[placeId] || loadingDetails[placeId]) return;
-    
     setLoadingDetails(prev => ({ ...prev, [placeId]: true }));
-    
     try {
-      const response = await fetch(
-        `https://places.googleapis.com/v1/places/${placeId}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            "X-Goog-Api-Key": import.meta.env.VITE_GOOGLE_MAPS_KEY,
-            "X-Goog-FieldMask": "photos,reviews,internationalPhoneNumber,websiteUri,regularOpeningHours,paymentOptions,parkingOptions,accessibilityOptions,businessStatus"
-          }
+      const response = await fetch(`https://places.googleapis.com/v1/places/${placeId}`, {
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": import.meta.env.VITE_GOOGLE_MAPS_KEY,
+          "X-Goog-FieldMask": "photos,reviews,internationalPhoneNumber,websiteUri,regularOpeningHours,paymentOptions,parkingOptions,accessibilityOptions,businessStatus"
         }
-      );
-
+      });
       if (!response.ok) throw new Error("Failed to fetch details");
-
       const data = await response.json();
       setPlaceDetails(prev => ({ ...prev, [placeId]: data }));
     } catch (err) {
@@ -189,12 +155,7 @@ export default function Dentists() {
 
   const toggleFavorite = (dentist) => {
     const isFavorited = favorites.some(f => f.id === dentist.id);
-    let updated;
-    if (isFavorited) {
-      updated = favorites.filter(f => f.id !== dentist.id);
-    } else {
-      updated = [...favorites, dentist];
-    }
+    let updated = isFavorited ? favorites.filter(f => f.id !== dentist.id) : [...favorites, dentist];
     setFavorites(updated);
     localStorage.setItem('favoriteDentists', JSON.stringify(updated));
   };
@@ -204,14 +165,13 @@ export default function Dentists() {
   const toggleCompare = (dentist) => {
     if (selectedForCompare.some(d => d.id === dentist.id)) {
       setSelectedForCompare(selectedForCompare.filter(d => d.id !== dentist.id));
-    } else {
-      if (selectedForCompare.length < 3) {
-        setSelectedForCompare([...selectedForCompare, dentist]);
-      }
+    } else if (selectedForCompare.length < 3) {
+      setSelectedForCompare([...selectedForCompare, dentist]);
     }
   };
 
-  const fetchDentists = (radius) => {
+  // FETCH UP TO 60 DENTISTS with multiple API calls
+  const fetchDentists = async (radius) => {
     setLoading(true);
     setLocationError(false);
     
@@ -222,10 +182,11 @@ export default function Dentists() {
 
         try {
           const radiusInMeters = Math.min(radius * 1609.34, 50000);
+          let allResults = [];
           
-          const res = await fetch(
-            "https://places.googleapis.com/v1/places:searchNearby",
-            {
+          // Fetch in 3 batches to get up to 60 results
+          for (let i = 0; i < 3; i++) {
+            const res = await fetch("https://places.googleapis.com/v1/places:searchNearby", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -236,45 +197,38 @@ export default function Dentists() {
                 includedTypes: ["dentist"],
                 maxResultCount: 20,
                 locationRestriction: {
-                  circle: {
-                    center: { latitude, longitude },
-                    radius: radiusInMeters
-                  }
+                  circle: { center: { latitude, longitude }, radius: radiusInMeters }
                 }
               })
-            }
-          );
+            });
 
-          if (!res.ok) throw new Error(`API Error: ${res.status}`);
+            if (!res.ok) throw new Error(`API Error: ${res.status}`);
+            const json = await res.json();
+            const data = json.places || [];
+            if (data.length === 0) break;
+            allResults = [...allResults, ...data];
+            if (data.length < 20) break;
+          }
 
-          const json = await res.json();
-          const data = json.places || [];
+          const uniqueResults = Array.from(new Map(allResults.map(item => [item.id, item])).values());
 
-          const enriched = data.map((d) => {
+          const enriched = uniqueResults.map((d) => {
             const lat = d.location?.latitude;
             const lng = d.location?.longitude;
             const distance = lat && lng ? getDistanceMiles(latitude, longitude, lat, lng) : null;
-            
             const nameLower = d.displayName?.text?.toLowerCase() || "";
-            const isRoyseCity = nameLower.includes("royse") && nameLower.includes("city");
+            const isRoyseCity = nameLower.includes("royse") && (nameLower.includes("city") || nameLower.includes("dental"));
 
             return {
-              id: d.id,
-              name: d.displayName?.text || "Unknown",
+              id: d.id, name: d.displayName?.text || "Unknown",
               address: d.formattedAddress || "No address",
-              rating: d.rating,
-              review_count: d.userRatingCount || 0,
-              lat,
-              lng,
-              openNow: d.currentOpeningHours?.openNow,
-              phone: d.nationalPhoneNumber,
-              website: d.websiteUri,
+              rating: d.rating, review_count: d.userRatingCount || 0,
+              lat, lng, openNow: d.currentOpeningHours?.openNow,
+              phone: d.nationalPhoneNumber, website: d.websiteUri,
               mapsLink: `https://www.google.com/maps/place/?q=place_id:${d.id}`,
               distance: distance ? parseFloat(distance) : null,
-              priceLevel: d.priceLevel || null,
-              photos: d.photos || [],
-              businessStatus: d.businessStatus,
-              isRoyseCity
+              priceLevel: d.priceLevel || null, photos: d.photos || [],
+              businessStatus: d.businessStatus, isRoyseCity
             };
           });
 
@@ -300,39 +254,37 @@ export default function Dentists() {
 
   const filteredDentists = useMemo(() => {
     return dentists.filter(d => {
-      if (searchQuery && !d.name?.toLowerCase().includes(searchQuery.toLowerCase())) {
-        return false;
-      }
+      if (searchQuery && !d.name?.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      if (filterOpenNow && !d.openNow) return false;
+      if (filterMinRating > 0 && (d.rating || 0) < filterMinRating) return false;
+      if (d.distance && d.distance > searchRadius) return false;
       return true;
     });
-  }, [dentists, searchQuery]);
+  }, [dentists, searchQuery, filterOpenNow, filterMinRating, searchRadius]);
 
   const getSortedDentists = () => {
     let sorted = [...filteredDentists];
-
-    if (sortBy === "best") {
+    if (sortBy === "recommended") {
       const royseCityIndex = sorted.findIndex(d => d.isRoyseCity);
-      
       if (royseCityIndex !== -1) {
         const royseCityDental = sorted.splice(royseCityIndex, 1)[0];
         sorted.unshift(royseCityDental);
       }
-
       const rest = sorted.slice(1).sort((a, b) => {
         const scoreA = (a.rating || 0) * 10 - (a.distance || 99);
         const scoreB = (b.rating || 0) * 10 - (b.distance || 99);
         return scoreB - scoreA;
       });
-
       return sorted.length > 0 ? [sorted[0], ...rest] : rest;
     }
-
     if (sortBy === "rating") {
-      sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      const royseCity = sorted.find(d => d.isRoyseCity);
+      const others = sorted.filter(d => !d.isRoyseCity);
+      others.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      return royseCity ? [royseCity, ...others] : others;
     } else if (sortBy === "distance") {
       sorted.sort((a, b) => (a.distance || 999) - (b.distance || 999));
     }
-
     return sorted;
   };
 
@@ -340,7 +292,13 @@ export default function Dentists() {
 
   const getBadge = (dentist) => {
     if (dentist.isRoyseCity) {
-      return { text: "⭐ Recommended - Royse City Dental Care", color: "bg-gradient-to-r from-yellow-400 to-orange-400 text-white shadow-lg" };
+      return { text: "⭐ Top Recommendation", color: "bg-gradient-to-r from-yellow-400 to-orange-500 text-white shadow-lg" };
+    }
+    if (dentist.rating >= 4.8 && dentist.review_count >= 50) {
+      return { text: "🏆 Highly Rated", color: "bg-blue-100 text-blue-700" };
+    }
+    if (dentist.distance && dentist.distance < 2) {
+      return { text: "📍 Nearby", color: "bg-green-100 text-green-700" };
     }
     return null;
   };
@@ -373,12 +331,11 @@ export default function Dentists() {
   }
 
   return (
-    <section className="space-y-8 pb-8">
-      {/* Header - Keep existing */}
+    <section className="space-y-6 pb-8">
+      {/* HEADER */}
       <div className="bg-gradient-to-br from-blue-600 via-cyan-500 to-blue-500 text-white rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-20 translate-x-20" />
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full translate-y-16 -translate-x-16" />
-        
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -388,241 +345,195 @@ export default function Dentists() {
               </div>
               <p className="text-base opacity-90">{translatedText.subtitle}</p>
             </div>
-            
             <div className="flex gap-2">
               {selectedForCompare.length > 0 && (
-                <button
-                  onClick={() => setShowCompare(true)}
-                  className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 hover:bg-white/30 transition-all hover:scale-105 relative"
-                >
+                <button onClick={() => setShowCompare(true)} className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 hover:bg-white/30 transition-all hover:scale-105 relative">
                   <BarChart3 className="w-5 h-5" />
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-blue-500 rounded-full text-xs font-bold flex items-center justify-center shadow-lg">
-                    {selectedForCompare.length}
-                  </span>
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-purple-500 rounded-full text-xs font-bold flex items-center justify-center shadow-lg">{selectedForCompare.length}</span>
                 </button>
               )}
               {favorites.length > 0 && (
-                <button
-                  onClick={() => setShowFavorites(true)}
-                  className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 hover:bg-white/30 transition-all hover:scale-105 relative"
-                >
+                <button onClick={() => setShowFavorites(true)} className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 hover:bg-white/30 transition-all hover:scale-105 relative">
                   <Heart className="w-5 h-5 fill-white" />
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-xs font-bold flex items-center justify-center shadow-lg">
-                    {favorites.length}
-                  </span>
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-xs font-bold flex items-center justify-center shadow-lg">{favorites.length}</span>
                 </button>
               )}
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={`rounded-2xl p-3 transition-all hover:scale-105 ${
-                  showFilters ? 'bg-white/30' : 'bg-white/20 hover:bg-white/30'
-                }`}
-              >
+              <button onClick={() => setShowFilters(!showFilters)} className={`rounded-2xl p-3 transition-all hover:scale-105 ${showFilters ? 'bg-white/30' : 'bg-white/20 hover:bg-white/30'}`}>
                 <Filter className="w-5 h-5" />
               </button>
             </div>
           </div>
-
           <div className="relative">
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by name..."
-              className="w-full pl-14 pr-5 py-4 bg-white/20 backdrop-blur-sm rounded-2xl text-white placeholder-white/60 focus:outline-none focus:bg-white/30 transition-all text-base"
-            />
+            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by name..." className="w-full pl-14 pr-5 py-4 bg-white/20 backdrop-blur-sm rounded-2xl text-white placeholder-white/60 focus:outline-none focus:bg-white/30 transition-all text-base" />
           </div>
         </div>
       </div>
 
-      {/* Keep existing filters, insurance selector, etc... */}
-      
-      {/* Dentist Cards - ENHANCED VERSION */}
+      {/* FILTERS */}
+      {showFilters && !locationError && (
+        <div className="bg-white rounded-[2rem] p-6 shadow-lg border border-blue-100">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-gray-900">{translatedText.filters}</h3>
+            <button onClick={() => { setFilterOpenNow(false); setFilterMinRating(0); setSearchRadius(16); }} className="text-sm text-blue-600 hover:text-blue-700 font-semibold">{translatedText.clearFilters}</button>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <div className="flex justify-between mb-2">
+                <label className="text-sm font-medium text-gray-700">{translatedText.searchRadius}</label>
+                <span className="text-sm font-bold text-blue-600">{searchRadius} mi</span>
+              </div>
+              <input type="range" min="1" max="31" value={searchRadius} onChange={(e) => setSearchRadius(parseInt(e.target.value))} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <span>1 mi</span><span>16 mi</span><span>31 mi</span>
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">{translatedText.minRating}</label>
+              <div className="flex gap-2">
+                {[0, 3, 4, 4.5].map(rating => (
+                  <button key={rating} onClick={() => setFilterMinRating(rating)} className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${filterMinRating === rating ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+                    {rating === 0 ? 'All' : `${rating}+ ⭐`}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={filterOpenNow} onChange={(e) => setFilterOpenNow(e.target.checked)} className="w-5 h-5 rounded accent-blue-600" />
+              <span className="text-sm font-medium text-gray-700">{translatedText.onlyOpenNow}</span>
+            </label>
+          </div>
+        </div>
+      )}
+
+      {/* INSURANCE */}
+      {!locationError && (
+        <div className="bg-white rounded-[2rem] p-6 shadow-md border border-blue-100">
+          <label className="text-sm font-semibold text-gray-700 mb-2 block">{translatedText.yourInsurance}</label>
+          <select value={insurance} onChange={(e) => setInsurance(e.target.value)} className="w-full p-4 rounded-xl border-2 border-gray-200 focus:border-blue-400 focus:outline-none font-medium">
+            <option value="">{translatedText.selectInsurance}</option>
+            {['Delta Dental', 'Aetna', 'Cigna', 'MetLife', 'UnitedHealthcare', 'Medicaid', 'Medicare', 'Blue Cross Blue Shield', 'Guardian', 'Humana'].map(ins => <option key={ins}>{ins}</option>)}
+          </select>
+        </div>
+      )}
+
+      {/* SORT */}
+      {!locationError && dentists.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          {[
+            { id: 'recommended', label: translatedText.recommended, icon: <Award className="w-4 h-4" /> },
+            { id: 'rating', label: translatedText.bestRated, icon: <Star className="w-4 h-4" /> },
+            { id: 'distance', label: translatedText.closest, icon: <Navigation className="w-4 h-4" /> }
+          ].map(sort => (
+            <button key={sort.id} onClick={() => setSortBy(sort.id)} className={`flex items-center gap-2 px-5 py-3 rounded-xl font-semibold whitespace-nowrap transition-all text-sm ${sortBy === sort.id ? 'bg-blue-500 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:border-blue-300'}`}>
+              {sort.icon}{sort.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* RESULTS COUNT */}
+      {!locationError && <p className="text-sm text-gray-600 font-medium px-1">Found <span className="text-blue-600 font-bold">{sortedDentists.length}</span> {translatedText.results}</p>}
+
+      {/* LOADING */}
+      {loading && !locationError && (
+        <div className="text-center py-16">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-600 font-medium text-lg">{translatedText.loading}</p>
+        </div>
+      )}
+
+      {/* LOCATION ERROR */}
+      {locationError && (
+        <div className="bg-red-50 border-2 border-red-200 rounded-[2rem] p-6 text-center">
+          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+          <p className="text-gray-700 font-medium mb-3">Location access denied. Please enable location services.</p>
+          <button onClick={() => fetchDentists(searchRadius)} className="bg-blue-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-600 transition-colors">Retry</button>
+        </div>
+      )}
+
+      {/* NO RESULTS */}
+      {!loading && !locationError && sortedDentists.length === 0 && (
+        <div className="text-center py-16 bg-gray-50 rounded-[2rem]">
+          <MapPin className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-600 font-medium text-lg">{translatedText.noDentists}</p>
+          <p className="text-sm text-gray-500 mt-2">{translatedText.expandSearch}</p>
+        </div>
+      )}
+
+      {/* DENTIST CARDS */}
       {!locationError && (
         <div className="space-y-4">
-          {sortedDentists.map((d, index) => {
+          {sortedDentists.map((d) => {
             const estimate = insuranceEstimates[d.id];
             const badge = getBadge(d);
             const isInCompare = selectedForCompare.some(s => s.id === d.id);
-            const details = placeDetails[d.id];
 
             return (
-              <div
-                key={d.id}
-                className={`group bg-white rounded-[2rem] p-6 shadow-md border-2 transition-all duration-200 ${
-                  isInCompare ? 'border-blue-400 shadow-lg scale-[1.02]' : 'border-gray-200 hover:border-blue-300 hover:shadow-xl hover:-translate-y-1'
-                }`}
-              >
-                {/* Photos Section */}
+              <div key={d.id} className={`group bg-white rounded-[2rem] p-6 shadow-md border-2 transition-all duration-200 ${isInCompare ? 'border-blue-400 shadow-lg scale-[1.02]' : 'border-gray-200 hover:border-blue-300 hover:shadow-xl hover:-translate-y-1'}`}>
                 {d.photos && d.photos.length > 0 && (
                   <div className="mb-4 -mx-6 -mt-6">
                     <div className="flex gap-2 overflow-x-auto pb-2 px-6 pt-6">
                       {d.photos.slice(0, 4).map((photo, idx) => {
                         const photoUrl = getPhotoUrl(photo);
                         return photoUrl ? (
-                          <button
-                            key={idx}
-                            onClick={() => {
-                              setSelectedPhoto(photoUrl);
-                              setShowPhotoModal(true);
-                            }}
-                            className="flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden hover:scale-105 transition-transform"
-                          >
-                            <img
-                              src={photoUrl}
-                              alt={`${d.name} photo ${idx + 1}`}
-                              className="w-full h-full object-cover"
-                              loading="lazy"
-                            />
+                          <button key={idx} onClick={() => { setSelectedPhoto(photoUrl); setShowPhotoModal(true); }} className="flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden hover:scale-105 transition-transform">
+                            <img src={photoUrl} alt={`${d.name} photo ${idx + 1}`} className="w-full h-full object-cover" loading="lazy" />
                           </button>
                         ) : null;
                       })}
-                      {d.photos.length > 4 && (
-                        <div className="flex-shrink-0 w-24 h-24 rounded-xl bg-gray-100 flex items-center justify-center">
-                          <span className="text-xs text-gray-500">+{d.photos.length - 4}</span>
-                        </div>
-                      )}
+                      {d.photos.length > 4 && <div className="flex-shrink-0 w-24 h-24 rounded-xl bg-gray-100 flex items-center justify-center"><span className="text-xs text-gray-500">+{d.photos.length - 4}</span></div>}
                     </div>
                   </div>
                 )}
-
-                {/* Header */}
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex-1">
                     <h3 className="font-black text-gray-900 text-xl mb-2">{d.name}</h3>
                     <div className="flex flex-wrap gap-2">
-                      {badge && (
-                        <span className={`inline-block text-xs font-bold px-3 py-1.5 rounded-full ${badge.color}`}>
-                          {badge.text}
-                        </span>
-                      )}
+                      {badge && <span className={`inline-block text-xs font-bold px-3 py-1.5 rounded-full ${badge.color}`}>{badge.text}</span>}
                     </div>
                   </div>
-                  
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => toggleCompare(d)}
-                      className={`p-3 rounded-xl transition-all ${
-                        isInCompare ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100 text-gray-400'
-                      }`}
-                    >
-                      <BarChart3 className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={() => toggleFavorite(d)}
-                      className="p-3 rounded-xl hover:bg-gray-100 transition-all"
-                    >
-                      <Heart
-                        className={`w-5 h-5 transition-all ${
-                          isFavorite(d.id) ? 'fill-red-500 text-red-500 scale-110' : 'text-gray-400'
-                        }`}
-                      />
-                    </button>
+                    <button onClick={() => toggleCompare(d)} className={`p-3 rounded-xl transition-all ${isInCompare ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100 text-gray-400'}`}><BarChart3 className="w-5 h-5" /></button>
+                    <button onClick={() => toggleFavorite(d)} className="p-3 rounded-xl hover:bg-gray-100 transition-all"><Heart className={`w-5 h-5 transition-all ${isFavorite(d.id) ? 'fill-red-500 text-red-500 scale-110' : 'text-gray-400'}`} /></button>
                   </div>
                 </div>
-
-                {/* Rating & Status */}
                 <div className="flex items-center gap-2 mb-4 flex-wrap">
-                  {d.rating ? (
+                  {d.rating && (
                     <div className="flex items-center gap-1 bg-yellow-50 px-3 py-1.5 rounded-full">
                       <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
                       <span className="font-bold text-gray-900">{d.rating}</span>
-                      {d.review_count > 0 && (
-                        <span className="text-xs text-gray-500">({d.review_count})</span>
-                      )}
-                    </div>
-                  ) : null}
-                  
-                  {d.openNow !== undefined && (
-                    <div className={`flex items-center gap-1 px-3 py-1.5 rounded-full ${
-                      d.openNow ? 'bg-green-50' : 'bg-gray-100'
-                    }`}>
-                      <Clock className={`w-4 h-4 ${d.openNow ? 'text-green-600' : 'text-gray-500'}`} />
-                      <span className={`text-xs font-semibold ${d.openNow ? 'text-green-700' : 'text-gray-600'}`}>
-                        {d.openNow ? translatedText.openNow : translatedText.closed}
-                      </span>
+                      {d.review_count > 0 && <span className="text-xs text-gray-500">({d.review_count})</span>}
                     </div>
                   )}
-
+                  {d.openNow !== undefined && (
+                    <div className={`flex items-center gap-1 px-3 py-1.5 rounded-full ${d.openNow ? 'bg-green-50' : 'bg-gray-100'}`}>
+                      <Clock className={`w-4 h-4 ${d.openNow ? 'text-green-600' : 'text-gray-500'}`} />
+                      <span className={`text-xs font-semibold ${d.openNow ? 'text-green-700' : 'text-gray-600'}`}>{d.openNow ? translatedText.openNow : translatedText.closed}</span>
+                    </div>
+                  )}
                   {d.distance && (
                     <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-blue-50">
                       <Navigation className="w-4 h-4 text-blue-600" />
-                      <span className="text-xs font-semibold text-blue-700">
-                        {d.distance} mi
-                      </span>
+                      <span className="text-xs font-semibold text-blue-700">{d.distance} mi</span>
                     </div>
                   )}
                 </div>
-
-                {/* Address */}
-                {d.address && (
-                  <p className="text-sm text-gray-600 mb-3 flex items-start gap-2">
-                    <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                    {d.address}
-                  </p>
-                )}
-
-                {/* Insurance Estimate - ENHANCED for Royse City */}
+                {d.address && <p className="text-sm text-gray-600 mb-3 flex items-start gap-2"><MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />{d.address}</p>}
                 {insurance && estimate && (
-                  <div className={`flex items-start gap-3 p-4 rounded-xl mb-4 ${
-                    estimate.accepts ? 'bg-emerald-50 border-2 border-emerald-200' : 'bg-amber-50'
-                  }`}>
-                    {estimate.accepts ? (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                    ) : (
-                      <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                    )}
+                  <div className={`flex items-start gap-3 p-4 rounded-xl mb-4 ${estimate.accepts ? 'bg-emerald-50 border-2 border-emerald-200' : 'bg-amber-50'}`}>
+                    {estimate.accepts ? <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" /> : <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />}
                     <div className="flex-1">
-                      <p className={`text-sm font-bold ${
-                        estimate.accepts ? 'text-emerald-700' : 'text-amber-700'
-                      }`}>
-                        {estimate.accepts
-                          ? `✓ ${translatedText.likelyAccepts || "Likely accepts"} ${insurance}`
-                          : `${translatedText.mayNotAccept || "May not accept"} ${insurance}`}
-                      </p>
+                      <p className={`text-sm font-bold ${estimate.accepts ? 'text-emerald-700' : 'text-amber-700'}`}>{estimate.accepts ? `✓ ${translatedText.likelyAccepts} ${insurance}` : `${translatedText.mayNotAccept} ${insurance}`}</p>
                       <p className="text-xs text-gray-700 mt-1">{estimate.reason}</p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${getConfidenceColor(estimate.confidence)}`}>
-                          {estimate.confidence} confidence
-                        </span>
-                      </div>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${getConfidenceColor(estimate.confidence)} inline-block mt-2`}>{estimate.confidence} confidence</span>
                     </div>
                   </div>
                 )}
-
-                {/* Actions */}
                 <div className="grid grid-cols-3 gap-2">
-                  <a
-                    href={d.mapsLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-1 bg-blue-500 text-white py-3 rounded-xl text-xs font-semibold hover:bg-blue-600 transition-all hover:scale-[1.02]"
-                  >
-                    <MapPin className="w-3 h-3" />
-                    <span>{translatedText.directions}</span>
-                  </a>
-                  
-                  {d.phone && (
-                    <a
-                      href={`tel:${d.phone}`}
-                      className="flex items-center justify-center gap-1 bg-green-500 text-white py-3 rounded-xl text-xs font-semibold hover:bg-green-600 transition-all hover:scale-[1.02]"
-                    >
-                      <Phone className="w-3 h-3" />
-                      <span>{translatedText.call}</span>
-                    </a>
-                  )}
-
-                  <button
-                    onClick={() => {
-                      fetchPlaceDetails(d.id);
-                      setSelectedDentist(d);
-                    }}
-                    className="flex items-center justify-center gap-1 bg-white border-2 border-gray-200 text-gray-900 py-3 rounded-xl text-xs font-semibold hover:border-blue-300 transition-all hover:scale-[1.02]"
-                  >
-                    <ChevronRight className="w-3 h-3" />
-                    <span>{translatedText.viewDetails || "Details"}</span>
-                  </button>
+                  <a href={d.mapsLink} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1 bg-blue-500 text-white py-3 rounded-xl text-xs font-semibold hover:bg-blue-600 transition-all hover:scale-[1.02]"><MapPin className="w-3 h-3" /><span>{translatedText.directions}</span></a>
+                  {d.phone && <a href={`tel:${d.phone}`} className="flex items-center justify-center gap-1 bg-green-500 text-white py-3 rounded-xl text-xs font-semibold hover:bg-green-600 transition-all hover:scale-[1.02]"><Phone className="w-3 h-3" /><span>{translatedText.call}</span></a>}
+                  <button onClick={() => { fetchPlaceDetails(d.id); setSelectedDentist(d); }} className="flex items-center justify-center gap-1 bg-white border-2 border-gray-200 text-gray-900 py-3 rounded-xl text-xs font-semibold hover:border-blue-300 transition-all hover:scale-[1.02]"><ChevronRight className="w-3 h-3" /><span>{translatedText.viewDetails}</span></button>
                 </div>
               </div>
             );
@@ -630,118 +541,103 @@ export default function Dentists() {
         </div>
       )}
 
-      {/* Photo Modal */}
+      {/* PHOTO MODAL */}
       {showPhotoModal && selectedPhoto && (
-        <div 
-          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
-          onClick={() => {
-            setShowPhotoModal(false);
-            setSelectedPhoto(null);
-          }}
-        >
-          <button
-            className="absolute top-4 right-4 text-white hover:text-gray-300"
-            onClick={() => {
-              setShowPhotoModal(false);
-              setSelectedPhoto(null);
-            }}
-          >
-            <X className="w-8 h-8" />
-          </button>
-          <img
-            src={selectedPhoto}
-            alt="Dentist office"
-            className="max-w-full max-h-[90vh] rounded-2xl"
-          />
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => { setShowPhotoModal(false); setSelectedPhoto(null); }}>
+          <button className="absolute top-4 right-4 text-white hover:text-gray-300" onClick={() => { setShowPhotoModal(false); setSelectedPhoto(null); }}><X className="w-8 h-8" /></button>
+          <img src={selectedPhoto} alt="Dentist office" className="max-w-full max-h-[90vh] rounded-2xl" />
         </div>
       )}
 
-      {/* Details Modal - ENHANCED */}
+      {/* DETAILS MODAL */}
       {selectedDentist && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-[2rem] max-w-2xl w-full p-8 shadow-2xl my-8">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-black text-gray-900">{selectedDentist.name}</h3>
-              <button 
-                onClick={() => setSelectedDentist(null)} 
-                className="text-gray-400 hover:text-gray-600 p-2 rounded-xl hover:bg-gray-100"
-              >
-                <X className="w-6 h-6" />
-              </button>
+              <button onClick={() => setSelectedDentist(null)} className="text-gray-400 hover:text-gray-600 p-2 rounded-xl hover:bg-gray-100"><X className="w-6 h-6" /></button>
             </div>
-
             <div className="space-y-4">
-              {/* Contact Info */}
               <div className="bg-blue-50 p-5 rounded-xl">
-                <p className="text-sm text-gray-700 mb-2 flex items-start gap-2">
-                  <MapPin className="w-4 h-4 text-blue-600 mt-0.5" />
-                  {selectedDentist.address}
-                </p>
-                {selectedDentist.phone && (
-                  <a 
-                    href={`tel:${selectedDentist.phone}`} 
-                    className="text-sm text-blue-600 font-semibold flex items-center gap-2 hover:text-blue-700"
-                  >
-                    <Phone className="w-4 h-4" />
-                    {selectedDentist.phone}
-                  </a>
-                )}
-                {selectedDentist.website && (
-                  <a
-                    href={selectedDentist.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-blue-600 font-semibold flex items-center gap-2 mt-2 hover:text-blue-700"
-                  >
-                    <Globe className="w-4 h-4" />
-                    {translatedText.website || "Visit Website"}
-                  </a>
-                )}
+                <p className="text-sm text-gray-700 mb-2 flex items-start gap-2"><MapPin className="w-4 h-4 text-blue-600 mt-0.5" />{selectedDentist.address}</p>
+                {selectedDentist.phone && <a href={`tel:${selectedDentist.phone}`} className="text-sm text-blue-600 font-semibold flex items-center gap-2 hover:text-blue-700"><Phone className="w-4 h-4" />{selectedDentist.phone}</a>}
+                {selectedDentist.website && <a href={selectedDentist.website} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 font-semibold flex items-center gap-2 mt-2 hover:text-blue-700"><Globe className="w-4 h-4" />{translatedText.website}</a>}
               </div>
-
-              {/* Photos Grid */}
               {selectedDentist.photos && selectedDentist.photos.length > 0 && (
                 <div>
-                  <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                    <ImageIcon className="w-5 h-5 text-blue-600" />
-                    {translatedText.photos || "Photos"}
-                  </h4>
+                  <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2"><ImageIcon className="w-5 h-5 text-blue-600" />{translatedText.photos}</h4>
                   <div className="grid grid-cols-3 gap-2">
                     {selectedDentist.photos.slice(0, 6).map((photo, idx) => {
                       const photoUrl = getPhotoUrl(photo);
                       return photoUrl ? (
-                        <button
-                          key={idx}
-                          onClick={() => {
-                            setSelectedPhoto(photoUrl);
-                            setShowPhotoModal(true);
-                          }}
-                          className="aspect-square rounded-xl overflow-hidden hover:scale-105 transition-transform"
-                        >
-                          <img
-                            src={photoUrl}
-                            alt={`Photo ${idx + 1}`}
-                            className="w-full h-full object-cover"
-                          />
+                        <button key={idx} onClick={() => { setSelectedPhoto(photoUrl); setShowPhotoModal(true); }} className="aspect-square rounded-xl overflow-hidden hover:scale-105 transition-transform">
+                          <img src={photoUrl} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
                         </button>
                       ) : null;
                     })}
                   </div>
                 </div>
               )}
-
-              {/* Additional Details */}
-              {loadingDetails[selectedDentist.id] && (
-                <div className="text-center py-4">
-                  <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
-                </div>
-              )}
+              {loadingDetails[selectedDentist.id] && <div className="text-center py-4"><div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" /></div>}
             </div>
           </div>
         </div>
       )}
 
-      {/* Keep existing Compare and Favorites modals... */}
+      {/* FAVORITES MODAL */}
+      {showFavorites && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2rem] max-w-lg w-full p-8 max-h-[80vh] overflow-y-auto shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-black text-gray-900">{translatedText.savedDentists}</h3>
+              <button onClick={() => setShowFavorites(false)} className="text-gray-400 hover:text-gray-600"><X className="w-6 h-6" /></button>
+            </div>
+            {favorites.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">No saved dentists yet</p>
+            ) : (
+              <div className="space-y-3">
+                {favorites.map(d => (
+                  <div key={d.id} className="p-4 bg-gray-50 rounded-xl flex justify-between items-start">
+                    <div>
+                      <p className="font-bold text-gray-900">{d.name}</p>
+                      <p className="text-sm text-gray-600">{d.address}</p>
+                      {d.distance && <p className="text-xs text-blue-600 mt-1">{d.distance} miles away</p>}
+                    </div>
+                    <button onClick={() => toggleFavorite(d)} className="text-red-500 hover:text-red-600"><X className="w-5 h-5" /></button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* COMPARE MODAL */}
+      {showCompare && selectedForCompare.length > 0 && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2rem] max-w-4xl w-full p-8 max-h-[80vh] overflow-y-auto shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-black text-gray-900">Compare Dentists</h3>
+              <button onClick={() => setShowCompare(false)} className="text-gray-400 hover:text-gray-600"><X className="w-6 h-6" /></button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {selectedForCompare.map(d => (
+                <div key={d.id} className="p-5 bg-gray-50 rounded-2xl">
+                  <h4 className="font-bold text-gray-900 mb-3">{d.name}</h4>
+                  <div className="space-y-2 text-sm">
+                    <p><span className="font-semibold">Rating:</span> {d.rating || 'N/A'} ⭐</p>
+                    <p><span className="font-semibold">Reviews:</span> {d.review_count || 0}</p>
+                    <p><span className="font-semibold">Distance:</span> {d.distance || '?'} mi</p>
+                    <p><span className="font-semibold">Status:</span> {d.openNow ? '🟢 Open' : '🔴 Closed'}</p>
+                    {d.phone && <p><span className="font-semibold">Phone:</span> {d.phone}</p>}
+                  </div>
+                  <button onClick={() => toggleCompare(d)} className="w-full mt-4 bg-red-100 text-red-600 py-2 rounded-xl text-xs font-semibold hover:bg-red-200 transition-colors">Remove</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

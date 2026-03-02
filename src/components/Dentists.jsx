@@ -3,7 +3,7 @@ import {
   MapPin, Star, Clock, Heart, Phone, ChevronRight, TrendingUp, Award, 
   Navigation, X, CheckCircle2, AlertCircle, Calendar, Users,
   DollarSign, Filter, Search, Sliders, Globe, Car,
-  Menu, BarChart3
+  Menu, BarChart3, Sparkles, Shield, HelpCircle
 } from "lucide-react";
 import { TranslationContext } from "../App";
 
@@ -14,26 +14,6 @@ const Wheelchair = ({ className }) => (
     <path d="M4 12h4l2 8 3-4 3 4 2-8h4" />
   </svg>
 );
-
-/* 🧠 Insurance intelligence profiles - these are based on common patterns, not guaranteed */
-const INSURANCE_PROFILES = {
-  corporate: ["Delta Dental", "Aetna", "Cigna", "MetLife", "UnitedHealthcare", "Guardian"],
-  private: ["Delta Dental", "MetLife", "Guardian", "Cigna"],
-  medicaid: ["Medicaid", "CHIP", "Medicare"]
-};
-
-function inferClinicType(name = "", address = "") {
-  const n = name.toLowerCase();
-  const a = address.toLowerCase();
-  
-  if (n.includes("community") || n.includes("health") || a.includes("community")) {
-    return "medicaid";
-  }
-  if (n.includes("family") || n.includes("group") || n.includes("dental care")) {
-    return "corporate";
-  }
-  return "private";
-}
 
 function getDistanceMiles(lat1, lon1, lat2, lon2) {
   if (!lat1 || !lon1 || !lat2 || !lon2) return null;
@@ -48,12 +28,81 @@ function getDistanceMiles(lat1, lon1, lat2, lon2) {
   return (2 * R * Math.asin(Math.sqrt(a))).toFixed(1);
 }
 
+// Gemini API function for insurance prediction
+async function predictInsuranceWithGemini(dentistName, dentistAddress, userInsurance) {
+  if (!userInsurance) return null;
+  
+  const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+  if (!API_KEY) {
+    console.warn("Gemini API key not found");
+    return null;
+  }
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${API_KEY}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: `You are an AI assistant that predicts whether dental clinics accept specific insurance plans.
+              
+              Based on the dentist's name and address, predict if they are likely to accept ${userInsurance} insurance.
+              
+              Dentist Name: ${dentistName}
+              Address: ${dentistAddress}
+              
+              Consider these factors:
+              - Corporate dental chains (Aspen Dental, Western Dental, etc.) typically accept major insurance plans
+              - Private practices may have more limited acceptance
+              - Community health centers and clinics with "community" or "health" in the name often accept Medicaid/Medicare
+              - Dental schools and university-affiliated clinics usually accept multiple insurance types
+              - Geographic location and practice size can indicate insurance acceptance patterns
+              
+              Return a JSON object with:
+              - "accepts": boolean (true/false) - your best prediction
+              - "confidence": "high", "medium", or "low" - how confident you are
+              - "reason": brief explanation of why you think this
+              
+              Examples:
+              - "Aspen Dental" in any location → likely accepts most major insurance
+              - "Community Health Center" → likely accepts Medicaid
+              - "Smith Family Dentistry" (private practice) → may have limited acceptance
+              
+              Return ONLY the JSON object, no other text.`
+            }]
+          }]
+        })
+      }
+    );
+
+    const data = await response.json();
+    const text = data.candidates[0].content.parts[0].text;
+    
+    // Extract JSON from response
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+    return null;
+  } catch (error) {
+    console.error("Gemini API error:", error);
+    return null;
+  }
+}
+
 export default function Dentists() {
   const { t, currentLanguage, translating } = useContext(TranslationContext);
   
   const [dentists, setDentists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [insurance, setInsurance] = useState("");
+  const [insurancePredictions, setInsurancePredictions] = useState({});
+  const [predictingInsurance, setPredictingInsurance] = useState(false);
   const [sortBy, setSortBy] = useState("best");
   const [favorites, setFavorites] = useState([]);
   const [showFavorites, setShowFavorites] = useState(false);
@@ -61,13 +110,14 @@ export default function Dentists() {
   const [userLocation, setUserLocation] = useState(null);
   const [translatedText, setTranslatedText] = useState({});
   
-  // Essential filters only
-  const [searchRadius, setSearchRadius] = useState(10);
+  // Essential filters only - set default to 16 miles, max 100
+  const [searchRadius, setSearchRadius] = useState(16);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedForCompare, setSelectedForCompare] = useState([]);
   const [showCompare, setShowCompare] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("list");
+  const [showInsuranceHelp, setShowInsuranceHelp] = useState(false);
 
   const translationKeys = {
     title: "Find Dentists",
@@ -104,7 +154,14 @@ export default function Dentists() {
     
     mapView: "Map View",
     listView: "List View",
-    compareView: "Compare View"
+    compareView: "Compare View",
+    
+    insuranceHelp: "How Insurance Prediction Works",
+    insuranceHelpText: "Our AI analyzes the dentist's name, location, and practice type to predict insurance acceptance. This is an estimate - always call to confirm.",
+    highConfidence: "High confidence prediction",
+    mediumConfidence: "Medium confidence prediction", 
+    lowConfidence: "Low confidence prediction",
+    predicting: "Analyzing insurance acceptance..."
   };
 
   // Load translations
@@ -124,6 +181,40 @@ export default function Dentists() {
     const saved = JSON.parse(localStorage.getItem('favoriteDentists') || '[]');
     setFavorites(saved);
   }, []);
+
+  // Run insurance predictions when insurance changes
+  useEffect(() => {
+    async function predictAllInsurance() {
+      if (!insurance || dentists.length === 0) return;
+      
+      setPredictingInsurance(true);
+      const predictions = {};
+      
+      // Process in batches to avoid rate limiting
+      for (let i = 0; i < dentists.length; i += 3) {
+        const batch = dentists.slice(i, i + 3);
+        await Promise.all(
+          batch.map(async (dentist) => {
+            const prediction = await predictInsuranceWithGemini(
+              dentist.name,
+              dentist.address,
+              insurance
+            );
+            if (prediction) {
+              predictions[dentist.id] = prediction;
+            }
+          })
+        );
+        // Small delay between batches
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+      
+      setInsurancePredictions(predictions);
+      setPredictingInsurance(false);
+    }
+
+    predictAllInsurance();
+  }, [insurance, dentists]);
 
   const toggleFavorite = (dentist) => {
     const isFavorited = favorites.some(f => f.id === dentist.id);
@@ -172,7 +263,7 @@ export default function Dentists() {
               locationRestriction: {
                 circle: {
                   center: { latitude, longitude },
-                  radius: searchRadius * 1609.34, // Convert miles to meters
+                  radius: searchRadius * 1609.34, // Convert miles to meters (1 mile = 1609.34 meters)
                 },
               },
             }),
@@ -277,13 +368,22 @@ export default function Dentists() {
     return null;
   };
 
+  const getConfidenceColor = (confidence) => {
+    switch(confidence) {
+      case 'high': return 'text-emerald-600 bg-emerald-50';
+      case 'medium': return 'text-amber-600 bg-amber-50';
+      case 'low': return 'text-gray-600 bg-gray-50';
+      default: return 'text-gray-500 bg-gray-50';
+    }
+  };
+
   if (translating || Object.keys(translatedText).length === 0) {
     return (
       <section className="space-y-6 pb-8">
-        <div className="bg-gradient-to-br from-blue-600 via-cyan-500 to-blue-500 text-white rounded-3xl p-6 shadow-xl">
-          <div className="animate-pulse flex items-center gap-2">
-            <MapPin className="w-6 h-6" />
-            <h2 className="text-2xl font-black">Loading...</h2>
+        <div className="bg-gradient-to-br from-blue-600 via-cyan-500 to-blue-500 text-white rounded-[2.5rem] p-8 shadow-xl">
+          <div className="animate-pulse flex items-center gap-3">
+            <MapPin className="w-7 h-7" />
+            <h2 className="text-3xl font-black">Loading...</h2>
           </div>
         </div>
       </section>
@@ -291,30 +391,30 @@ export default function Dentists() {
   }
 
   return (
-    <section className="space-y-6 pb-8">
+    <section className="space-y-8 pb-8">
       {/* Header */}
-      <div className="bg-gradient-to-br from-blue-600 via-cyan-500 to-blue-500 text-white rounded-3xl p-6 shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16" />
-        <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-12 -translate-x-12" />
+      <div className="bg-gradient-to-br from-blue-600 via-cyan-500 to-blue-500 text-white rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-20 translate-x-20" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full translate-y-16 -translate-x-16" />
         
         <div className="relative z-10">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-6">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <MapPin className="w-6 h-6" />
-                <h2 className="text-2xl font-black">{translatedText.title}</h2>
+              <div className="flex items-center gap-3 mb-2">
+                <MapPin className="w-7 h-7" />
+                <h2 className="text-3xl font-black">{translatedText.title}</h2>
               </div>
-              <p className="text-sm opacity-90">{translatedText.subtitle}</p>
+              <p className="text-base opacity-90">{translatedText.subtitle}</p>
             </div>
             
             <div className="flex gap-2">
               {selectedForCompare.length > 0 && (
                 <button
                   onClick={() => setShowCompare(true)}
-                  className="bg-white/20 backdrop-blur-sm rounded-xl p-2 hover:bg-white/30 transition-colors relative"
+                  className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 hover:bg-white/30 transition-all hover:scale-105 relative"
                 >
                   <BarChart3 className="w-5 h-5" />
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full text-xs flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-blue-500 rounded-full text-xs font-bold flex items-center justify-center shadow-lg">
                     {selectedForCompare.length}
                   </span>
                 </button>
@@ -322,17 +422,19 @@ export default function Dentists() {
               {favorites.length > 0 && (
                 <button
                   onClick={() => setShowFavorites(true)}
-                  className="bg-white/20 backdrop-blur-sm rounded-xl p-2 hover:bg-white/30 transition-colors relative"
+                  className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 hover:bg-white/30 transition-all hover:scale-105 relative"
                 >
                   <Heart className="w-5 h-5 fill-white" />
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-xs flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-xs font-bold flex items-center justify-center shadow-lg">
                     {favorites.length}
                   </span>
                 </button>
               )}
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`p-2 rounded-xl transition-colors ${showFilters ? 'bg-white/30' : 'bg-white/20 hover:bg-white/30'}`}
+                className={`rounded-2xl p-3 transition-all hover:scale-105 ${
+                  showFilters ? 'bg-white/30' : 'bg-white/20 hover:bg-white/30'
+                }`}
               >
                 <Filter className="w-5 h-5" />
               </button>
@@ -341,13 +443,13 @@ export default function Dentists() {
 
           {/* Search Bar */}
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by name..."
-              className="w-full pl-12 pr-4 py-3 bg-white/20 backdrop-blur-sm rounded-xl text-white placeholder-white/60 focus:outline-none focus:bg-white/30 transition-colors"
+              className="w-full pl-14 pr-5 py-4 bg-white/20 backdrop-blur-sm rounded-2xl text-white placeholder-white/60 focus:outline-none focus:bg-white/30 transition-all text-base"
             />
           </div>
         </div>
@@ -355,44 +457,63 @@ export default function Dentists() {
 
       {/* Filters Panel */}
       {showFilters && (
-        <div className="bg-white rounded-3xl p-6 shadow-lg border border-blue-100">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-black text-gray-900 flex items-center gap-2">
+        <div className="bg-white rounded-[2rem] p-8 shadow-xl border border-blue-100">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="font-black text-gray-900 flex items-center gap-2 text-lg">
               <Sliders className="w-5 h-5 text-blue-600" />
               {translatedText.filters}
             </h3>
             <button
-              onClick={() => setSearchRadius(10)}
-              className="text-sm text-blue-600 hover:text-blue-700"
+              onClick={() => setSearchRadius(16)}
+              className="text-sm text-blue-600 hover:text-blue-700 font-semibold px-4 py-2 rounded-xl hover:bg-blue-50 transition-colors"
             >
-              Reset
+              Reset to 16 miles
             </button>
           </div>
 
-          {/* Radius Slider - Real filter that affects API call */}
+          {/* Radius Slider - Now 1-100 miles, default 16 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Search Radius: {searchRadius} miles
-            </label>
+            <div className="flex justify-between mb-2">
+              <label className="text-sm font-medium text-gray-700">
+                Search Radius
+              </label>
+              <span className="text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                {searchRadius} miles
+              </span>
+            </div>
             <input
               type="range"
               min="1"
-              max="25"
+              max="100"
               value={searchRadius}
               onChange={(e) => setSearchRadius(parseInt(e.target.value))}
-              className="w-full"
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
             />
+            <div className="flex justify-between text-xs text-gray-500 mt-2">
+              <span>1 mile</span>
+              <span>16 mi (default)</span>
+              <span>100 miles</span>
+            </div>
           </div>
         </div>
       )}
 
       {/* Insurance Selector */}
-      <div className="bg-white rounded-2xl p-4 shadow-md border border-blue-100">
-        <label className="block text-sm font-semibold text-gray-700 mb-2">{translatedText.yourInsurance}</label>
+      <div className="bg-white rounded-[2rem] p-6 shadow-md border border-blue-100">
+        <div className="flex items-center justify-between mb-2">
+          <label className="text-sm font-semibold text-gray-700">{translatedText.yourInsurance}</label>
+          <button
+            onClick={() => setShowInsuranceHelp(!showInsuranceHelp)}
+            className="text-blue-600 hover:text-blue-700"
+          >
+            <HelpCircle className="w-4 h-4" />
+          </button>
+        </div>
+        
         <select
           value={insurance}
           onChange={(e) => setInsurance(e.target.value)}
-          className="w-full p-3 rounded-xl border-2 border-gray-200 focus:border-blue-400 focus:outline-none font-medium"
+          className="w-full p-4 rounded-xl border-2 border-gray-200 focus:border-blue-400 focus:outline-none font-medium text-base"
         >
           <option value="">{translatedText.selectInsurance}</option>
           <option>Delta Dental</option>
@@ -401,8 +522,27 @@ export default function Dentists() {
           <option>MetLife</option>
           <option>UnitedHealthcare</option>
           <option>Medicaid</option>
+          <option>Medicare</option>
+          <option>Blue Cross Blue Shield</option>
+          <option>Guardian</option>
+          <option>Humana</option>
         </select>
-        <p className="text-xs text-gray-500 mt-2">Insurance acceptance is estimated based on clinic type. Always call to confirm.</p>
+
+        {showInsuranceHelp && (
+          <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+            <p className="text-xs text-gray-700 leading-relaxed">
+              <Sparkles className="w-3 h-3 inline mr-1 text-blue-600" />
+              {translatedText.insuranceHelpText}
+            </p>
+          </div>
+        )}
+
+        {predictingInsurance && (
+          <div className="mt-3 flex items-center gap-2 text-xs text-blue-600">
+            <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            {translatedText.predicting}
+          </div>
+        )}
       </div>
 
       {/* Sort Options */}
@@ -415,7 +555,7 @@ export default function Dentists() {
           <button
             key={sort.id}
             onClick={() => setSortBy(sort.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold whitespace-nowrap transition-all ${
+            className={`flex items-center gap-2 px-5 py-3 rounded-xl font-semibold whitespace-nowrap transition-all text-sm ${
               sortBy === sort.id
                 ? 'bg-blue-500 text-white shadow-md'
                 : 'bg-white text-gray-600 border border-gray-200 hover:border-blue-300'
@@ -428,14 +568,14 @@ export default function Dentists() {
       </div>
 
       {/* Results Count */}
-      <div className="flex justify-between items-center">
-        <p className="text-sm text-gray-600">
-          Found {filteredDentists.length} dentists
+      <div className="flex justify-between items-center px-1">
+        <p className="text-sm text-gray-600 font-medium">
+          Found <span className="text-blue-600 font-bold">{filteredDentists.length}</span> dentists
         </p>
         {selectedForCompare.length > 0 && (
           <button
             onClick={() => setShowCompare(true)}
-            className="text-sm text-blue-600 font-semibold hover:text-blue-700"
+            className="text-sm text-blue-600 font-semibold hover:text-blue-700 bg-blue-50 px-4 py-2 rounded-xl hover:bg-blue-100 transition-colors"
           >
             Compare {selectedForCompare.length} selected
           </button>
@@ -444,74 +584,76 @@ export default function Dentists() {
 
       {/* Loading State */}
       {loading && (
-        <div className="text-center py-12">
-          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 font-medium">{translatedText.loading}</p>
+        <div className="text-center py-16">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-600 font-medium text-lg">{translatedText.loading}</p>
         </div>
       )}
 
       {/* No Results */}
       {!loading && filteredDentists.length === 0 && (
-        <div className="text-center py-12 bg-gray-50 rounded-2xl">
-          <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-          <p className="text-gray-600 font-medium">{translatedText.noDentists}</p>
-          <p className="text-sm text-gray-500 mt-1">{translatedText.expandSearch}</p>
+        <div className="text-center py-16 bg-gray-50 rounded-[2rem]">
+          <MapPin className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-600 font-medium text-lg">{translatedText.noDentists}</p>
+          <p className="text-sm text-gray-500 mt-2">{translatedText.expandSearch}</p>
         </div>
       )}
 
-      {/* Dentist Cards - Only Real Data */}
+      {/* Dentist Cards */}
       <div className="space-y-4">
         {sortedDentists.map((d, index) => {
-          const clinicType = inferClinicType(d.name, d.address);
-          const likelyPlans = INSURANCE_PROFILES[clinicType] || [];
-          const likelyAccepted = insurance && likelyPlans.includes(insurance);
+          const prediction = insurancePredictions[d.id];
           const badge = getBadge(d, index);
           const isInCompare = selectedForCompare.some(s => s.id === d.id);
 
           return (
             <div
               key={d.id}
-              className={`group bg-white rounded-3xl p-5 shadow-md border-2 transition-all duration-200 ${
-                isInCompare ? 'border-blue-400' : 'border-gray-200 hover:border-blue-300 hover:shadow-xl'
+              className={`group bg-white rounded-[2rem] p-6 shadow-md border-2 transition-all duration-200 ${
+                isInCompare ? 'border-blue-400 shadow-lg scale-[1.02]' : 'border-gray-200 hover:border-blue-300 hover:shadow-xl hover:-translate-y-1'
               }`}
             >
               {/* Header */}
-              <div className="flex justify-between items-start mb-3">
+              <div className="flex justify-between items-start mb-4">
                 <div className="flex-1">
-                  <h3 className="font-black text-gray-900 text-lg mb-1">{d.name}</h3>
-                  {badge && (
-                    <span className={`inline-block text-xs font-bold px-3 py-1 rounded-full ${badge.color}`}>
-                      {badge.text}
-                    </span>
-                  )}
+                  <h3 className="font-black text-gray-900 text-xl mb-2">{d.name}</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {badge && (
+                      <span className={`inline-block text-xs font-bold px-3 py-1.5 rounded-full ${badge.color}`}>
+                        {badge.text}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 
-                <div className="flex gap-1">
+                <div className="flex gap-2">
                   <button
                     onClick={() => toggleCompare(d)}
-                    className={`p-2 rounded-xl transition-colors ${
+                    className={`p-3 rounded-xl transition-all ${
                       isInCompare ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100 text-gray-400'
                     }`}
+                    title="Compare"
                   >
                     <BarChart3 className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => toggleFavorite(d)}
-                    className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
+                    className="p-3 rounded-xl hover:bg-gray-100 transition-all"
+                    title={isFavorite(d.id) ? "Remove from favorites" : "Add to favorites"}
                   >
                     <Heart
-                      className={`w-5 h-5 ${
-                        isFavorite(d.id) ? 'fill-red-500 text-red-500' : 'text-gray-400'
+                      className={`w-5 h-5 transition-all ${
+                        isFavorite(d.id) ? 'fill-red-500 text-red-500 scale-110' : 'text-gray-400'
                       }`}
                     />
                   </button>
                 </div>
               </div>
 
-              {/* Rating & Status - Real data from API */}
-              <div className="flex items-center gap-3 mb-3 flex-wrap">
+              {/* Rating & Status */}
+              <div className="flex items-center gap-2 mb-4 flex-wrap">
                 {d.rating ? (
-                  <div className="flex items-center gap-1 bg-yellow-50 px-3 py-1 rounded-lg">
+                  <div className="flex items-center gap-1 bg-yellow-50 px-3 py-1.5 rounded-full">
                     <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
                     <span className="font-bold text-gray-900">{d.rating}</span>
                     {d.review_count && (
@@ -519,13 +661,13 @@ export default function Dentists() {
                     )}
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1 bg-gray-50 px-3 py-1 rounded-lg">
-                    <span className="text-xs text-gray-500">No ratings yet</span>
+                  <div className="flex items-center gap-1 bg-gray-50 px-3 py-1.5 rounded-full">
+                    <span className="text-xs text-gray-500">No ratings</span>
                   </div>
                 )}
                 
                 {d.openNow !== undefined && (
-                  <div className={`flex items-center gap-1 px-3 py-1 rounded-lg ${
+                  <div className={`flex items-center gap-1 px-3 py-1.5 rounded-full ${
                     d.openNow ? 'bg-green-50' : 'bg-gray-100'
                   }`}>
                     <Clock className={`w-4 h-4 ${d.openNow ? 'text-green-600' : 'text-gray-500'}`} />
@@ -536,7 +678,7 @@ export default function Dentists() {
                 )}
 
                 {d.priceLevel && (
-                  <div className="flex items-center gap-1 px-3 py-1 rounded-lg bg-purple-50">
+                  <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-purple-50">
                     <DollarSign className="w-4 h-4 text-purple-600" />
                     <span className="text-xs font-semibold text-purple-700">
                       {'$'.repeat(d.priceLevel)}
@@ -545,45 +687,55 @@ export default function Dentists() {
                 )}
               </div>
 
-              {/* Address - Real from API */}
+              {/* Address */}
               {d.address && (
-                <p className="text-sm text-gray-600 mb-2 flex items-start gap-2">
+                <p className="text-sm text-gray-600 mb-3 flex items-start gap-2">
                   <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
                   {d.address}
                 </p>
               )}
 
-              {/* Distance - Calculated from real coordinates */}
+              {/* Distance */}
               {d.distance && (
                 <p className="text-sm font-semibold text-blue-600 mb-3">
                   📍 {d.distance} {translatedText.milesAway}
                 </p>
               )}
 
-              {/* Review - Real from API if available */}
+              {/* Review */}
               {d.review && (
-                <div className="bg-gray-50 rounded-xl p-3 mb-3">
-                  <p className="text-xs text-gray-600 italic line-clamp-2">"{d.review}"</p>
+                <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                  <p className="text-xs text-gray-600 italic">"{d.review}"</p>
                 </div>
               )}
 
-              {/* Insurance - Based on inference, clearly marked as estimated */}
-              {insurance && (
-                <div className={`flex items-start gap-2 p-3 rounded-xl mb-3 ${
-                  likelyAccepted ? 'bg-green-50' : 'bg-orange-50'
+              {/* Insurance Prediction - Now using Gemini AI */}
+              {insurance && prediction && (
+                <div className={`flex items-start gap-3 p-4 rounded-xl mb-4 ${
+                  prediction.accepts ? 'bg-emerald-50' : 'bg-amber-50'
                 }`}>
-                  {likelyAccepted ? (
-                    <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                  {prediction.accepts ? (
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
                   ) : (
-                    <AlertCircle className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
+                    <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                   )}
-                  <p className={`text-xs font-medium ${
-                    likelyAccepted ? 'text-green-700' : 'text-orange-700'
-                  }`}>
-                    {likelyAccepted
-                      ? `${translatedText.likelyAccepts} ${insurance}`
-                      : `${translatedText.mayNotAccept} ${insurance} — ${translatedText.callToConfirm}`}
-                  </p>
+                  <div className="flex-1">
+                    <p className={`text-sm font-medium ${
+                      prediction.accepts ? 'text-emerald-700' : 'text-amber-700'
+                    }`}>
+                      {prediction.accepts
+                        ? `${translatedText.likelyAccepts} ${insurance}`
+                        : `${translatedText.mayNotAccept} ${insurance}`}
+                    </p>
+                    <p className="text-xs text-gray-600 mt-1">{prediction.reason}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${getConfidenceColor(prediction.confidence)}`}>
+                        {prediction.confidence} confidence
+                      </span>
+                      <span className="text-xs text-gray-400">•</span>
+                      <span className="text-xs text-gray-500">Always call to confirm</span>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -593,27 +745,27 @@ export default function Dentists() {
                   href={d.mapsLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-1 bg-blue-500 text-white py-2 rounded-xl text-xs font-semibold hover:bg-blue-600 transition-colors"
+                  className="flex items-center justify-center gap-2 bg-blue-500 text-white py-3 rounded-xl text-sm font-semibold hover:bg-blue-600 transition-all hover:scale-[1.02]"
                 >
-                  <MapPin className="w-3 h-3" />
+                  <MapPin className="w-4 h-4" />
                   <span>{translatedText.directions}</span>
                 </a>
                 
                 {d.phone && (
                   <a
                     href={`tel:${d.phone}`}
-                    className="flex items-center justify-center gap-1 bg-green-500 text-white py-2 rounded-xl text-xs font-semibold hover:bg-green-600 transition-colors"
+                    className="flex items-center justify-center gap-2 bg-green-500 text-white py-3 rounded-xl text-sm font-semibold hover:bg-green-600 transition-all hover:scale-[1.02]"
                   >
-                    <Phone className="w-3 h-3" />
+                    <Phone className="w-4 h-4" />
                     <span>{translatedText.call}</span>
                   </a>
                 )}
 
                 <button
                   onClick={() => setSelectedDentist(d)}
-                  className="flex items-center justify-center gap-1 bg-white border-2 border-gray-200 text-gray-900 py-2 rounded-xl text-xs font-semibold hover:border-blue-300 transition-colors"
+                  className="flex items-center justify-center gap-2 bg-white border-2 border-gray-200 text-gray-900 py-3 rounded-xl text-sm font-semibold hover:border-blue-300 transition-all hover:scale-[1.02]"
                 >
-                  <Calendar className="w-3 h-3" />
+                  <Calendar className="w-4 h-4" />
                   <span>Info</span>
                 </button>
               </div>
@@ -622,22 +774,22 @@ export default function Dentists() {
         })}
       </div>
 
-      {/* Info Modal - Shows real data about the dentist */}
+      {/* Info Modal */}
       {selectedDentist && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-black text-gray-900">{selectedDentist.name}</h3>
-              <button onClick={() => setSelectedDentist(null)} className="text-gray-400 hover:text-gray-600">
-                <X className="w-5 h-5" />
+          <div className="bg-white rounded-[2rem] max-w-lg w-full p-8 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-black text-gray-900">{selectedDentist.name}</h3>
+              <button onClick={() => setSelectedDentist(null)} className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                <X className="w-6 h-6" />
               </button>
             </div>
 
             <div className="space-y-4">
-              <div className="bg-blue-50 p-4 rounded-xl">
+              <div className="bg-blue-50 p-5 rounded-xl">
                 <p className="text-sm text-gray-700 mb-2">{selectedDentist.address}</p>
                 {selectedDentist.phone && (
-                  <a href={`tel:${selectedDentist.phone}`} className="text-sm text-blue-600 font-semibold">
+                  <a href={`tel:${selectedDentist.phone}`} className="text-sm text-blue-600 font-semibold hover:underline">
                     {selectedDentist.phone}
                   </a>
                 )}
@@ -648,7 +800,7 @@ export default function Dentists() {
                   href={selectedDentist.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block text-center bg-blue-500 text-white py-3 rounded-xl font-semibold hover:bg-blue-600 transition-colors"
+                  className="block text-center bg-blue-500 text-white py-4 rounded-xl font-semibold hover:bg-blue-600 transition-all hover:scale-[1.02]"
                 >
                   Visit Website
                 </a>
@@ -658,7 +810,7 @@ export default function Dentists() {
                 href={selectedDentist.mapsLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block text-center bg-green-500 text-white py-3 rounded-xl font-semibold hover:bg-green-600 transition-colors"
+                className="block text-center bg-green-500 text-white py-4 rounded-xl font-semibold hover:bg-green-600 transition-all hover:scale-[1.02]"
               >
                 Get Directions
               </a>
@@ -670,48 +822,56 @@ export default function Dentists() {
       {/* Compare Modal */}
       {showCompare && selectedForCompare.length > 0 && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-4xl w-full p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-black text-gray-900 flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-blue-600" />
+          <div className="bg-white rounded-[2rem] max-w-5xl w-full p-8 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-2xl font-black text-gray-900 flex items-center gap-2">
+                <BarChart3 className="w-6 h-6 text-blue-600" />
                 Compare Dentists
               </h3>
-              <button onClick={() => setShowCompare(false)} className="text-gray-400 hover:text-gray-600">
-                <X className="w-5 h-5" />
+              <button onClick={() => setShowCompare(false)} className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                <X className="w-6 h-6" />
               </button>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {selectedForCompare.map(dentist => (
-                <div key={dentist.id} className="space-y-3">
-                  <h4 className="font-bold text-gray-900 text-sm">{dentist.name}</h4>
+                <div key={dentist.id} className="space-y-4 bg-gray-50 p-6 rounded-2xl">
+                  <h4 className="font-bold text-gray-900 text-lg">{dentist.name}</h4>
                   
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-500">Rating</span>
-                      <span className="font-semibold">{dentist.rating || 'N/A'} ⭐</span>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                      <span className="text-sm text-gray-600">Rating</span>
+                      <span className="font-bold text-gray-900">{dentist.rating || 'N/A'} ⭐</span>
                     </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-500">Distance</span>
-                      <span className="font-semibold">{dentist.distance ? `${dentist.distance} mi` : 'N/A'}</span>
+                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                      <span className="text-sm text-gray-600">Distance</span>
+                      <span className="font-bold text-gray-900">{dentist.distance ? `${dentist.distance} mi` : 'N/A'}</span>
                     </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-500">Price</span>
-                      <span className="font-semibold">{dentist.priceLevel ? '$'.repeat(dentist.priceLevel) : 'N/A'}</span>
+                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                      <span className="text-sm text-gray-600">Price</span>
+                      <span className="font-bold text-gray-900">{dentist.priceLevel ? '$'.repeat(dentist.priceLevel) : 'N/A'}</span>
                     </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-500">Open Now</span>
-                      <span className={dentist.openNow ? 'text-green-600' : 'text-red-600'}>
+                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                      <span className="text-sm text-gray-600">Open Now</span>
+                      <span className={dentist.openNow ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
                         {dentist.openNow ? 'Yes' : 'No'}
                       </span>
                     </div>
+                    {dentist.phone && (
+                      <div className="flex justify-between items-center py-2">
+                        <span className="text-sm text-gray-600">Phone</span>
+                        <a href={`tel:${dentist.phone}`} className="text-sm text-blue-600 font-medium">
+                          Call
+                        </a>
+                      </div>
+                    )}
                   </div>
 
                   <button
                     onClick={() => {
                       setSelectedForCompare(selectedForCompare.filter(d => d.id !== dentist.id));
                     }}
-                    className="w-full py-2 text-xs text-red-600 border border-red-200 rounded-xl hover:bg-red-50 transition-colors"
+                    className="w-full py-3 text-sm text-red-600 border-2 border-red-200 rounded-xl hover:bg-red-50 transition-colors font-semibold"
                   >
                     Remove
                   </button>
@@ -725,13 +885,13 @@ export default function Dentists() {
       {/* Favorites Modal */}
       {showFavorites && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[80vh] overflow-hidden">
+          <div className="bg-white rounded-[2rem] max-w-lg w-full max-h-[80vh] overflow-hidden">
             <div className="p-6 border-b border-gray-200 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Heart className="w-5 h-5 text-red-500 fill-red-500" />
-                <h3 className="font-black text-gray-900">{translatedText.savedDentists}</h3>
+                <h3 className="font-black text-gray-900 text-lg">{translatedText.savedDentists}</h3>
               </div>
-              <button onClick={() => setShowFavorites(false)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => setShowFavorites(false)} className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-xl transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -741,11 +901,11 @@ export default function Dentists() {
                 <p className="text-center text-gray-500 py-8">{translatedText.noSavedDentists}</p>
               ) : (
                 favorites.map((d) => (
-                  <div key={d.id} className="flex gap-3 p-4 rounded-xl bg-gray-50">
+                  <div key={d.id} className="flex gap-4 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
                     <div className="flex-1">
                       <p className="font-bold text-gray-900 mb-1">{d.name}</p>
                       <p className="text-xs text-gray-600 mb-2">{d.address}</p>
-                      <div className="flex gap-2">
+                      <div className="flex gap-3">
                         <a
                           href={d.mapsLink}
                           target="_blank"

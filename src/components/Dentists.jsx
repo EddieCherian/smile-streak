@@ -192,7 +192,7 @@ export default function Dentists() {
               headers: {
                 "Content-Type": "application/json",
                 "X-Goog-Api-Key": import.meta.env.VITE_GOOGLE_MAPS_KEY,
-                "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.currentOpeningHours,places.nationalPhoneNumber,places.websiteUri,places.priceLevel,places.photos,places.businessStatus"
+                "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.currentOpeningHours,places.nationalPhoneNumber,places.websiteUri,places.priceLevel,places.photos,places.businessStatus,places.accessibilityOptions,places.paymentOptions,places.parkingOptions,places.regularOpeningHours"
               },
               body: JSON.stringify({
                 includedTypes: ["dentist"],
@@ -227,6 +227,40 @@ export default function Dentists() {
                nameLower.includes("family") ||
                nameLower.includes("care"));
 
+            // Extract accessibility options
+            const accessibility = {};
+            if (d.accessibilityOptions) {
+              accessibility.wheelchairEntrance = d.accessibilityOptions.wheelchairAccessibleEntrance || false;
+              accessibility.wheelchairParking = d.accessibilityOptions.wheelchairAccessibleParking || false;
+              accessibility.wheelchairRestroom = d.accessibilityOptions.wheelchairAccessibleRestroom || false;
+              accessibility.wheelchairSeating = d.accessibilityOptions.wheelchairAccessibleSeating || false;
+            }
+
+            // Extract payment options
+            const paymentOptions = {};
+            if (d.paymentOptions) {
+              paymentOptions.creditCards = d.paymentOptions.acceptsCreditCards || false;
+              paymentOptions.debitCards = d.paymentOptions.acceptsDebitCards || false;
+              paymentOptions.nfcMobilePayments = d.paymentOptions.acceptsNfc || false;
+              paymentOptions.cash = d.paymentOptions.acceptsCash || false;
+              paymentOptions.insurance = d.paymentOptions.acceptsInsurance || false;
+            }
+
+            // Extract hours
+            const hours = {};
+            if (d.regularOpeningHours?.weekdayDescriptions) {
+              d.regularOpeningHours.weekdayDescriptions.forEach(desc => {
+                const [day, time] = desc.split(': ');
+                hours[day] = time || 'Closed';
+              });
+            }
+
+            // Generate photo URLs
+            const photos = d.photos?.map(photo => ({
+              name: photo.name,
+              url: `https://places.googleapis.com/v1/${photo.name}/media?maxHeightPx=400&maxWidthPx=400&key=${import.meta.env.VITE_GOOGLE_MAPS_KEY}`
+            })) || [];
+
             return {
               id: d.id, 
               name: d.displayName?.text || "Unknown",
@@ -240,9 +274,21 @@ export default function Dentists() {
               mapsLink: `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(d.displayName?.text || '')}&destination_place_id=${d.id}`,
               distance: distance ? parseFloat(distance) : null,
               priceLevel: d.priceLevel || null, 
-              photos: d.photos || [],
+              photos: photos,
               businessStatus: d.businessStatus, 
-              isRoyseCity
+              isRoyseCity,
+              accessibility,
+              paymentOptions,
+              hours,
+              // Add default empty objects for other fields to prevent undefined errors
+              offerings: {},
+              amenities: {},
+              planning: {},
+              insuranceAccepted: {},
+              specialDesignations: {},
+              languages: [],
+              providerInfo: {},
+              knowBeforeYouGo: []
             };
           });
 
@@ -651,10 +697,12 @@ export default function Dentists() {
     if (!photoResource) return null;
     // If it's a custom photo object with url property
     if (photoResource.url) return photoResource.url;
-    // If it's from Google Places API
+    // If it's from Google Places API with name property
     if (photoResource.name) {
       return `https://places.googleapis.com/v1/${photoResource.name}/media?maxHeightPx=400&maxWidthPx=400&key=${import.meta.env.VITE_GOOGLE_MAPS_KEY}`;
     }
+    // If it's a string URL
+    if (typeof photoResource === 'string') return photoResource;
     return null;
   };
 
@@ -828,7 +876,12 @@ export default function Dentists() {
                         const photoUrl = getPhotoUrl(photo);
                         return photoUrl ? (
                           <button key={idx} onClick={() => { setSelectedPhoto(photoUrl); setShowPhotoModal(true); }} className="flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden hover:scale-105 transition-transform">
-                            <img src={photoUrl} alt={`${d.name} photo ${idx + 1}`} className="w-full h-full object-cover" loading="lazy" />
+                            <img src={photoUrl} alt={`${d.name} photo ${idx + 1}`} className="w-full h-full object-cover" loading="lazy" 
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = "https://via.placeholder.com/400x400/4f46e5/ffffff?text=Dental+Clinic";
+                              }}
+                            />
                           </button>
                         ) : null;
                       })}
@@ -883,7 +936,7 @@ export default function Dentists() {
                 </div>
                 
                 {/* Accessibility & Amenities Icons */}
-                {d.accessibility && (
+                {d.accessibility && Object.keys(d.accessibility).length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-3">
                     {d.accessibility.wheelchairEntrance && (
                       <span className="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-lg">
@@ -898,6 +951,11 @@ export default function Dentists() {
                     {d.paymentOptions?.nfcMobilePayments && (
                       <span className="inline-flex items-center gap-1 text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded-lg">
                         <Zap className="w-3 h-3" /> NFC Payments
+                      </span>
+                    )}
+                    {d.paymentOptions?.insurance && (
+                      <span className="inline-flex items-center gap-1 text-xs bg-emerald-50 text-emerald-700 px-2 py-1 rounded-lg">
+                        <Shield className="w-3 h-3" /> Insurance Accepted
                       </span>
                     )}
                   </div>
@@ -966,7 +1024,7 @@ export default function Dentists() {
               </div>
 
               {/* Hours */}
-              {selectedDentist.hours && (
+              {selectedDentist.hours && Object.keys(selectedDentist.hours).length > 0 && (
                 <div>
                   <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2"><Clock className="w-5 h-5 text-blue-600" />Hours</h4>
                   <div className="grid grid-cols-2 gap-2 text-sm">
@@ -981,7 +1039,7 @@ export default function Dentists() {
               )}
 
               {/* Services & Offerings */}
-              {selectedDentist.offerings && (
+              {selectedDentist.offerings && Object.keys(selectedDentist.offerings).length > 0 && (
                 <div>
                   <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2"><Zap className="w-5 h-5 text-blue-600" />Services</h4>
                   <div className="flex flex-wrap gap-2">
@@ -997,7 +1055,7 @@ export default function Dentists() {
               )}
 
               {/* Accessibility */}
-              {selectedDentist.accessibility && (
+              {selectedDentist.accessibility && Object.keys(selectedDentist.accessibility).length > 0 && (
                 <div>
                   <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2"><Wheelchair className="w-5 h-5 text-blue-600" />Accessibility</h4>
                   <div className="flex flex-wrap gap-2">
@@ -1013,7 +1071,7 @@ export default function Dentists() {
               )}
 
               {/* Payment Options */}
-              {selectedDentist.paymentOptions && (
+              {selectedDentist.paymentOptions && Object.keys(selectedDentist.paymentOptions).length > 0 && (
                 <div>
                   <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2"><CreditCard className="w-5 h-5 text-blue-600" />Payment Options</h4>
                   <div className="flex flex-wrap gap-2">
@@ -1029,7 +1087,7 @@ export default function Dentists() {
               )}
 
               {/* Insurance Accepted */}
-              {selectedDentist.insuranceAccepted && (
+              {selectedDentist.insuranceAccepted && Object.keys(selectedDentist.insuranceAccepted).length > 0 && (
                 <div>
                   <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2"><Shield className="w-5 h-5 text-blue-600" />Insurance Accepted</h4>
                   <div className="flex flex-wrap gap-2">
@@ -1077,7 +1135,12 @@ export default function Dentists() {
                       const photoUrl = getPhotoUrl(photo);
                       return photoUrl ? (
                         <button key={idx} onClick={() => { setSelectedPhoto(photoUrl); setShowPhotoModal(true); }} className="aspect-square rounded-xl overflow-hidden hover:scale-105 transition-transform">
-                          <img src={photoUrl} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
+                          <img src={photoUrl} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" 
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = "https://via.placeholder.com/400x400/4f46e5/ffffff?text=Dental+Clinic";
+                            }}
+                          />
                         </button>
                       ) : null;
                     })}

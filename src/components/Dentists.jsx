@@ -1,10 +1,9 @@
-import { useEffect, useState, useContext, useMemo } from "react";
 import { 
   MapPin, Star, Clock, Heart, Phone, ChevronRight, TrendingUp, Award, 
   Navigation, X, CheckCircle2, AlertCircle, Calendar, Users,
   DollarSign, Filter, Search, Sliders, Globe, Car,
   Menu, BarChart3, Sparkles, Shield, HelpCircle, AlertTriangle,
-  Wifi, Coffee, Baby, CreditCard, Languages, ExternalLink
+  Wifi, Coffee, Baby, CreditCard, Languages, ExternalLink, Share2
 } from "lucide-react";
 import { TranslationContext } from "../App";
 

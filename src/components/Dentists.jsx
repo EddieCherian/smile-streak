@@ -1,3 +1,4 @@
+import React, { useEffect, useState, useContext, useMemo } from "react";
 import { 
   MapPin, Star, Clock, Heart, Phone, ChevronRight, TrendingUp, Award, 
   Navigation, X, CheckCircle2, AlertCircle, Calendar, Users,

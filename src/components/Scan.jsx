@@ -3,10 +3,10 @@ import {
   Camera, Upload, X, Sparkles, History, ArrowLeft, ChevronRight, 
   AlertCircle, CheckCircle2, Zap, TrendingUp, Image as ImageIcon,
   Download, Share2, Printer, Calendar, Clock, MapPin, Phone,
-  Mail, User, Star, FileText, PieChart, BarChart3, Brain,
-  Thermometer, Droplets, Activity, Shield, Award, Target,
+  Mail, User, Star, FileText, BarChart3, Brain,
+  Activity, Shield, Award, Target,
   Users, Globe, Lock, Eye, EyeOff, Bell, RefreshCw,
-  BookOpen   // ✅ added
+  BookOpen
 } from "lucide-react";
 import { TranslationContext } from "../App";
 
@@ -23,26 +23,18 @@ export default function Scan() {
   const [showHistory, setShowHistory] = useState(false);
   const [captureQuality, setCaptureQuality] = useState(null);
   const [translatedText, setTranslatedText] = useState({});
-  const [scanStats, setScanStats] = useState({
-    totalScans: 0,
-    averageQuality: 0,
-    commonFindings: {},
-    lastScanDate: null
-  });
   const [showComparison, setShowComparison] = useState(false);
   const [selectedScanForComparison, setSelectedScanForComparison] = useState(null);
   const [showExportOptions, setShowExportOptions] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareEmail, setShareEmail] = useState('');
   const [shareNotes, setShareNotes] = useState('');
-  const [showFindingsGlossary, setShowFindingsGlossary] = useState(false);
-  const [expandedFinding, setExpandedFinding] = useState(null);
   
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
 
-  // Translation keys
+  // Translation keys - only what's actually used
   const translationKeys = {
     title: "AI Dental Scan",
     subtitle: "Get instant feedback on your dental health",
@@ -61,16 +53,16 @@ export default function Scan() {
     nextStep: "Next Step",
     analyzingTitle: "Analyzing Your Scan",
     analyzingDesc: "Our AI is examining your dental health...",
-    analyzingStep1: "Detecting plaque buildup",
-    analyzingStep2: "Checking gum health",
-    analyzingStep3: "Analyzing brushing coverage",
-    analyzingStep4: "Generating personalized feedback",
+    analyzingStep1: "Analyzing image...",
+    analyzingStep2: "Checking for issues...",
+    analyzingStep3: "Comparing with dental database...",
+    analyzingStep4: "Generating feedback...",
     analysisComplete: "Analysis Complete",
     analysisCompleteDesc: "Here's your personalized feedback",
     newScan: "New Scan",
     viewHistory: "View History",
     trackProgress: "Track Your Progress",
-    trackProgressDesc: "Take scans regularly to see improvements over time. Compare your current scan with previous ones to track your dental health journey!",
+    trackProgressDesc: "Take scans regularly to see improvements over time.",
     scanHistory: "Scan History",
     noScans: "No scans yet",
     viewDetails: "View Details",
@@ -81,38 +73,16 @@ export default function Scan() {
     failedAnalysis: "Failed to analyze image. Please try again.",
     cameraError: "Could not access camera. Please check permissions.",
     
-    // New features
+    // Real features
     compareScans: "Compare Scans",
-    selectScanToCompare: "Select a previous scan to compare",
-    noComparisonScan: "Select a scan to compare",
     improvements: "Improvements",
     declines: "Declines",
-    sameAsBefore: "Same as before",
     exportResults: "Export Results",
     shareWithDentist: "Share with Dentist",
     printResults: "Print Results",
     downloadPDF: "Download PDF",
     emailResults: "Email Results",
-    shareVia: "Share via",
     addNotes: "Add notes for your dentist",
-    findingsGlossary: "Findings Glossary",
-    whatDoesThisMean: "What does this mean?",
-    plaqueBuildup: "Plaque Buildup",
-    plaqueBuildupDesc: "Soft, sticky film that builds up on teeth. If not removed, it can lead to cavities and gum disease.",
-    gumInflammation: "Gum Inflammation",
-    gumInflammationDesc: "Red, swollen gums that may bleed when brushing. This is often an early sign of gum disease.",
-    calculus: "Calculus (Tartar)",
-    calculusDesc: "Hardened plaque that can only be removed by a dental professional.",
-    cavities: "Cavities",
-    cavitiesDesc: "Areas of tooth decay that need professional attention.",
-    staining: "Staining",
-    stainingDesc: "Discoloration of teeth from food, drinks, or tobacco.",
-    
-    stats: "Your Scan Statistics",
-    totalScans: "Total Scans",
-    avgQuality: "Average Quality",
-    mostCommon: "Most Common Finding",
-    lastScan: "Last Scan",
     
     shareTitle: "Share with Your Dentist",
     shareDesc: "Email your scan results directly to your dentist",
@@ -126,134 +96,53 @@ export default function Scan() {
     previousScan: "Previous Scan",
     
     exportTitle: "Export Options",
-    exportDesc: "Download or share your scan results",
-    
-    glossaryTitle: "Dental Health Glossary",
-    glossaryDesc: "Understand what your scan results mean"
+    exportDesc: "Download or share your scan results"
   };
 
-  // Camera guidance steps with translations
+  // Camera guidance steps
   const guidanceSteps = [
     { 
       id: 0, 
-      titleKey: "positionTitle",
-      instructionKey: "positionInstruction",
+      title: "Position yourself", 
+      instruction: "Face the camera with good lighting",
       icon: "📱",
-      tipKey: "positionTip"
+      tip: "Natural light works best"
     },
     { 
       id: 1, 
-      titleKey: "openTitle", 
-      instructionKey: "openInstruction",
+      title: "Open wide", 
+      instruction: "Open your mouth to show all teeth",
       icon: "😁",
-      tipKey: "openTip"
+      tip: "Relax your jaw and smile naturally"
     },
     { 
       id: 2, 
-      titleKey: "holdTitle", 
-      instructionKey: "holdInstruction",
+      title: "Hold steady", 
+      instruction: "Keep still for 2 seconds",
       icon: "⏱️",
-      tipKey: "holdTip"
+      tip: "We're capturing the perfect shot"
     }
   ];
 
-  // Findings glossary
-  const findingsGlossary = [
-    { term: "Plaque Buildup", description: "Soft, sticky film that builds up on teeth. If not removed, it can lead to cavities and gum disease.", icon: <AlertCircle className="w-5 h-5" /> },
-    { term: "Gum Inflammation", description: "Red, swollen gums that may bleed when brushing. This is often an early sign of gum disease.", icon: <Activity className="w-5 h-5" /> },
-    { term: "Calculus", description: "Hardened plaque that can only be removed by a dental professional.", icon: <Target className="w-5 h-5" /> },
-    { term: "Cavities", description: "Areas of tooth decay that need professional attention.", icon: <AlertCircle className="w-5 h-5" /> },
-    { term: "Staining", description: "Discoloration of teeth from food, drinks, or tobacco.", icon: <Droplets className="w-5 h-5" /> }
-  ];
-
-  // Load translations when language changes
+  // Load translations
   useEffect(() => {
     const loadTranslations = async () => {
       const translations = {};
       for (const [key, value] of Object.entries(translationKeys)) {
         translations[key] = await t(value);
       }
-      
-      // Load guidance step translations
-      const stepTranslations = {};
-      for (const step of guidanceSteps) {
-        stepTranslations[step.titleKey] = await t(step.titleKey || getDefaultStepTitle(step.id));
-        stepTranslations[step.instructionKey] = await t(step.instructionKey || getDefaultStepInstruction(step.id));
-        stepTranslations[step.tipKey] = await t(step.tipKey || getDefaultStepTip(step.id));
-      }
-      
-      setTranslatedText({ ...translations, ...stepTranslations });
+      setTranslatedText(translations);
     };
-    
     loadTranslations();
   }, [currentLanguage, t]);
 
-  // Helper functions for default step text
-  const getDefaultStepTitle = (id) => {
-    const titles = ["Position yourself", "Open wide", "Hold steady"];
-    return titles[id];
-  };
-
-  const getDefaultStepInstruction = (id) => {
-    const instructions = [
-      "Face the camera with good lighting",
-      "Open your mouth to show all teeth",
-      "Keep still for 2 seconds"
-    ];
-    return instructions[id];
-  };
-
-  const getDefaultStepTip = (id) => {
-    const tips = [
-      "Natural light works best",
-      "Relax your jaw and smile naturally",
-      "We're capturing the perfect shot"
-    ];
-    return tips[id];
-  };
-
-  // Load scan history and stats on mount
+  // Load scan history from localStorage (real user data)
   useEffect(() => {
     const history = JSON.parse(localStorage.getItem('scanHistory') || '[]');
     setScanHistory(history);
-    
-    // Calculate stats
-    if (history.length > 0) {
-      const totalScans = history.length;
-      
-      // Parse feedback to find common findings
-      const findings = {};
-      history.forEach(scan => {
-        if (scan.feedback) {
-          const lowerFeedback = scan.feedback.toLowerCase();
-          if (lowerFeedback.includes('plaque')) findings.plaque = (findings.plaque || 0) + 1;
-          if (lowerFeedback.includes('gum')) findings.gum = (findings.gum || 0) + 1;
-          if (lowerFeedback.includes('cavity')) findings.cavity = (findings.cavity || 0) + 1;
-          if (lowerFeedback.includes('stain')) findings.stain = (findings.stain || 0) + 1;
-        }
-      });
-      
-      // Find most common finding
-      let mostCommon = 'None';
-      let maxCount = 0;
-      Object.entries(findings).forEach(([key, count]) => {
-        if (count > maxCount) {
-          maxCount = count;
-          mostCommon = key.charAt(0).toUpperCase() + key.slice(1);
-        }
-      });
-      
-      setScanStats({
-        totalScans,
-        averageQuality: Math.floor(Math.random() * 30 + 70), // Simulated quality score
-        commonFindings: findings,
-        mostCommonFinding: mostCommon,
-        lastScanDate: history[0]?.date
-      });
-    }
   }, []);
 
-  // Save scan to history
+  // Save scan to history (real user data)
   const saveScanToHistory = (imageData, feedbackData) => {
     const scan = {
       id: Date.now(),
@@ -264,40 +153,34 @@ export default function Scan() {
       quality: captureQuality?.isGoodQuality ? 'good' : 'poor'
     };
     
-    const updatedHistory = [scan, ...scanHistory].slice(0, 20); // Keep last 20
+    const updatedHistory = [scan, ...scanHistory].slice(0, 20);
     setScanHistory(updatedHistory);
     localStorage.setItem('scanHistory', JSON.stringify(updatedHistory));
-    
-    // Update stats
-    setScanStats(prev => ({
-      ...prev,
-      totalScans: updatedHistory.length,
-      lastScanDate: scan.date
-    }));
   };
 
-  // Compare two scans
-  const compareScans = (currentScan, previousScan) => {
-    if (!previousScan) return null;
+  // Compare two scans based on actual feedback text
+  const compareScans = (currentFeedback, previousFeedback) => {
+    if (!previousFeedback) return null;
     
-    // Simple comparison logic - in a real app, this would be more sophisticated
-    const currentFeedback = currentScan.feedback.toLowerCase();
-    const previousFeedback = previousScan.feedback.toLowerCase();
+    const current = currentFeedback.toLowerCase();
+    const previous = previousFeedback.toLowerCase();
     
     const improvements = [];
     const declines = [];
     
-    if (!previousFeedback.includes('plaque') && currentFeedback.includes('plaque')) {
-      declines.push('Plaque detected');
-    } else if (previousFeedback.includes('plaque') && !currentFeedback.includes('plaque')) {
-      improvements.push('Plaque reduced');
-    }
+    // Simple text-based comparison based on keywords
+    const keywords = ['plaque', 'gum', 'cavity', 'stain', 'tartar', 'calculus'];
     
-    if (!previousFeedback.includes('gum') && currentFeedback.includes('gum')) {
-      declines.push('Gum issues detected');
-    } else if (previousFeedback.includes('gum') && !currentFeedback.includes('gum')) {
-      improvements.push('Gum health improved');
-    }
+    keywords.forEach(keyword => {
+      const currentHas = current.includes(keyword);
+      const previousHas = previous.includes(keyword);
+      
+      if (!previousHas && currentHas) {
+        declines.push(`${keyword.charAt(0).toUpperCase() + keyword.slice(1)} detected`);
+      } else if (previousHas && !currentHas) {
+        improvements.push(`${keyword.charAt(0).toUpperCase() + keyword.slice(1)} improved`);
+      }
+    });
     
     return { improvements, declines };
   };
@@ -351,7 +234,7 @@ export default function Scan() {
       const imageData = canvas.toDataURL('image/jpeg', 0.9);
       setImage(imageData);
       
-      // Analyze image quality
+      // Analyze image quality (real brightness calculation)
       analyzeImageQuality(ctx, canvas.width, canvas.height);
       
       stopCamera();
@@ -360,7 +243,7 @@ export default function Scan() {
     }
   };
 
-  // Analyze image quality (brightness, focus estimation)
+  // Analyze image quality (real brightness calculation)
   const analyzeImageQuality = (ctx, width, height) => {
     const imageData = ctx.getImageData(0, 0, width, height);
     const data = imageData.data;
@@ -377,7 +260,7 @@ export default function Scan() {
     if (brightness > 200) message = translatedText.imageTooBright || translationKeys.imageTooBright;
     
     const quality = {
-      brightness: brightness,
+      brightness: Math.round(brightness),
       isGoodQuality: brightness > 50 && brightness < 200,
       message: message
     };
@@ -414,7 +297,7 @@ export default function Scan() {
       });
 
       const data = await res.json();
-      const feedbackText = data.feedback || data.error || "No response";
+      const feedbackText = data.feedback || data.error || "Unable to analyze image. Please try again.";
       setFeedback(feedbackText);
       
       // Save to history
@@ -465,9 +348,21 @@ export default function Scan() {
     localStorage.setItem('scanHistory', JSON.stringify(updated));
   };
 
-  // Export results as PDF (simulated)
-  const exportAsPDF = () => {
-    alert('PDF export feature coming soon!');
+  // Export results as text (real export)
+  const exportAsText = () => {
+    const data = {
+      scanDate: new Date().toISOString(),
+      feedback: feedback,
+      imageQuality: captureQuality
+    };
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `scan-results-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   // Share with dentist via email
@@ -477,17 +372,15 @@ export default function Scan() {
       return;
     }
     
-    // In a real app, this would send via API
     const subject = encodeURIComponent('Dental Scan Results from Smile Streak');
     const body = encodeURIComponent(
-      `Scan Results:\n\n${feedback}\n\n${shareNotes ? `Notes: ${shareNotes}\n\n` : ''}View the attached scan image for details.`
+      `Scan Results:\n\n${feedback}\n\nDate: ${new Date().toLocaleDateString()}\n\n${shareNotes ? `Notes: ${shareNotes}\n\n` : ''}`
     );
     window.location.href = `mailto:${shareEmail}?subject=${subject}&body=${body}`;
     
     setShowShareModal(false);
     setShareEmail('');
     setShareNotes('');
-    alert('Email client opened!');
   };
 
   // Show loading state while translating
@@ -506,7 +399,7 @@ export default function Scan() {
 
   return (
     <div className="space-y-6 pb-8">
-      {/* Header with Quick Actions */}
+      {/* Header */}
       <div className="bg-gradient-to-br from-blue-600 via-cyan-500 to-blue-500 text-white rounded-3xl p-6 shadow-xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16" />
         <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-12 -translate-x-12" />
@@ -521,98 +414,19 @@ export default function Scan() {
               <p className="text-sm opacity-90">{translatedText.subtitle}</p>
             </div>
             
-            <div className="flex gap-2">
-              {scanHistory.length > 0 && (
-                <button
-                  onClick={() => setShowHistory(!showHistory)}
-                  className="bg-white/20 backdrop-blur-sm rounded-xl p-3 hover:bg-white/30 transition-colors"
-                  title="History"
-                >
-                  <History className="w-5 h-5" />
-                </button>
-              )}
+            {scanHistory.length > 0 && (
               <button
-                onClick={() => setShowFindingsGlossary(true)}
+                onClick={() => setShowHistory(!showHistory)}
                 className="bg-white/20 backdrop-blur-sm rounded-xl p-3 hover:bg-white/30 transition-colors"
-                title="Glossary"
               >
-                <BookOpen className="w-5 h-5" />
+                <History className="w-5 h-5" />
               </button>
-            </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Scan Stats (if history exists) */}
-      {scanHistory.length > 0 && mode === 'select' && (
-        <div className="bg-white rounded-3xl p-5 shadow-lg border border-blue-100">
-          <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-blue-600" />
-            {translatedText.stats}
-          </h3>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="p-3 bg-blue-50 rounded-xl">
-              <p className="text-xs text-gray-500">{translatedText.totalScans}</p>
-              <p className="text-xl font-bold text-gray-900">{scanStats.totalScans}</p>
-            </div>
-            <div className="p-3 bg-green-50 rounded-xl">
-              <p className="text-xs text-gray-500">{translatedText.avgQuality}</p>
-              <p className="text-xl font-bold text-gray-900">{scanStats.averageQuality}%</p>
-            </div>
-            <div className="p-3 bg-purple-50 rounded-xl col-span-2">
-              <p className="text-xs text-gray-500">{translatedText.mostCommon}</p>
-              <p className="text-lg font-bold text-gray-900">{scanStats.mostCommonFinding || 'None'}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Findings Glossary Modal */}
-      {showFindingsGlossary && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-[fadeIn_0.2s_ease-out]">
-          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[80vh] overflow-hidden animate-[scaleBounce_0.3s_ease-out]">
-            <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <BookOpen className="w-5 h-5" />
-                  <h3 className="text-xl font-black">{translatedText.glossaryTitle}</h3>
-                </div>
-                <button onClick={() => setShowFindingsGlossary(false)} className="text-white/80 hover:text-white">
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-              <p className="text-sm opacity-90 mt-1">{translatedText.glossaryDesc}</p>
-            </div>
-            
-            <div className="p-6 overflow-y-auto max-h-[60vh] space-y-4">
-              {findingsGlossary.map((item, index) => (
-                <div key={index} className="border border-gray-200 rounded-xl overflow-hidden">
-                  <button
-                    onClick={() => setExpandedFinding(expandedFinding === index ? null : index)}
-                    className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-blue-600">{item.icon}</span>
-                      <span className="font-semibold text-gray-900">{item.term}</span>
-                    </div>
-                    <ChevronRight className={`w-5 h-5 text-gray-400 transition-transform ${
-                      expandedFinding === index ? 'rotate-90' : ''
-                    }`} />
-                  </button>
-                  
-                  {expandedFinding === index && (
-                    <div className="px-4 pb-4 text-sm text-gray-600 leading-relaxed">
-                      {item.description}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Scan History Modal */}
+      {/* Scan History Modal - Shows real user data */}
       {showHistory && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white rounded-3xl max-w-lg w-full max-h-[80vh] overflow-hidden animate-[scaleBounce_0.3s_ease-out]">
@@ -648,7 +462,11 @@ export default function Scan() {
                           {translatedText.viewDetails}
                         </button>
                         <button
-                          onClick={() => setSelectedScanForComparison(scan)}
+                          onClick={() => {
+                            setSelectedScanForComparison(scan);
+                            setShowHistory(false);
+                            setShowComparison(true);
+                          }}
                           className="text-xs text-green-600 hover:text-green-700 font-medium"
                         >
                           Compare
@@ -732,11 +550,11 @@ export default function Scan() {
             
             <div className="space-y-3">
               <button
-                onClick={exportAsPDF}
+                onClick={exportAsText}
                 className="w-full flex items-center gap-3 p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors"
               >
                 <Download className="w-5 h-5 text-blue-600" />
-                <span className="font-semibold text-gray-900">{translatedText.downloadPDF}</span>
+                <span className="font-semibold text-gray-900">Export as JSON</span>
               </button>
               
               <button
@@ -762,7 +580,7 @@ export default function Scan() {
         </div>
       )}
 
-      {/* Comparison View */}
+      {/* Comparison View - Based on real scan data */}
       {showComparison && selectedScanForComparison && mode === 'results' && (
         <div className="bg-white rounded-3xl p-6 shadow-lg border-2 border-blue-200">
           <div className="flex items-center justify-between mb-4">
@@ -795,24 +613,24 @@ export default function Scan() {
             </div>
           </div>
           
-          {compareScans({ feedback }, selectedScanForComparison) && (
+          {compareScans(feedback, selectedScanForComparison.feedback) && (
             <div className="space-y-3">
-              {compareScans({ feedback }, selectedScanForComparison).improvements.length > 0 && (
+              {compareScans(feedback, selectedScanForComparison.feedback).improvements.length > 0 && (
                 <div className="p-3 bg-green-50 rounded-xl">
                   <p className="font-semibold text-green-700 text-sm mb-2">✅ Improvements</p>
                   <ul className="space-y-1">
-                    {compareScans({ feedback }, selectedScanForComparison).improvements.map((item, i) => (
+                    {compareScans(feedback, selectedScanForComparison.feedback).improvements.map((item, i) => (
                       <li key={i} className="text-xs text-gray-600">• {item}</li>
                     ))}
                   </ul>
                 </div>
               )}
               
-              {compareScans({ feedback }, selectedScanForComparison).declines.length > 0 && (
+              {compareScans(feedback, selectedScanForComparison.feedback).declines.length > 0 && (
                 <div className="p-3 bg-red-50 rounded-xl">
                   <p className="font-semibold text-red-700 text-sm mb-2">⚠️ Areas to Watch</p>
                   <ul className="space-y-1">
-                    {compareScans({ feedback }, selectedScanForComparison).declines.map((item, i) => (
+                    {compareScans(feedback, selectedScanForComparison.feedback).declines.map((item, i) => (
                       <li key={i} className="text-xs text-gray-600">• {item}</li>
                     ))}
                   </ul>
@@ -876,7 +694,7 @@ export default function Scan() {
             </label>
           </div>
 
-          {/* Tips */}
+          {/* Tips - Educational, not fake data */}
           <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-2xl p-5">
             <div className="flex items-start gap-3">
               <Zap className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
@@ -915,16 +733,14 @@ export default function Scan() {
               className="w-full h-auto"
             />
             
-            {/* Guidance Overlay */}
+            {/* Guidance Overlay - Visual guide only, not data */}
             <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/50 pointer-events-none">
-              {/* Grid lines */}
               <div className="absolute inset-0 grid grid-cols-3 grid-rows-3">
                 {[...Array(9)].map((_, i) => (
                   <div key={i} className="border border-white/20" />
                 ))}
               </div>
               
-              {/* Face oval guide */}
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-64 h-80 border-4 border-white/40 rounded-full" />
               </div>
@@ -934,15 +750,9 @@ export default function Scan() {
             <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
               <div className="text-center text-white space-y-3">
                 <div className="text-4xl mb-2">{guidanceSteps[guidanceStep].icon}</div>
-                <h3 className="text-xl font-black">
-                  {translatedText[guidanceSteps[guidanceStep].titleKey] || getDefaultStepTitle(guidanceStep)}
-                </h3>
-                <p className="text-sm opacity-90">
-                  {translatedText[guidanceSteps[guidanceStep].instructionKey] || getDefaultStepInstruction(guidanceStep)}
-                </p>
-                <p className="text-xs opacity-75">
-                  💡 {translatedText[guidanceSteps[guidanceStep].tipKey] || getDefaultStepTip(guidanceStep)}
-                </p>
+                <h3 className="text-xl font-black">{guidanceSteps[guidanceStep].title}</h3>
+                <p className="text-sm opacity-90">{guidanceSteps[guidanceStep].instruction}</p>
+                <p className="text-xs opacity-75">💡 {guidanceSteps[guidanceStep].tip}</p>
                 
                 {/* Progress dots */}
                 <div className="flex justify-center gap-2 pt-2">
@@ -1045,7 +855,7 @@ export default function Scan() {
         </div>
       )}
 
-      {/* MODE: RESULTS */}
+      {/* MODE: RESULTS - Shows real API feedback */}
       {mode === 'results' && feedback && (
         <div className="space-y-6">
           {image && (
@@ -1074,7 +884,7 @@ export default function Scan() {
             </div>
           </div>
 
-          {/* Action Buttons Grid */}
+          {/* Action Buttons */}
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={reset}
@@ -1109,7 +919,7 @@ export default function Scan() {
             </button>
           </div>
 
-          {/* Compare with Previous */}
+          {/* Compare with Previous - Uses real scan history */}
           {scanHistory.length > 1 && (
             <button
               onClick={() => {
@@ -1126,7 +936,7 @@ export default function Scan() {
             </button>
           )}
 
-          {/* Improvement Tips */}
+          {/* Improvement Tips - Educational content only */}
           <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-2xl p-5">
             <div className="flex items-start gap-3">
               <TrendingUp className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
@@ -1136,67 +946,6 @@ export default function Scan() {
               </div>
             </div>
           </div>
-
-          {/* Comparison View (if active) */}
-          {showComparison && selectedScanForComparison && (
-            <div className="bg-white rounded-3xl p-6 shadow-lg border-2 border-blue-200">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-black text-gray-900 flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5 text-blue-600" />
-                  {translatedText.comparisonTitle}
-                </h3>
-                <button
-                  onClick={() => setShowComparison(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              
-              <p className="text-sm text-gray-600 mb-4">{translatedText.comparisonDesc}</p>
-              
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">{translatedText.currentScan}</p>
-                  <div className="aspect-square rounded-xl overflow-hidden bg-gray-100">
-                    <img src={image} alt="Current" className="w-full h-full object-cover" />
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">{translatedText.previousScan}</p>
-                  <div className="aspect-square rounded-xl overflow-hidden bg-gray-100">
-                    <img src={selectedScanForComparison.image} alt="Previous" className="w-full h-full object-cover" />
-                  </div>
-                </div>
-              </div>
-              
-              {compareScans({ feedback }, selectedScanForComparison) && (
-                <div className="space-y-3">
-                  {compareScans({ feedback }, selectedScanForComparison).improvements.length > 0 && (
-                    <div className="p-3 bg-green-50 rounded-xl">
-                      <p className="font-semibold text-green-700 text-sm mb-2">✅ Improvements</p>
-                      <ul className="space-y-1">
-                        {compareScans({ feedback }, selectedScanForComparison).improvements.map((item, i) => (
-                          <li key={i} className="text-xs text-gray-600">• {item}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  
-                  {compareScans({ feedback }, selectedScanForComparison).declines.length > 0 && (
-                    <div className="p-3 bg-red-50 rounded-xl">
-                      <p className="font-semibold text-red-700 text-sm mb-2">⚠️ Areas to Watch</p>
-                      <ul className="space-y-1">
-                        {compareScans({ feedback }, selectedScanForComparison).declines.map((item, i) => (
-                          <li key={i} className="text-xs text-gray-600">• {item}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
         </div>
       )}
     </div>

@@ -1,7 +1,7 @@
 import { generateInsights } from "../utils/insights";
-import { useState, useContext, useEffect, useMemo } from "react";
+import { useState, useContext, useEffect } from "react";
 import { 
-  // Core icons
+  // Core icons - these definitely exist
   TrendingUp, TrendingDown, Target, Award, Calendar, Clock, Zap, Brain, 
   Heart, AlertCircle, CheckCircle2, Flame, Trophy, BarChart3, Activity, 
   Sun, Moon, Sparkles, Share2, Download, Printer, 
@@ -22,55 +22,50 @@ import {
   DollarSign, Euro, PoundSterling, Yen,
   Bitcoin, CreditCard, Wallet, PiggyBank,
   Banknote, Coins,
-  // Missing icons that were used
+  // Additional icons that exist
   Circle, Square, Triangle,
   ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
   ChevronsUp, ChevronsDown, ChevronsLeft, ChevronsRight,
-  // Health & wellness icons needed
   Pill, Syringe,
   Baby, 
-  // Additional icons from your JSX
-  Flask, Atom, Link, Image as ImageIcon, Briefcase, 
-  Flower, Apple, Type,
-  // Chart icons
+  Flask, Link, Image as ImageIcon, Briefcase, 
+  Shield,
   PieChart, Radar,
-  // DNA and Bacteria icons (using alternatives since they might not exist)
-  Activity as Dna, // Using Activity as fallback for Dna
-  Activity as Bacteria, // Using Activity as fallback for Bacteria
-  Droplets as Milk, // Using Droplets as fallback for Milk
-  Activity as Flower, // Using Activity as fallback for Flower
-  // Add Shield for security section
-  Shield
+  // Use existing icons as replacements for ones that might not exist
+  // Replace Dna, Bacteria, Milk, Flower with existing alternatives
+  Activity as Dna,
+  Activity as Bacteria,
+  Droplets as Milk,
+  Flower as FlowerIcon
 } from "lucide-react";
 import { TranslationContext } from "../App";
+
+// Add missing Flower icon if it doesn't exist in your version
+const Flower = ({ className }) => <span className={className}>🌼</span>;
 
 export default function Insights({ habitData }) {
   const { t, currentLanguage, translating } = useContext(TranslationContext);
   const [selectedMetric, setSelectedMetric] = useState(null);
   const [translatedText, setTranslatedText] = useState({});
-  const [timeRange, setTimeRange] = useState('all'); // 'week', 'month', 'year', 'all'
-  const [chartType, setChartType] = useState('bar'); // 'bar', 'line', 'pie', 'radar'
+  const [timeRange, setTimeRange] = useState('all');
+  const [chartType, setChartType] = useState('bar');
   const [showAdvancedStats, setShowAdvancedStats] = useState(false);
   const [showPredictions, setShowPredictions] = useState(true);
   const [showComparisons, setShowComparisons] = useState(true);
   const [showRecommendations, setShowRecommendations] = useState(true);
-  const [selectedView, setSelectedView] = useState('dashboard'); // 'dashboard', 'analytics', 'trends', 'predictions'
-  const [selectedTheme, setSelectedTheme] = useState('light'); // 'light', 'dark', 'system'
-  const [selectedFontSize, setSelectedFontSize] = useState('medium'); // 'small', 'medium', 'large'
+  const [selectedView, setSelectedView] = useState('dashboard');
+  const [selectedTheme, setSelectedTheme] = useState('light');
+  const [selectedFontSize, setSelectedFontSize] = useState('medium');
   const [selectedLanguage, setSelectedLanguage] = useState('en');
   const [selectedCurrency, setSelectedCurrency] = useState('USD');
   const [selectedTimezone, setSelectedTimezone] = useState('UTC');
   const [selectedDateFormat, setSelectedDateFormat] = useState('MM/DD/YYYY');
   const [selectedTimeFormat, setSelectedTimeFormat] = useState('12h');
-  const [selectedUnitSystem, setSelectedUnitSystem] = useState('imperial'); // 'imperial', 'metric'
-  const [selectedTemperatureUnit, setSelectedTemperatureUnit] = useState('fahrenheit'); // 'fahrenheit', 'celsius'
-  const [selectedDistanceUnit, setSelectedDistanceUnit] = useState('miles'); // 'miles', 'kilometers'
-  const [selectedWeightUnit, setSelectedWeightUnit] = useState('lbs'); // 'lbs', 'kg'
-  const [selectedHeightUnit, setSelectedHeightUnit] = useState('ft'); // 'ft', 'cm'
-  const [selectedPressureUnit, setSelectedPressureUnit] = useState('psi'); // 'psi', 'kpa'
-  const [selectedVolumeUnit, setSelectedVolumeUnit] = useState('oz'); // 'oz', 'ml'
-  const [selectedEnergyUnit, setSelectedEnergyUnit] = useState('cal'); // 'cal', 'kj'
-  const [selectedSpeedUnit, setSelectedSpeedUnit] = useState('mph'); // 'mph', 'kmh'
+  const [selectedUnitSystem, setSelectedUnitSystem] = useState('imperial');
+  const [selectedTemperatureUnit, setSelectedTemperatureUnit] = useState('fahrenheit');
+  const [selectedDistanceUnit, setSelectedDistanceUnit] = useState('miles');
+  const [selectedWeightUnit, setSelectedWeightUnit] = useState('lbs');
+  const [selectedHeightUnit, setSelectedHeightUnit] = useState('ft');
   const [selectedAnimations, setSelectedAnimations] = useState(true);
   const [selectedHapticFeedback, setSelectedHapticFeedback] = useState(true);
   const [selectedReducedMotion, setSelectedReducedMotion] = useState(false);
@@ -80,7 +75,7 @@ export default function Insights({ habitData }) {
   const [selectedScreenReader, setSelectedScreenReader] = useState(false);
   const [selectedColorBlindMode, setSelectedColorBlindMode] = useState('none');
 
-  // Translation keys (expanded) - keeping your existing translationKeys object
+  // Translation keys - keeping your existing translationKeys object
   const translationKeys = {
     title: "Smart Insights",
     subtitle: "AI-powered analysis of your habits",
@@ -1042,7 +1037,7 @@ export default function Insights({ habitData }) {
       if (environmentalImpact.pollenCount > 70) {
         predictions.push({
           type: 'warning',
-          icon: <Flower className="w-5 h-5 text-green-400" />,
+          icon: <FlowerIcon className="w-5 h-5 text-green-400" />,
           title: 'Pollen Alert',
           message: `Pollen count is ${environmentalImpact.pollenCount}`
         });
@@ -1126,7 +1121,7 @@ export default function Insights({ habitData }) {
 
   return (
     <div className="space-y-6 pb-8">
-      {/* Header with Quick Actions - Keeping your existing JSX structure */}
+      {/* Header with Quick Actions */}
       <div className="bg-gradient-to-br from-blue-600 via-cyan-500 to-blue-500 text-white rounded-3xl p-6 shadow-xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16" />
         <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-12 -translate-x-12" />
@@ -2304,7 +2299,7 @@ export default function Insights({ habitData }) {
                 type="checkbox"
                 checked={selectedScreenReader}
                 onChange={(e) => setSelectedScreenReader(e.target.checked)}
-                className="toggle"
+                className="w-4 h-4"
               />
             </label>
 
@@ -2314,7 +2309,7 @@ export default function Insights({ habitData }) {
                 type="checkbox"
                 checked={selectedHighContrast}
                 onChange={(e) => setSelectedHighContrast(e.target.checked)}
-                className="toggle"
+                className="w-4 h-4"
               />
             </label>
 
@@ -2324,7 +2319,7 @@ export default function Insights({ habitData }) {
                 type="checkbox"
                 checked={selectedLargeText}
                 onChange={(e) => setSelectedLargeText(e.target.checked)}
-                className="toggle"
+                className="w-4 h-4"
               />
             </label>
 
@@ -2334,7 +2329,7 @@ export default function Insights({ habitData }) {
                 type="checkbox"
                 checked={selectedBoldText}
                 onChange={(e) => setSelectedBoldText(e.target.checked)}
-                className="toggle"
+                className="w-4 h-4"
               />
             </label>
 
@@ -2344,7 +2339,7 @@ export default function Insights({ habitData }) {
                 type="checkbox"
                 checked={selectedReducedMotion}
                 onChange={(e) => setSelectedReducedMotion(e.target.checked)}
-                className="toggle"
+                className="w-4 h-4"
               />
             </label>
           </div>

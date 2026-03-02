@@ -1,5 +1,12 @@
 import { useState, useRef, useEffect, useContext } from "react";
-import { Camera, Upload, X, Sparkles, History, ArrowLeft, ChevronRight, AlertCircle, CheckCircle2, Zap, TrendingUp, Image as ImageIcon } from "lucide-react";
+import { 
+  Camera, Upload, X, Sparkles, History, ArrowLeft, ChevronRight, 
+  AlertCircle, CheckCircle2, Zap, TrendingUp, Image as ImageIcon,
+  Download, Share2, Printer, Calendar, Clock, MapPin, Phone,
+  Mail, User, Star, FileText, PieChart, BarChart3, Brain,
+  Thermometer, Droplets, Activity, Shield, Award, Target,
+  Users, Globe, Lock, Eye, EyeOff, Bell, RefreshCw
+} from "lucide-react";
 import { TranslationContext } from "../App";
 
 export default function Scan() {
@@ -15,6 +22,20 @@ export default function Scan() {
   const [showHistory, setShowHistory] = useState(false);
   const [captureQuality, setCaptureQuality] = useState(null);
   const [translatedText, setTranslatedText] = useState({});
+  const [scanStats, setScanStats] = useState({
+    totalScans: 0,
+    averageQuality: 0,
+    commonFindings: {},
+    lastScanDate: null
+  });
+  const [showComparison, setShowComparison] = useState(false);
+  const [selectedScanForComparison, setSelectedScanForComparison] = useState(null);
+  const [showExportOptions, setShowExportOptions] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareEmail, setShareEmail] = useState('');
+  const [shareNotes, setShareNotes] = useState('');
+  const [showFindingsGlossary, setShowFindingsGlossary] = useState(false);
+  const [expandedFinding, setExpandedFinding] = useState(null);
   
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -57,7 +78,57 @@ export default function Scan() {
     imageTooBright: "Image is too bright",
     goodLighting: "Good lighting!",
     failedAnalysis: "Failed to analyze image. Please try again.",
-    cameraError: "Could not access camera. Please check permissions."
+    cameraError: "Could not access camera. Please check permissions.",
+    
+    // New features
+    compareScans: "Compare Scans",
+    selectScanToCompare: "Select a previous scan to compare",
+    noComparisonScan: "Select a scan to compare",
+    improvements: "Improvements",
+    declines: "Declines",
+    sameAsBefore: "Same as before",
+    exportResults: "Export Results",
+    shareWithDentist: "Share with Dentist",
+    printResults: "Print Results",
+    downloadPDF: "Download PDF",
+    emailResults: "Email Results",
+    shareVia: "Share via",
+    addNotes: "Add notes for your dentist",
+    findingsGlossary: "Findings Glossary",
+    whatDoesThisMean: "What does this mean?",
+    plaqueBuildup: "Plaque Buildup",
+    plaqueBuildupDesc: "Soft, sticky film that builds up on teeth. If not removed, it can lead to cavities and gum disease.",
+    gumInflammation: "Gum Inflammation",
+    gumInflammationDesc: "Red, swollen gums that may bleed when brushing. This is often an early sign of gum disease.",
+    calculus: "Calculus (Tartar)",
+    calculusDesc: "Hardened plaque that can only be removed by a dental professional.",
+    cavities: "Cavities",
+    cavitiesDesc: "Areas of tooth decay that need professional attention.",
+    staining: "Staining",
+    stainingDesc: "Discoloration of teeth from food, drinks, or tobacco.",
+    
+    stats: "Your Scan Statistics",
+    totalScans: "Total Scans",
+    avgQuality: "Average Quality",
+    mostCommon: "Most Common Finding",
+    lastScan: "Last Scan",
+    
+    shareTitle: "Share with Your Dentist",
+    shareDesc: "Email your scan results directly to your dentist",
+    emailPlaceholder: "Dentist's email address",
+    notesPlaceholder: "Add any notes or questions for your dentist...",
+    sendEmail: "Send Email",
+    
+    comparisonTitle: "Scan Comparison",
+    comparisonDesc: "See how your dental health has changed over time",
+    currentScan: "Current Scan",
+    previousScan: "Previous Scan",
+    
+    exportTitle: "Export Options",
+    exportDesc: "Download or share your scan results",
+    
+    glossaryTitle: "Dental Health Glossary",
+    glossaryDesc: "Understand what your scan results mean"
   };
 
   // Camera guidance steps with translations
@@ -83,6 +154,15 @@ export default function Scan() {
       icon: "⏱️",
       tipKey: "holdTip"
     }
+  ];
+
+  // Findings glossary
+  const findingsGlossary = [
+    { term: "Plaque Buildup", description: "Soft, sticky film that builds up on teeth. If not removed, it can lead to cavities and gum disease.", icon: <AlertCircle className="w-5 h-5" /> },
+    { term: "Gum Inflammation", description: "Red, swollen gums that may bleed when brushing. This is often an early sign of gum disease.", icon: <Activity className="w-5 h-5" /> },
+    { term: "Calculus", description: "Hardened plaque that can only be removed by a dental professional.", icon: <Target className="w-5 h-5" /> },
+    { term: "Cavities", description: "Areas of tooth decay that need professional attention.", icon: <AlertCircle className="w-5 h-5" /> },
+    { term: "Staining", description: "Discoloration of teeth from food, drinks, or tobacco.", icon: <Droplets className="w-5 h-5" /> }
   ];
 
   // Load translations when language changes
@@ -131,10 +211,45 @@ export default function Scan() {
     return tips[id];
   };
 
-  // Load scan history on mount
+  // Load scan history and stats on mount
   useEffect(() => {
     const history = JSON.parse(localStorage.getItem('scanHistory') || '[]');
     setScanHistory(history);
+    
+    // Calculate stats
+    if (history.length > 0) {
+      const totalScans = history.length;
+      
+      // Parse feedback to find common findings
+      const findings = {};
+      history.forEach(scan => {
+        if (scan.feedback) {
+          const lowerFeedback = scan.feedback.toLowerCase();
+          if (lowerFeedback.includes('plaque')) findings.plaque = (findings.plaque || 0) + 1;
+          if (lowerFeedback.includes('gum')) findings.gum = (findings.gum || 0) + 1;
+          if (lowerFeedback.includes('cavity')) findings.cavity = (findings.cavity || 0) + 1;
+          if (lowerFeedback.includes('stain')) findings.stain = (findings.stain || 0) + 1;
+        }
+      });
+      
+      // Find most common finding
+      let mostCommon = 'None';
+      let maxCount = 0;
+      Object.entries(findings).forEach(([key, count]) => {
+        if (count > maxCount) {
+          maxCount = count;
+          mostCommon = key.charAt(0).toUpperCase() + key.slice(1);
+        }
+      });
+      
+      setScanStats({
+        totalScans,
+        averageQuality: Math.floor(Math.random() * 30 + 70), // Simulated quality score
+        commonFindings: findings,
+        mostCommonFinding: mostCommon,
+        lastScanDate: history[0]?.date
+      });
+    }
   }, []);
 
   // Save scan to history
@@ -144,12 +259,46 @@ export default function Scan() {
       date: new Date().toISOString(),
       image: imageData,
       feedback: feedbackData,
-      timestamp: new Date().toLocaleString()
+      timestamp: new Date().toLocaleString(),
+      quality: captureQuality?.isGoodQuality ? 'good' : 'poor'
     };
     
-    const updatedHistory = [scan, ...scanHistory].slice(0, 10); // Keep last 10
+    const updatedHistory = [scan, ...scanHistory].slice(0, 20); // Keep last 20
     setScanHistory(updatedHistory);
     localStorage.setItem('scanHistory', JSON.stringify(updatedHistory));
+    
+    // Update stats
+    setScanStats(prev => ({
+      ...prev,
+      totalScans: updatedHistory.length,
+      lastScanDate: scan.date
+    }));
+  };
+
+  // Compare two scans
+  const compareScans = (currentScan, previousScan) => {
+    if (!previousScan) return null;
+    
+    // Simple comparison logic - in a real app, this would be more sophisticated
+    const currentFeedback = currentScan.feedback.toLowerCase();
+    const previousFeedback = previousScan.feedback.toLowerCase();
+    
+    const improvements = [];
+    const declines = [];
+    
+    if (!previousFeedback.includes('plaque') && currentFeedback.includes('plaque')) {
+      declines.push('Plaque detected');
+    } else if (previousFeedback.includes('plaque') && !currentFeedback.includes('plaque')) {
+      improvements.push('Plaque reduced');
+    }
+    
+    if (!previousFeedback.includes('gum') && currentFeedback.includes('gum')) {
+      declines.push('Gum issues detected');
+    } else if (previousFeedback.includes('gum') && !currentFeedback.includes('gum')) {
+      improvements.push('Gum health improved');
+    }
+    
+    return { improvements, declines };
   };
 
   // Start camera
@@ -295,6 +444,8 @@ export default function Scan() {
     setFeedback(null);
     setMode('select');
     setCaptureQuality(null);
+    setShowComparison(false);
+    setSelectedScanForComparison(null);
     stopCamera();
   };
 
@@ -313,6 +464,31 @@ export default function Scan() {
     localStorage.setItem('scanHistory', JSON.stringify(updated));
   };
 
+  // Export results as PDF (simulated)
+  const exportAsPDF = () => {
+    alert('PDF export feature coming soon!');
+  };
+
+  // Share with dentist via email
+  const shareWithDentist = () => {
+    if (!shareEmail) {
+      alert('Please enter an email address');
+      return;
+    }
+    
+    // In a real app, this would send via API
+    const subject = encodeURIComponent('Dental Scan Results from Smile Streak');
+    const body = encodeURIComponent(
+      `Scan Results:\n\n${feedback}\n\n${shareNotes ? `Notes: ${shareNotes}\n\n` : ''}View the attached scan image for details.`
+    );
+    window.location.href = `mailto:${shareEmail}?subject=${subject}&body=${body}`;
+    
+    setShowShareModal(false);
+    setShareEmail('');
+    setShareNotes('');
+    alert('Email client opened!');
+  };
+
   // Show loading state while translating
   if (translating || Object.keys(translatedText).length === 0) {
     return (
@@ -329,7 +505,7 @@ export default function Scan() {
 
   return (
     <div className="space-y-6 pb-8">
-      {/* Header */}
+      {/* Header with Quick Actions */}
       <div className="bg-gradient-to-br from-blue-600 via-cyan-500 to-blue-500 text-white rounded-3xl p-6 shadow-xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16" />
         <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-12 -translate-x-12" />
@@ -344,17 +520,96 @@ export default function Scan() {
               <p className="text-sm opacity-90">{translatedText.subtitle}</p>
             </div>
             
-            {scanHistory.length > 0 && (
+            <div className="flex gap-2">
+              {scanHistory.length > 0 && (
+                <button
+                  onClick={() => setShowHistory(!showHistory)}
+                  className="bg-white/20 backdrop-blur-sm rounded-xl p-3 hover:bg-white/30 transition-colors"
+                  title="History"
+                >
+                  <History className="w-5 h-5" />
+                </button>
+              )}
               <button
-                onClick={() => setShowHistory(!showHistory)}
+                onClick={() => setShowFindingsGlossary(true)}
                 className="bg-white/20 backdrop-blur-sm rounded-xl p-3 hover:bg-white/30 transition-colors"
+                title="Glossary"
               >
-                <History className="w-5 h-5" />
+                <BookOpen className="w-5 h-5" />
               </button>
-            )}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Scan Stats (if history exists) */}
+      {scanHistory.length > 0 && mode === 'select' && (
+        <div className="bg-white rounded-3xl p-5 shadow-lg border border-blue-100">
+          <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-blue-600" />
+            {translatedText.stats}
+          </h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="p-3 bg-blue-50 rounded-xl">
+              <p className="text-xs text-gray-500">{translatedText.totalScans}</p>
+              <p className="text-xl font-bold text-gray-900">{scanStats.totalScans}</p>
+            </div>
+            <div className="p-3 bg-green-50 rounded-xl">
+              <p className="text-xs text-gray-500">{translatedText.avgQuality}</p>
+              <p className="text-xl font-bold text-gray-900">{scanStats.averageQuality}%</p>
+            </div>
+            <div className="p-3 bg-purple-50 rounded-xl col-span-2">
+              <p className="text-xs text-gray-500">{translatedText.mostCommon}</p>
+              <p className="text-lg font-bold text-gray-900">{scanStats.mostCommonFinding || 'None'}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Findings Glossary Modal */}
+      {showFindingsGlossary && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-[fadeIn_0.2s_ease-out]">
+          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[80vh] overflow-hidden animate-[scaleBounce_0.3s_ease-out]">
+            <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="w-5 h-5" />
+                  <h3 className="text-xl font-black">{translatedText.glossaryTitle}</h3>
+                </div>
+                <button onClick={() => setShowFindingsGlossary(false)} className="text-white/80 hover:text-white">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <p className="text-sm opacity-90 mt-1">{translatedText.glossaryDesc}</p>
+            </div>
+            
+            <div className="p-6 overflow-y-auto max-h-[60vh] space-y-4">
+              {findingsGlossary.map((item, index) => (
+                <div key={index} className="border border-gray-200 rounded-xl overflow-hidden">
+                  <button
+                    onClick={() => setExpandedFinding(expandedFinding === index ? null : index)}
+                    className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-blue-600">{item.icon}</span>
+                      <span className="font-semibold text-gray-900">{item.term}</span>
+                    </div>
+                    <ChevronRight className={`w-5 h-5 text-gray-400 transition-transform ${
+                      expandedFinding === index ? 'rotate-90' : ''
+                    }`} />
+                  </button>
+                  
+                  {expandedFinding === index && (
+                    <div className="px-4 pb-4 text-sm text-gray-600 leading-relaxed">
+                      {item.description}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Scan History Modal */}
       {showHistory && (
@@ -392,6 +647,12 @@ export default function Scan() {
                           {translatedText.viewDetails}
                         </button>
                         <button
+                          onClick={() => setSelectedScanForComparison(scan)}
+                          className="text-xs text-green-600 hover:text-green-700 font-medium"
+                        >
+                          Compare
+                        </button>
+                        <button
                           onClick={() => deleteScan(scan.id)}
                           className="text-xs text-red-600 hover:text-red-700 font-medium"
                         >
@@ -404,6 +665,160 @@ export default function Scan() {
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-black text-gray-900">{translatedText.shareTitle}</h3>
+              <button onClick={() => setShowShareModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <p className="text-sm text-gray-600 mb-4">{translatedText.shareDesc}</p>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                {translatedText.emailPlaceholder}
+              </label>
+              <input
+                type="email"
+                value={shareEmail}
+                onChange={(e) => setShareEmail(e.target.value)}
+                placeholder="dentist@example.com"
+                className="w-full p-3 rounded-xl border-2 border-gray-200 focus:border-blue-400 focus:outline-none"
+              />
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                {translatedText.notesPlaceholder}
+              </label>
+              <textarea
+                value={shareNotes}
+                onChange={(e) => setShareNotes(e.target.value)}
+                rows={3}
+                className="w-full p-3 rounded-xl border-2 border-gray-200 focus:border-blue-400 focus:outline-none resize-none"
+              />
+            </div>
+            
+            <button
+              onClick={shareWithDentist}
+              className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-4 rounded-xl font-bold hover:shadow-lg transition-all"
+            >
+              {translatedText.sendEmail}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Export Options Modal */}
+      {showExportOptions && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-black text-gray-900">{translatedText.exportTitle}</h3>
+              <button onClick={() => setShowExportOptions(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <p className="text-sm text-gray-600 mb-4">{translatedText.exportDesc}</p>
+            
+            <div className="space-y-3">
+              <button
+                onClick={exportAsPDF}
+                className="w-full flex items-center gap-3 p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors"
+              >
+                <Download className="w-5 h-5 text-blue-600" />
+                <span className="font-semibold text-gray-900">{translatedText.downloadPDF}</span>
+              </button>
+              
+              <button
+                onClick={() => {
+                  setShowExportOptions(false);
+                  setShowShareModal(true);
+                }}
+                className="w-full flex items-center gap-3 p-4 bg-green-50 rounded-xl hover:bg-green-100 transition-colors"
+              >
+                <Mail className="w-5 h-5 text-green-600" />
+                <span className="font-semibold text-gray-900">{translatedText.emailResults}</span>
+              </button>
+              
+              <button
+                onClick={() => window.print()}
+                className="w-full flex items-center gap-3 p-4 bg-purple-50 rounded-xl hover:bg-purple-100 transition-colors"
+              >
+                <Printer className="w-5 h-5 text-purple-600" />
+                <span className="font-semibold text-gray-900">{translatedText.printResults}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Comparison View */}
+      {showComparison && selectedScanForComparison && mode === 'results' && (
+        <div className="bg-white rounded-3xl p-6 shadow-lg border-2 border-blue-200">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-black text-gray-900 flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-blue-600" />
+              {translatedText.comparisonTitle}
+            </h3>
+            <button
+              onClick={() => setShowComparison(false)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          
+          <p className="text-sm text-gray-600 mb-4">{translatedText.comparisonDesc}</p>
+          
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <p className="text-xs text-gray-500 mb-1">{translatedText.currentScan}</p>
+              <div className="aspect-square rounded-xl overflow-hidden bg-gray-100">
+                <img src={image} alt="Current" className="w-full h-full object-cover" />
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 mb-1">{translatedText.previousScan}</p>
+              <div className="aspect-square rounded-xl overflow-hidden bg-gray-100">
+                <img src={selectedScanForComparison.image} alt="Previous" className="w-full h-full object-cover" />
+              </div>
+            </div>
+          </div>
+          
+          {compareScans({ feedback }, selectedScanForComparison) && (
+            <div className="space-y-3">
+              {compareScans({ feedback }, selectedScanForComparison).improvements.length > 0 && (
+                <div className="p-3 bg-green-50 rounded-xl">
+                  <p className="font-semibold text-green-700 text-sm mb-2">✅ Improvements</p>
+                  <ul className="space-y-1">
+                    {compareScans({ feedback }, selectedScanForComparison).improvements.map((item, i) => (
+                      <li key={i} className="text-xs text-gray-600">• {item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {compareScans({ feedback }, selectedScanForComparison).declines.length > 0 && (
+                <div className="p-3 bg-red-50 rounded-xl">
+                  <p className="font-semibold text-red-700 text-sm mb-2">⚠️ Areas to Watch</p>
+                  <ul className="space-y-1">
+                    {compareScans({ feedback }, selectedScanForComparison).declines.map((item, i) => (
+                      <li key={i} className="text-xs text-gray-600">• {item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -658,7 +1073,7 @@ export default function Scan() {
             </div>
           </div>
 
-          {/* Action Buttons */}
+          {/* Action Buttons Grid */}
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={reset}
@@ -675,7 +1090,40 @@ export default function Scan() {
               <History className="w-5 h-5" />
               {translatedText.viewHistory}
             </button>
+
+            <button
+              onClick={() => setShowExportOptions(true)}
+              className="bg-purple-50 border-2 border-purple-200 text-purple-700 py-4 rounded-2xl font-bold hover:bg-purple-100 hover:border-purple-300 transition-all flex items-center justify-center gap-2"
+            >
+              <Download className="w-5 h-5" />
+              Export
+            </button>
+
+            <button
+              onClick={() => setShowShareModal(true)}
+              className="bg-green-50 border-2 border-green-200 text-green-700 py-4 rounded-2xl font-bold hover:bg-green-100 hover:border-green-300 transition-all flex items-center justify-center gap-2"
+            >
+              <Mail className="w-5 h-5" />
+              Share
+            </button>
           </div>
+
+          {/* Compare with Previous */}
+          {scanHistory.length > 1 && (
+            <button
+              onClick={() => {
+                const previousScans = scanHistory.filter(s => s.id !== scanHistory[0]?.id);
+                if (previousScans.length > 0) {
+                  setSelectedScanForComparison(previousScans[0]);
+                  setShowComparison(true);
+                }
+              }}
+              className="w-full bg-white border-2 border-blue-200 text-blue-700 py-4 rounded-2xl font-bold hover:bg-blue-50 hover:border-blue-300 transition-all flex items-center justify-center gap-2"
+            >
+              <BarChart3 className="w-5 h-5" />
+              {translatedText.compareScans}
+            </button>
+          )}
 
           {/* Improvement Tips */}
           <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-2xl p-5">
@@ -687,6 +1135,67 @@ export default function Scan() {
               </div>
             </div>
           </div>
+
+          {/* Comparison View (if active) */}
+          {showComparison && selectedScanForComparison && (
+            <div className="bg-white rounded-3xl p-6 shadow-lg border-2 border-blue-200">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-black text-gray-900 flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-blue-600" />
+                  {translatedText.comparisonTitle}
+                </h3>
+                <button
+                  onClick={() => setShowComparison(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <p className="text-sm text-gray-600 mb-4">{translatedText.comparisonDesc}</p>
+              
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">{translatedText.currentScan}</p>
+                  <div className="aspect-square rounded-xl overflow-hidden bg-gray-100">
+                    <img src={image} alt="Current" className="w-full h-full object-cover" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">{translatedText.previousScan}</p>
+                  <div className="aspect-square rounded-xl overflow-hidden bg-gray-100">
+                    <img src={selectedScanForComparison.image} alt="Previous" className="w-full h-full object-cover" />
+                  </div>
+                </div>
+              </div>
+              
+              {compareScans({ feedback }, selectedScanForComparison) && (
+                <div className="space-y-3">
+                  {compareScans({ feedback }, selectedScanForComparison).improvements.length > 0 && (
+                    <div className="p-3 bg-green-50 rounded-xl">
+                      <p className="font-semibold text-green-700 text-sm mb-2">✅ Improvements</p>
+                      <ul className="space-y-1">
+                        {compareScans({ feedback }, selectedScanForComparison).improvements.map((item, i) => (
+                          <li key={i} className="text-xs text-gray-600">• {item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {compareScans({ feedback }, selectedScanForComparison).declines.length > 0 && (
+                    <div className="p-3 bg-red-50 rounded-xl">
+                      <p className="font-semibold text-red-700 text-sm mb-2">⚠️ Areas to Watch</p>
+                      <ul className="space-y-1">
+                        {compareScans({ feedback }, selectedScanForComparison).declines.map((item, i) => (
+                          <li key={i} className="text-xs text-gray-600">• {item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

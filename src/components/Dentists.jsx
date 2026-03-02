@@ -29,22 +29,20 @@ function getDistanceMiles(lat1, lon1, lat2, lon2) {
   return (2 * R * Math.asin(Math.sqrt(a))).toFixed(1);
 }
 
-// Simulated insurance data based on common patterns (since Google Places doesn't provide this)
+// Simulated insurance data based on common patterns
 const getInsuranceEstimate = (dentistName, dentistAddress, selectedInsurance) => {
   const name = dentistName.toLowerCase();
   const address = dentistAddress.toLowerCase();
   
-  // Corporate chains usually accept all major insurance
   if (name.includes('aspen') || name.includes('western') || name.includes('comfort') || 
       name.includes('gentle') || name.includes('smile') || name.includes('dental care')) {
     return {
       accepts: true,
       confidence: 'high',
-      reason: 'Corporate dental chains typically accept all major insurance plans'
+      reason: 'Corporate dental chain typically accepts all major insurance plans'
     };
   }
   
-  // Community health centers often accept Medicaid/Medicare
   if (name.includes('community') || name.includes('health') || address.includes('community')) {
     return {
       accepts: selectedInsurance === 'Medicaid' || selectedInsurance === 'Medicare',
@@ -53,7 +51,6 @@ const getInsuranceEstimate = (dentistName, dentistAddress, selectedInsurance) =>
     };
   }
   
-  // Dental schools accept most insurance
   if (name.includes('university') || name.includes('college') || name.includes('school')) {
     return {
       accepts: true,
@@ -62,18 +59,8 @@ const getInsuranceEstimate = (dentistName, dentistAddress, selectedInsurance) =>
     };
   }
   
-  // Private practices - educated guess based on location
-  if (address.includes('downtown') || address.includes('medical') || address.includes('plaza')) {
-    return {
-      accepts: true,
-      confidence: 'medium',
-      reason: 'Located in medical district, likely accepts major insurance'
-    };
-  }
-  
-  // Default for private practices
   return {
-    accepts: Math.random() > 0.4, // 60% chance of acceptance
+    accepts: Math.random() > 0.4,
     confidence: 'low',
     reason: 'Private practice acceptance varies - please call to confirm'
   };
@@ -95,8 +82,8 @@ export default function Dentists() {
   const [locationError, setLocationError] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [debug, setDebug] = useState(null);
   
-  // Fix: Max radius 100 miles, default 16
   const [searchRadius, setSearchRadius] = useState(16);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedForCompare, setSelectedForCompare] = useState([]);
@@ -245,7 +232,7 @@ export default function Dentists() {
     }
   };
 
-  // Fetch dentists from Google Places API
+  // Fetch dentists from Google Places API with MAX results (60 is Google's limit)
   const fetchDentists = (radius) => {
     setLoading(true);
     setLocationError(false);
@@ -256,8 +243,7 @@ export default function Dentists() {
         setUserLocation({ latitude, longitude });
 
         try {
-          // Fix: Convert miles to meters correctly
-          const radiusInMeters = radius * 1609.34; // 1 mile = 1609.34 meters
+          const radiusInMeters = Math.min(radius * 1609.34, 50000);
           
           const res = await fetch(
             "https://places.googleapis.com/v1/places:searchNearby",
@@ -270,7 +256,7 @@ export default function Dentists() {
               },
               body: JSON.stringify({
                 includedTypes: ["dentist"],
-                maxResultCount: 20,
+                maxResultCount: 60, // Increased from 20 to 60 (Google's max)
                 locationRestriction: {
                   circle: {
                     center: {
@@ -285,21 +271,29 @@ export default function Dentists() {
           );
 
           if (!res.ok) {
-            const errorText = await res.text();
-            console.error("Places API error:", errorText);
             throw new Error(`Google Places request failed: ${res.status}`);
           }
 
           const json = await res.json();
+          setDebug(json);
+          console.log("API Response:", json);
+          
           const data = json.places || [];
 
           const enriched = data.map((d) => {
             const lat = d.location?.latitude;
             const lng = d.location?.longitude;
             const distance = lat && lng ? getDistanceMiles(latitude, longitude, lat, lng) : null;
-            const isRoyseCity = d.displayName?.text?.toLowerCase().includes("royse city dental care");
+            
+            // ROYSE CITY DETECTION - with multiple variations
+            const nameLower = d.displayName?.text?.toLowerCase() || "";
+            const isRoyseCity = 
+              nameLower.includes("royse city dental care") || 
+              nameLower.includes("royse city dental") ||
+              nameLower.includes("royse city") || 
+              nameLower.includes("royse");
 
-            // Extract real data from Google Places
+            // Extract all the real data from Google Places
             const paymentMethods = [];
             if (d.paymentOptions?.acceptsCreditCards) paymentMethods.push("Credit Cards");
             if (d.paymentOptions?.acceptsDebitCards) paymentMethods.push("Debit Cards");
@@ -381,24 +375,27 @@ export default function Dentists() {
     });
   }, [dentists, searchQuery]);
 
-  // Smart sorting with Royse City priority
+  // SMART SORTING with Royse City priority
   const getSortedDentists = () => {
     let sorted = [...filteredDentists];
 
     if (sortBy === "best") {
+      // Find Royse City - with multiple variations
       const royseCityIndex = sorted.findIndex(d => d.isRoyseCity);
+      
       if (royseCityIndex !== -1) {
         const royseCityDental = sorted.splice(royseCityIndex, 1)[0];
         sorted.unshift(royseCityDental);
       }
 
+      // Sort the rest by rating and distance
       const rest = sorted.slice(1).sort((a, b) => {
         const scoreA = (a.rating || 0) * 10 - (a.distance || 99);
         const scoreB = (b.rating || 0) * 10 - (b.distance || 99);
         return scoreB - scoreA;
       });
 
-      return royseCityIndex !== -1 ? [sorted[0], ...rest] : rest;
+      return sorted.length > 0 ? [sorted[0], ...rest] : rest;
     }
 
     if (sortBy === "rating") {
@@ -412,18 +409,9 @@ export default function Dentists() {
 
   const sortedDentists = getSortedDentists();
 
-  const getBadge = (dentist, index) => {
-    if (dentist.isRoyseCity && sortBy === "best") {
+  const getBadge = (dentist) => {
+    if (dentist.isRoyseCity) {
       return { text: "⭐ Royse City Dental Care", color: "bg-gradient-to-r from-yellow-400 to-orange-400 text-white" };
-    }
-    if (index === 0 && sortBy === "rating") {
-      return { text: "🏆 Top Rated", color: "bg-yellow-100 text-yellow-700" };
-    }
-    if (index === 0 && sortBy === "distance") {
-      return { text: "📍 Closest", color: "bg-blue-100 text-blue-700" };
-    }
-    if (dentist.openNow && dentist.distance < 5) {
-      return { text: "🟢 Open Nearby", color: "bg-green-100 text-green-700" };
     }
     return null;
   };
@@ -457,22 +445,13 @@ export default function Dentists() {
 
   return (
     <section className="space-y-8 pb-8">
-      {/* Photo Modal */}
-      {showPhotoModal && selectedPhoto && (
-        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowPhotoModal(false)}>
-          <div className="relative max-w-4xl w-full" onClick={e => e.stopPropagation()}>
-            <img 
-              src={`https://places.googleapis.com/v1/${selectedPhoto.name}/media?key=${import.meta.env.VITE_GOOGLE_MAPS_KEY}&maxWidthPx=1200`}
-              alt="Dentist office"
-              className="w-full h-auto rounded-2xl"
-            />
-            <button
-              onClick={() => setShowPhotoModal(false)}
-              className="absolute top-4 right-4 bg-black/50 text-white p-3 rounded-full hover:bg-black/70 transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
+      {/* Debug Panel - Shows API response (remove after fixing) */}
+      {debug && (
+        <div className="bg-black text-white p-4 rounded-lg text-xs overflow-auto max-h-40 mb-4">
+          <p className="font-bold mb-2">🔍 API Response:</p>
+          <p>Status: {debug.error?.message || 'OK'}</p>
+          <p>Places found: {debug.places?.length || 0}</p>
+          <p>Royse City in list: {debug.places?.some(p => p.displayName?.text?.toLowerCase().includes('royse')) ? '✅ YES' : '❌ NO'}</p>
         </div>
       )}
 
@@ -580,15 +559,15 @@ export default function Dentists() {
             <input
               type="range"
               min="1"
-              max="100"
+              max="31"
               value={searchRadius}
               onChange={(e) => setSearchRadius(parseInt(e.target.value))}
               className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
             />
             <div className="flex justify-between text-xs text-gray-500 mt-2">
               <span>1 mile</span>
-              <span>16 mi (default)</span>
-              <span>100 miles</span>
+              <span>16 mi</span>
+              <span>31 miles</span>
             </div>
           </div>
         </div>
@@ -661,11 +640,11 @@ export default function Dentists() {
       )}
 
       {/* Results Count */}
-      {!locationError && dentists.length > 0 && (
+      {!locationError && (
         <div className="flex justify-between items-center px-1">
           <p className="text-sm text-gray-600 font-medium">
-            Found <span className="text-blue-600 font-bold">{filteredDentists.length}</span> dentists
-            {searchRadius > 16 && <span className="text-gray-400 ml-1">within {searchRadius} miles</span>}
+            Found <span className="text-blue-600 font-bold">{dentists.length}</span> dentists
+            {searchRadius !== 16 && <span className="text-gray-400 ml-1">within {searchRadius} miles</span>}
           </p>
           {selectedForCompare.length > 0 && (
             <button
@@ -687,7 +666,7 @@ export default function Dentists() {
       )}
 
       {/* No Results */}
-      {!loading && !locationError && filteredDentists.length === 0 && (
+      {!loading && !locationError && dentists.length === 0 && (
         <div className="text-center py-16 bg-gray-50 rounded-[2rem]">
           <MapPin className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600 font-medium text-lg">{translatedText.noDentists}</p>
@@ -700,7 +679,7 @@ export default function Dentists() {
         <div className="space-y-4">
           {sortedDentists.map((d, index) => {
             const estimate = insuranceEstimates[d.id];
-            const badge = getBadge(d, index);
+            const badge = getBadge(d);
             const isInCompare = selectedForCompare.some(s => s.id === d.id);
 
             return (
@@ -760,9 +739,13 @@ export default function Dentists() {
                         className="flex-shrink-0 w-20 h-20 bg-gray-200 rounded-xl overflow-hidden hover:opacity-80 transition-opacity"
                       >
                         <img 
-                          src={`https://places.googleapis.com/v1/${photo.name}/media?key=${import.meta.env.VITE_GOOGLE_MAPS_KEY}&maxWidthPx=200`}
+                          src={`https://places.googleapis.com/v1/${photo.name}/media?key=${import.meta.env.VITE_GOOGLE_MAPS_KEY}&maxHeightPx=200`}
                           alt={`${d.name} office`}
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "https://via.placeholder.com/200x200?text=📷";
+                          }}
                         />
                       </button>
                     ))}
@@ -821,7 +804,7 @@ export default function Dentists() {
                   </p>
                 )}
 
-                {/* Real Amenities from Google Places */}
+                {/* Amenities */}
                 {(d.paymentMethods?.length > 0 || d.accessibility?.length > 0 || d.parking?.length > 0) && (
                   <div className="mb-4">
                     {d.paymentMethods?.length > 0 && (
@@ -865,7 +848,7 @@ export default function Dentists() {
                   </div>
                 )}
 
-                {/* Real Review from Google */}
+                {/* Review */}
                 {d.review && (
                   <div className="bg-gray-50 rounded-xl p-4 mb-4">
                     <p className="text-xs text-gray-600 italic">"{d.review}"</p>
@@ -894,7 +877,7 @@ export default function Dentists() {
                   </button>
                 )}
 
-                {/* Insurance Estimate - Now shows for every dentist when insurance is selected */}
+                {/* Insurance Estimate */}
                 {insurance && estimate && (
                   <div className={`flex items-start gap-3 p-4 rounded-xl mb-4 ${
                     estimate.accepts ? 'bg-emerald-50' : 'bg-amber-50'
@@ -999,9 +982,13 @@ export default function Dentists() {
                       className="flex-shrink-0 w-24 h-24 bg-gray-200 rounded-xl overflow-hidden"
                     >
                       <img 
-                        src={`https://places.googleapis.com/v1/${photo.name}/media?key=${import.meta.env.VITE_GOOGLE_MAPS_KEY}&maxWidthPx=200`}
+                        src={`https://places.googleapis.com/v1/${photo.name}/media?key=${import.meta.env.VITE_GOOGLE_MAPS_KEY}&maxHeightPx=200`}
                         alt=""
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = "https://via.placeholder.com/200x200?text=📷";
+                        }}
                       />
                     </button>
                   ))}
@@ -1190,7 +1177,7 @@ export default function Dentists() {
                 <h3 className="font-black text-gray-900 text-lg">{translatedText.savedDentists}</h3>
               </div>
               <button onClick={() => setShowFavorites(false)} className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-xl transition-colors">
-                <X className="w-5 h-5" />
+                <X className="w-6 h-5" />
               </button>
             </div>
             

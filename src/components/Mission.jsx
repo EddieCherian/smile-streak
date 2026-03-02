@@ -1,4 +1,15 @@
-import { Heart, Shield, Target, Users, Lightbulb, Mail, Github, Award, Sparkles, CheckCircle2, Globe, Star, TrendingUp, Clock, Zap, Brain, BookOpen, Code, Coffee, Palette, Rocket, Smile, ThumbsUp, HelpCircle, MessageCircle, Share2, Download, ExternalLink, Lock, Eye, EyeOff, Bell, Calendar, Filter, RefreshCw, AlertTriangle, Gift, Crown, Medal, Users2, Building, Microscope, Newspaper, BookMarked, Video, Headphones, Instagram, Twitter, Linkedin, Youtube, Facebook, MapPin, Camera, Flame, X, Flask, Atom, Link, Image as ImageIcon, Briefcase, Dna, Milk, Flower, Bacteria, Sunrise, Sunset, Cloud, CloudRain, CloudSnow, CloudLightning, Wind, Thermometer, Droplets, PieChart, Radar, Apple, Type, ToggleLeft, ToggleRight } from "lucide-react";
+import { 
+  Heart, Shield, Target, Users, Lightbulb, Mail, Github, Award, Sparkles, 
+  CheckCircle2, Globe, Star, TrendingUp, Clock, Zap, Brain, BookOpen, Code, 
+  Coffee, Palette, Rocket, Smile, ThumbsUp, HelpCircle, MessageCircle, Share2, 
+  Download, ExternalLink, Lock, Eye, EyeOff, Bell, Calendar, Filter, RefreshCw, 
+  AlertTriangle, Gift, Crown, Medal, Users2, Building, Microscope, Newspaper, 
+  BookMarked, Video, Headphones, Instagram, Twitter, Linkedin, Youtube, Facebook, 
+  MapPin, Camera, Flame, X, Flask, Atom, Link, Image as ImageIcon, Briefcase, 
+  Dna, Milk, Flower, Bacteria, Sunrise, Sunset, Cloud, CloudRain, CloudSnow, 
+  CloudLightning, Wind, Thermometer, Droplets, PieChart, Radar, Apple, Type, 
+  ToggleLeft, ToggleRight, ChevronDown, Database, Smartphone, Android 
+} from "lucide-react";
 import { useState, useContext, useEffect } from "react";
 import { TranslationContext } from "../App";
 
@@ -16,7 +27,7 @@ export default function Mission() {
   const [expandedFaq, setExpandedFaq] = useState(null);
   const [translatedText, setTranslatedText] = useState({});
 
-  // Translation keys
+  // Translation keys (keeping your existing translationKeys object)
   const translationKeys = {
     title: "Our Mission",
     subtitle: "Building better dental habits, together",

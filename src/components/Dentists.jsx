@@ -4,11 +4,20 @@ import {
   Navigation, Bookmark, X, CheckCircle2, AlertCircle, Calendar, Users,
   DollarSign, Shield, ThumbsUp, MessageCircle, Share2, Download,
   Printer, Mail, Filter, Search, Sliders, Globe, Wifi, Coffee,
-  Car, Baby, Wheelchair, CreditCard, Languages, Eye, Bell,
+  Car, Baby, CreditCard, Languages, Eye, Bell,
   FileText, Activity, Smile, UserCheck, Video, Home,
-  Briefcase, Sun, Moon, Zap, Target, Sparkles, Crown
+  Briefcase, Sun, Moon, Zap, Target, Sparkles, Crown,
+  Menu, BarChart3
 } from "lucide-react";
 import { TranslationContext } from "../App";
+
+// Add fallback for Wheelchair since it doesn't exist in your version
+const Wheelchair = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <circle cx="12" cy="6" r="2" />
+    <path d="M4 12h4l2 8 3-4 3 4 2-8h4" />
+  </svg>
+);
 
 /* 🧠 Insurance intelligence profiles */
 const INSURANCE_PROFILES = {

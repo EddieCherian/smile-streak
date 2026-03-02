@@ -38,7 +38,7 @@ const getInsuranceEstimate = (dentistName, dentistAddress, selectedInsurance) =>
     return {
       accepts: true,
       confidence: 'high',
-      reason: `✓ Verified Provider - ${dentistName} accepts all major insurance including ${selectedInsurance}. Medicaid & Ortho Provider.`,
+      reason: `✓ Verified Provider - ${dentistName} accepts all major insurance including ${selectedInsurance}. Medicaid & Ortho Provider. Call to Confirm.`,
       verified: true
     };
   }

@@ -1,4 +1,4 @@
-import { Heart, Shield, Target, Users, Lightbulb, Mail, Github, Award, Sparkles, CheckCircle2, Globe, Star, TrendingUp, Clock, Zap, Brain, BookOpen, Code, Coffee, Palette, Rocket, Smile, ThumbsUp, HelpCircle, MessageCircle, Share2, Download, ExternalLink, Lock, Eye, EyeOff, Bell, Calendar, Filter, RefreshCw, AlertTriangle, Gift, Crown, Medal, Users2, Building, Microscope, Newspaper, BookMarked, Video, Headphones, Instagram, Twitter, Linkedin, Youtube, Facebook, MapPin, Camera, Flame } from "lucide-react";
+import { Heart, Shield, Target, Users, Lightbulb, Mail, Github, Award, Sparkles, CheckCircle2, Globe, Star, TrendingUp, Clock, Zap, Brain, BookOpen, Code, Coffee, Palette, Rocket, Smile, ThumbsUp, HelpCircle, MessageCircle, Share2, Download, ExternalLink, Lock, Eye, EyeOff, Bell, Calendar, Filter, RefreshCw, AlertTriangle, Gift, Crown, Medal, Users2, Building, Microscope, Newspaper, BookMarked, Video, Headphones, Instagram, Twitter, Linkedin, Youtube, Facebook, MapPin, Camera, Flame, X, Flask, Atom, Link, Image as ImageIcon, Briefcase, Dna, Milk, Flower, Bacteria, Sunrise, Sunset, Cloud, CloudRain, CloudSnow, CloudLightning, Wind, Thermometer, Droplets, PieChart, Radar, Apple, Type, ToggleLeft, ToggleRight } from "lucide-react";
 import { useState, useContext, useEffect } from "react";
 import { TranslationContext } from "../App";
 
@@ -230,6 +230,15 @@ export default function Mission() {
     { icon: <MessageCircle className="w-5 h-5" />, label: 'joinDiscord', url: 'https://discord.gg/smilestreak', color: 'purple' },
     { icon: <Youtube className="w-5 h-5" />, label: 'watchYoutube', url: 'https://youtube.com/@smilestreak', color: 'red' },
     { icon: <Instagram className="w-5 h-5" />, label: 'followInstagram', url: 'https://instagram.com/smilestreak', color: 'pink' }
+  ];
+
+  // FAQ items
+  const faqItems = [
+    { question: 'faq1q', answer: 'faq1a' },
+    { question: 'faq2q', answer: 'faq2a' },
+    { question: 'faq3q', answer: 'faq3a' },
+    { question: 'faq4q', answer: 'faq4a' },
+    { question: 'faq5q', answer: 'faq5a' }
   ];
 
   // Show loading state while translating
@@ -617,7 +626,322 @@ export default function Mission() {
         </h3>
         
         <div className="space-y-3">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="border border-gray-200 rounded-xl overflow-hidden">
+          {faqItems.map((item, index) => {
+            const i = index + 1;
+            return (
+              <div key={i} className="border border-gray-200 rounded-xl overflow-hidden">
+                <button
+                  onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
+                  className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
+                >
+                  <span className="font-semibold text-gray-900 text-sm">
+                    {translatedText[item.question]}
+                  </span>
+                  <ChevronDown 
+                    className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${
+                      expandedFaq === i ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+                
+                {expandedFaq === i && (
+                  <div className="px-4 pb-4 text-sm text-gray-600 leading-relaxed">
+                    {translatedText[item.answer]}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Get Involved */}
+      <div className="bg-white rounded-3xl p-6 shadow-lg border border-blue-100">
+        <h3 className="text-lg font-black text-gray-900 mb-4">{translatedText.getInvolved}</h3>
+        <div className="space-y-3">
+          <button
+            onClick={() => setShowFeedback(true)}
+            className="w-full flex items-center justify-between p-4 rounded-2xl bg-blue-50 border-2 border-blue-200 hover:bg-blue-100 hover:border-blue-300 transition-all group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Mail className="w-5 h-5 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-gray-900 text-sm">{translatedText.shareFeedback}</p>
+                <p className="text-xs text-gray-600">{translatedText.shareFeedbackDesc}</p>
+              </div>
+            </div>
+          </button>
+
+          <a
+            href="https://github.com/EddieCherian/smile-streak"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center justify-between p-4 rounded-2xl bg-gray-50 border-2 border-gray-200 hover:bg-gray-100 hover:border-gray-300 transition-all group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gray-800 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Github className="w-5 h-5 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-gray-900 text-sm">{translatedText.openSource}</p>
+                <p className="text-xs text-gray-600">{translatedText.openSourceDesc}</p>
+              </div>
+            </div>
+          </a>
+
+          {/* Social Links */}
+          <div className="grid grid-cols-4 gap-2 mt-4">
+            {socialLinks.map((link, i) => (
+              <a
+                key={i}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`flex items-center justify-center p-3 rounded-xl bg-${link.color}-50 border-2 border-${link.color}-200 hover:bg-${link.color}-100 transition-all group`}
+                title={translatedText[link.label]}
+              >
+                <span className={`text-${link.color}-600 group-hover:scale-110 transition-transform`}>
+                  {link.icon}
+                </span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Feedback Modal */}
+      {showFeedback && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-black text-gray-900">{translatedText.feedbackTitle}</h3>
+              <button onClick={() => setShowFeedback(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                {translatedText.feedbackType}
+              </label>
+              <select
+                value={feedbackType}
+                onChange={(e) => setFeedbackType(e.target.value)}
+                className="w-full p-3 rounded-xl border-2 border-gray-200 focus:border-blue-400 focus:outline-none"
+              >
+                <option value="general">{translatedText.feedbackGeneral}</option>
+                <option value="bug">{translatedText.feedbackBug}</option>
+                <option value="feature">{translatedText.feedbackFeature}</option>
+              </select>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                {translatedText.feedbackRating}
+              </label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((rating) => (
+                  <button
+                    key={rating}
+                    onClick={() => setFeedbackRating(rating)}
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                      feedbackRating === rating
+                        ? 'bg-yellow-400 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    <Star className="w-5 h-5" />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                {translatedText.feedbackEmail}
+              </label>
+              <input
+                type="email"
+                value={feedbackEmail}
+                onChange={(e) => setFeedbackEmail(e.target.value)}
+                placeholder="your@email.com"
+                className="w-full p-3 rounded-xl border-2 border-gray-200 focus:border-blue-400 focus:outline-none"
+              />
+            </div>
+
+            <textarea
+              id="feedbackBox"
+              className="w-full h-32 p-3 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:outline-none resize-none mb-4"
+              placeholder={translatedText.feedbackPlaceholder}
+            />
+
+            <div className="flex gap-3">
               <button
-                onClick={() => setExpandedFaq(expandedFaq === i
+                onClick={() => setShowFeedback(false)}
+                className="flex-1 py-3 rounded-xl border-2 border-gray-200 font-bold text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                {translatedText.cancel}
+              </button>
+              <button
+                onClick={async () => {
+                  const msg = document.getElementById("feedbackBox")?.value || "";
+                  const feedbackData = {
+                    type: feedbackType,
+                    rating: feedbackRating,
+                    email: feedbackEmail,
+                    message: msg,
+                    timestamp: new Date().toISOString()
+                  };
+
+                  await fetch("https://formspree.io/f/mqedoavq", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(feedbackData)
+                  });
+
+                  alert(translatedText.thankYou);
+                  setShowFeedback(false);
+                  setFeedbackType('general');
+                  setFeedbackRating(5);
+                  setFeedbackEmail('');
+                }}
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold hover:shadow-lg transition-all"
+              >
+                {translatedText.submit}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Security & Privacy */}
+      <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-3xl p-6 shadow-lg">
+        <h3 className="text-xl font-black text-gray-900 mb-4 flex items-center gap-2">
+          <Shield className="w-6 h-6 text-green-600" />
+          {translatedText.security}
+        </h3>
+        
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex items-center gap-2 p-3 bg-white/60 rounded-xl">
+            <Lock className="w-4 h-4 text-green-600" />
+            <span className="text-xs text-gray-700">{translatedText.encryption}</span>
+          </div>
+          <div className="flex items-center gap-2 p-3 bg-white/60 rounded-xl">
+            <Database className="w-4 h-4 text-blue-600" />
+            <span className="text-xs text-gray-700">{translatedText.localFirst}</span>
+          </div>
+          <div className="flex items-center gap-2 p-3 bg-white/60 rounded-xl">
+            <EyeOff className="w-4 h-4 text-purple-600" />
+            <span className="text-xs text-gray-700">{translatedText.noTracking}</span>
+          </div>
+          <div className="flex items-center gap-2 p-3 bg-white/60 rounded-xl">
+            <Code className="w-4 h-4 text-orange-600" />
+            <span className="text-xs text-gray-700">{translatedText.openSource}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Resources */}
+      <div className="bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-3xl p-6 shadow-lg">
+        <h3 className="text-xl font-black text-gray-900 mb-4 flex items-center gap-2">
+          <BookOpen className="w-6 h-6 text-blue-600" />
+          {translatedText.resources}
+        </h3>
+        
+        <div className="grid grid-cols-2 gap-3">
+          <button className="flex items-center gap-2 p-3 bg-white/60 rounded-xl hover:bg-white/80 transition-colors">
+            <Newspaper className="w-4 h-4 text-blue-600" />
+            <span className="text-xs text-gray-700">{translatedText.articles}</span>
+          </button>
+          <button className="flex items-center gap-2 p-3 bg-white/60 rounded-xl hover:bg-white/80 transition-colors">
+            <Video className="w-4 h-4 text-red-600" />
+            <span className="text-xs text-gray-700">{translatedText.videos}</span>
+          </button>
+          <button className="flex items-center gap-2 p-3 bg-white/60 rounded-xl hover:bg-white/80 transition-colors">
+            <BookMarked className="w-4 h-4 text-green-600" />
+            <span className="text-xs text-gray-700">{translatedText.guides}</span>
+          </button>
+          <button className="flex items-center gap-2 p-3 bg-white/60 rounded-xl hover:bg-white/80 transition-colors">
+            <Microscope className="w-4 h-4 text-purple-600" />
+            <span className="text-xs text-gray-700">{translatedText.research}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile App */}
+      <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-3xl p-6 shadow-lg">
+        <h3 className="text-xl font-black text-gray-900 mb-4 flex items-center gap-2">
+          <Smartphone className="w-6 h-6 text-purple-600" />
+          {translatedText.mobileApp}
+        </h3>
+        
+        <div className="grid grid-cols-2 gap-3">
+          <button className="flex items-center justify-center gap-2 p-3 bg-white/60 rounded-xl hover:bg-white/80 transition-colors">
+            <Apple className="w-4 h-4" />
+            <span className="text-xs text-gray-700">{translatedText.ios}</span>
+          </button>
+          <button className="flex items-center justify-center gap-2 p-3 bg-white/60 rounded-xl hover:bg-white/80 transition-colors">
+            <Android className="w-4 h-4" />
+            <span className="text-xs text-gray-700">{translatedText.android}</span>
+          </button>
+        </div>
+        <p className="text-xs text-center text-gray-500 mt-3">{translatedText.comingSoon}</p>
+      </div>
+
+      {/* Contribute */}
+      <div className="bg-gradient-to-br from-orange-50 to-red-50 border-2 border-orange-200 rounded-3xl p-6 shadow-lg">
+        <h3 className="text-xl font-black text-gray-900 mb-4 flex items-center gap-2">
+          <Gift className="w-6 h-6 text-orange-600" />
+          {translatedText.contribute}
+        </h3>
+        
+        <div className="grid grid-cols-2 gap-3">
+          <button className="flex items-center gap-2 p-3 bg-white/60 rounded-xl hover:bg-white/80 transition-colors">
+            <Globe className="w-4 h-4 text-blue-600" />
+            <span className="text-xs text-gray-700">{translatedText.translate}</span>
+          </button>
+          <button className="flex items-center gap-2 p-3 bg-white/60 rounded-xl hover:bg-white/80 transition-colors">
+            <Code className="w-4 h-4 text-green-600" />
+            <span className="text-xs text-gray-700">{translatedText.develop}</span>
+          </button>
+          <button className="flex items-center gap-2 p-3 bg-white/60 rounded-xl hover:bg-white/80 transition-colors">
+            <Palette className="w-4 h-4 text-purple-600" />
+            <span className="text-xs text-gray-700">{translatedText.design}</span>
+          </button>
+          <button className="flex items-center gap-2 p-3 bg-white/60 rounded-xl hover:bg-white/80 transition-colors">
+            <BookOpen className="w-4 h-4 text-orange-600" />
+            <span className="text-xs text-gray-700">{translatedText.docs}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Disclaimer */}
+      <div className="bg-yellow-50 p-6 rounded-3xl border-2 border-yellow-200 shadow-lg">
+        <div className="flex items-start gap-3">
+          <Shield className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="font-bold text-gray-900 text-sm mb-2">{translatedText.medicalDisclaimer}</p>
+            <p className="text-sm text-gray-700 leading-relaxed">
+              {translatedText.disclaimerText}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Version & Credits */}
+      <div className="text-center py-4">
+        <p className="text-xs text-gray-400 mb-1">{translatedText.version}</p>
+        <p className="text-xs text-gray-400">{translatedText.madeWith}</p>
+        <div className="flex items-center justify-center gap-2 mt-2">
+          <Lock className="w-3 h-3 text-gray-300" />
+          <span className="text-xs text-gray-300">End-to-End Encrypted</span>
+          <span className="text-xs text-gray-300">•</span>
+          <Shield className="w-3 h-3 text-gray-300" />
+          <span className="text-xs text-gray-300">HIPAA Ready</span>
+        </div>
+      </div>
+    </div>
+  );
+}

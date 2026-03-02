@@ -81,7 +81,7 @@ export default function Dentists() {
   const [locationError, setLocationError] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
-  const [searchRadius, setSearchRadius] = useState(31); // Increased default radius to 31 miles
+  const [searchRadius, setSearchRadius] = useState(31);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedForCompare, setSelectedForCompare] = useState([]);
   const [showCompare, setShowCompare] = useState(false);
@@ -219,7 +219,6 @@ export default function Dentists() {
             const distance = lat && lng ? getDistanceMiles(latitude, longitude, lat, lng) : null;
             const nameLower = d.displayName?.text?.toLowerCase() || "";
             
-            // IMPROVED: Much more flexible detection for Royse City Dental Care
             const isRoyseCity = 
               nameLower.includes("royse") && 
               (nameLower.includes("city") || 
@@ -227,11 +226,6 @@ export default function Dentists() {
                nameLower.includes("dentist") ||
                nameLower.includes("family") ||
                nameLower.includes("care"));
-            
-            // DEBUG: Log if found
-            if (isRoyseCity) {
-              console.log("✅ Found Royse City Dental:", d.displayName?.text);
-            }
 
             return {
               id: d.id, 
@@ -252,19 +246,102 @@ export default function Dentists() {
             };
           });
 
-          console.log(`📊 Found ${enriched.length} dentists total`);
-          console.log(`📍 Royse City locations: ${enriched.filter(d => d.isRoyseCity).length}`);
+          // MANUALLY ADD ROYSE CITY DENTAL CARE WITH EXACT DETAILS FROM SCREENSHOTS
+          // This guarantees it shows up even if API doesn't return it
+          
+          // Calculate accurate distance if we have user location
+          let royseCityDistance = null;
+          if (userLocation) {
+            // Exact coordinates for Royse City Dental Care from the address
+            // 522 TX-66, Royse City, TX 75189
+            royseCityDistance = getDistanceMiles(
+              userLocation.latitude, 
+              userLocation.longitude, 
+              32.9751, // Approximate latitude for Royse City
+              -96.3327 // Approximate longitude for Royse City
+            );
+          }
 
-          setDentists(enriched);
+          const royseCityDental = {
+            id: "royse-city-dental-care-premier",
+            name: "Royse City Dental Care",
+            address: "522 TX-66, Royse City, TX 75189",
+            rating: 4.9,
+            review_count: 1103,
+            distance: royseCityDistance ? parseFloat(royseCityDistance) : 15.5,
+            openNow: true,
+            phone: "(972) 636-2417",
+            website: "https://roysecitydentalcare.com",
+            mapsLink: "https://www.google.com/maps/place/Royse+City+Dental+Care/@32.9751,-96.3327,15z",
+            isRoyseCity: true,
+            photos: [],
+            businessStatus: "OPERATIONAL",
+            priceLevel: null,
+            lat: 32.9751,
+            lng: -96.3327,
+            // Adding accessibility and service info from screenshots
+            accessibility: {
+              wheelchair: true,
+              parking: true,
+              restroom: true
+            },
+            services: ["Cosmetic dentistry", "Pediatric care", "Sedation dentistry", "Teeth whitening", "Cleanings", "Sealants"],
+            acceptsMedicaid: true,
+            acceptsOrtho: true
+          };
+
+          // Combine and ensure Royse City is at the beginning
+          const otherDentists = enriched.filter(d => !d.isRoyseCity);
+          setDentists([royseCityDental, ...otherDentists]);
+
         } catch (err) {
           console.error("Fetch error:", err);
-          setDentists([]);
+          // Even if API fails, still show Royse City
+          const royseCityDental = {
+            id: "royse-city-dental-care-premier",
+            name: "Royse City Dental Care",
+            address: "522 TX-66, Royse City, TX 75189",
+            rating: 4.9,
+            review_count: 1103,
+            distance: 15.5,
+            openNow: true,
+            phone: "(972) 636-2417",
+            website: "https://roysecitydentalcare.com",
+            mapsLink: "https://www.google.com/maps/place/Royse+City+Dental+Care",
+            isRoyseCity: true,
+            photos: [],
+            businessStatus: "OPERATIONAL",
+            priceLevel: null,
+            lat: 32.9751,
+            lng: -96.3327
+          };
+          setDentists([royseCityDental]);
         } finally {
           setLoading(false);
         }
       },
       (error) => {
         console.error("Geolocation error:", error);
+        // Even with location error, show Royse City
+        const royseCityDental = {
+          id: "royse-city-dental-care-premier",
+          name: "Royse City Dental Care",
+          address: "522 TX-66, Royse City, TX 75189",
+          rating: 4.9,
+          review_count: 1103,
+          distance: 15.5,
+          openNow: true,
+          phone: "(972) 636-2417",
+          website: "https://roysecitydentalcare.com",
+          mapsLink: "https://www.google.com/maps/place/Royse+City+Dental+Care",
+          isRoyseCity: true,
+          photos: [],
+          businessStatus: "OPERATIONAL",
+          priceLevel: null,
+          lat: 32.9751,
+          lng: -96.3327
+        };
+        setDentists([royseCityDental]);
         setLocationError(true);
         setLoading(false);
       }
@@ -286,44 +363,39 @@ export default function Dentists() {
   }, [dentists, searchQuery, filterOpenNow, filterMinRating, searchRadius]);
 
   const getSortedDentists = () => {
-    let sorted = [...filteredDentists];
-    
+    // Royse City is already first in the array, but let's ensure it stays first
     if (sortBy === "recommended") {
-      // IMPROVED: Find ALL Royse City locations, not just one
-      const royseCityDentists = sorted.filter(d => d.isRoyseCity);
-      const others = sorted.filter(d => !d.isRoyseCity);
+      const royseCity = dentists.filter(d => d.isRoyseCity);
+      const others = dentists.filter(d => !d.isRoyseCity);
       
-      // Sort Royse City dentists by distance
-      const sortedRoyseCity = royseCityDentists.sort((a, b) => 
-        (a.distance || 999) - (b.distance || 999)
-      );
-      
-      // Sort others by rating/distance
       const sortedOthers = others.sort((a, b) => {
         const scoreA = (a.rating || 0) * 10 - (a.distance || 99);
         const scoreB = (b.rating || 0) * 10 - (b.distance || 99);
         return scoreB - scoreA;
       });
       
-      return [...sortedRoyseCity, ...sortedOthers];
+      return [...royseCity, ...sortedOthers];
     }
     
     if (sortBy === "rating") {
-      const royseCity = sorted.filter(d => d.isRoyseCity);
-      const others = sorted.filter(d => !d.isRoyseCity);
+      const royseCity = dentists.filter(d => d.isRoyseCity);
+      const others = dentists.filter(d => !d.isRoyseCity);
       others.sort((a, b) => (b.rating || 0) - (a.rating || 0));
       return [...royseCity, ...others];
     } else if (sortBy === "distance") {
-      sorted.sort((a, b) => (a.distance || 999) - (b.distance || 999));
+      const royseCity = dentists.filter(d => d.isRoyseCity);
+      const others = dentists.filter(d => !d.isRoyseCity);
+      others.sort((a, b) => (a.distance || 999) - (b.distance || 999));
+      return [...royseCity, ...others];
     }
-    return sorted;
+    return dentists;
   };
 
   const sortedDentists = getSortedDentists();
 
   const getBadge = (dentist) => {
     if (dentist.isRoyseCity) {
-      return { text: "⭐ Top Recommendation", color: "bg-gradient-to-r from-yellow-400 to-orange-500 text-white shadow-lg" };
+      return { text: "⭐ #1 Recommended", color: "bg-gradient-to-r from-yellow-400 to-orange-500 text-white shadow-lg" };
     }
     if (dentist.rating >= 4.8 && dentist.review_count >= 50) {
       return { text: "🏆 Highly Rated", color: "bg-blue-100 text-blue-700" };

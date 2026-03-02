@@ -96,8 +96,7 @@ export default function Dentists() {
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   
-  // FIXED: Max radius 100 miles, default 16 - but Google Places API has a limit of 50km (31 miles)
-  // We'll set the UI to 100 but cap the actual API call at 50km (31 miles)
+  // FIXED: Max radius 31 miles (API limit), default 16
   const [searchRadius, setSearchRadius] = useState(16);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedForCompare, setSelectedForCompare] = useState([]);
@@ -258,8 +257,8 @@ export default function Dentists() {
 
         try {
           // FIXED: Google Places API has a limit of 50,000 meters (50km ≈ 31 miles)
-          // Cap the radius at 50,000 meters regardless of what the user selects
-          const radiusInMeters = Math.min(radius * 1609.34, 50000); // Cap at 50km
+          // Cap the radius at 50,000 meters (31 miles)
+          const radiusInMeters = Math.min(radius * 1609.34, 50000);
           
           const res = await fetch(
             "https://places.googleapis.com/v1/places:searchNearby",
@@ -582,24 +581,19 @@ export default function Dentists() {
               <span className="text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
                 {searchRadius} miles
               </span>
-              {searchRadius > 31 && (
-                <span className="text-xs text-amber-600 ml-2">
-                  (API max 31mi)
-                </span>
-              )}
             </div>
             <input
               type="range"
               min="1"
-              max="100"
+              max="31"
               value={searchRadius}
               onChange={(e) => setSearchRadius(parseInt(e.target.value))}
               className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
             />
             <div className="flex justify-between text-xs text-gray-500 mt-2">
               <span>1 mile</span>
-              <span>16 mi (default)</span>
-              <span>100 mi (API caps at 31)</span>
+              <span>16 mi</span>
+              <span>31 miles</span>
             </div>
           </div>
         </div>
@@ -676,7 +670,7 @@ export default function Dentists() {
         <div className="flex justify-between items-center px-1">
           <p className="text-sm text-gray-600 font-medium">
             Found <span className="text-blue-600 font-bold">{filteredDentists.length}</span> dentists
-            {searchRadius > 16 && <span className="text-gray-400 ml-1">within {Math.min(searchRadius, 31)} miles</span>}
+            {searchRadius > 16 && <span className="text-gray-400 ml-1">within {searchRadius} miles</span>}
           </p>
           {selectedForCompare.length > 0 && (
             <button
@@ -758,7 +752,7 @@ export default function Dentists() {
                   </div>
                 </div>
 
-                {/* Photos - FIXED: Added error handling for images */}
+                {/* Photos - Fixed with proper image URLs */}
                 {d.photos && d.photos.length > 0 && (
                   <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
                     {d.photos.map((photo, idx) => (
@@ -771,12 +765,12 @@ export default function Dentists() {
                         className="flex-shrink-0 w-20 h-20 bg-gray-200 rounded-xl overflow-hidden hover:opacity-80 transition-opacity"
                       >
                         <img 
-                          src={`https://places.googleapis.com/v1/${photo.name}/media?key=${import.meta.env.VITE_GOOGLE_MAPS_KEY}&maxWidthPx=200`}
+                          src={`https://places.googleapis.com/v1/${photo.name}/media?key=${import.meta.env.VITE_GOOGLE_MAPS_KEY}&maxHeightPx=200`}
                           alt={`${d.name} office`}
                           className="w-full h-full object-cover"
                           onError={(e) => {
                             e.target.onerror = null;
-                            e.target.src = "https://via.placeholder.com/200x200?text=No+Image";
+                            e.target.src = "https://via.placeholder.com/200x200?text=📷";
                           }}
                         />
                       </button>
@@ -1014,12 +1008,12 @@ export default function Dentists() {
                       className="flex-shrink-0 w-24 h-24 bg-gray-200 rounded-xl overflow-hidden"
                     >
                       <img 
-                        src={`https://places.googleapis.com/v1/${photo.name}/media?key=${import.meta.env.VITE_GOOGLE_MAPS_KEY}&maxWidthPx=200`}
+                        src={`https://places.googleapis.com/v1/${photo.name}/media?key=${import.meta.env.VITE_GOOGLE_MAPS_KEY}&maxHeightPx=200`}
                         alt=""
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           e.target.onerror = null;
-                          e.target.src = "https://via.placeholder.com/200x200?text=No+Image";
+                          e.target.src = "https://via.placeholder.com/200x200?text=📷";
                         }}
                       />
                     </button>
@@ -1209,7 +1203,7 @@ export default function Dentists() {
                 <h3 className="font-black text-gray-900 text-lg">{translatedText.savedDentists}</h3>
               </div>
               <button onClick={() => setShowFavorites(false)} className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-xl transition-colors">
-                <X className="w-5 h-5" />
+                <X className="w-6 h-5" />
               </button>
             </div>
             

@@ -237,7 +237,7 @@ export default function Dentists() {
               openNow: d.currentOpeningHours?.openNow,
               phone: d.nationalPhoneNumber, 
               website: d.websiteUri,
-              mapsLink: `https://www.google.com/maps/place/?q=place_id:${d.id}`,
+              mapsLink: `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(d.displayName?.text || '')}&destination_place_id=${d.id}`,
               distance: distance ? parseFloat(distance) : null,
               priceLevel: d.priceLevel || null, 
               photos: d.photos || [],
@@ -289,7 +289,7 @@ export default function Dentists() {
             openNow: true,
             phone: "(972) 636-2417",
             website: "https://roysecitydentalcare.com",
-            mapsLink: "https://www.google.com/maps/place/Royse+City+Dental+Care/@32.9751,-96.3327,15z",
+            mapsLink: `https://www.google.com/maps/dir/?api=1&destination=Royse+City+Dental+Care&destination_place_id=ChIJ_royse_city_placeholder`,
             isRoyseCity: true,
             photos: [], // No photos
             businessStatus: "OPERATIONAL",
@@ -436,7 +436,7 @@ export default function Dentists() {
             openNow: true,
             phone: "(972) 636-2417",
             website: "https://roysecitydentalcare.com",
-            mapsLink: "https://www.google.com/maps/place/Royse+City+Dental+Care",
+            mapsLink: `https://www.google.com/maps/dir/?api=1&destination=Royse+City+Dental+Care&destination_place_id=ChIJ_royse_city_placeholder`,
             isRoyseCity: true,
             photos: [],
             businessStatus: "OPERATIONAL",
@@ -514,7 +514,7 @@ export default function Dentists() {
           openNow: true,
           phone: "(972) 636-2417",
           website: "https://roysecitydentalcare.com",
-          mapsLink: "https://www.google.com/maps/place/Royse+City+Dental+Care",
+          mapsLink: `https://www.google.com/maps/dir/?api=1&destination=Royse+City+Dental+Care&destination_place_id=ChIJ_royse_city_placeholder`,
           isRoyseCity: true,
           photos: [],
           businessStatus: "OPERATIONAL",
@@ -598,7 +598,8 @@ export default function Dentists() {
       if (searchQuery && !d.name?.toLowerCase().includes(searchQuery.toLowerCase())) return false;
       if (filterOpenNow && !d.openNow) return false;
       if (filterMinRating > 0 && (d.rating || 0) < filterMinRating) return false;
-      if (d.distance && d.distance > searchRadius) return false;
+      // FIXED: Check if distance exists before comparing to searchRadius
+      if (d.distance !== null && d.distance !== undefined && d.distance > searchRadius) return false;
       return true;
     });
   }, [dentists, searchQuery, filterOpenNow, filterMinRating, searchRadius]);

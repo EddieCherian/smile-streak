@@ -231,7 +231,7 @@ export default function Dentists() {
     }
   };
 
-  // Fetch dentists from Google Places API with MAX results (60 is Google's limit)
+  // Fetch dentists from Google Places API - FIXED VERSION
   const fetchDentists = (radius) => {
     setLoading(true);
     setLocationError(false);
@@ -251,11 +251,11 @@ export default function Dentists() {
               headers: {
                 "Content-Type": "application/json",
                 "X-Goog-Api-Key": import.meta.env.VITE_GOOGLE_MAPS_KEY,
-                "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.currentOpeningHours,places.reviews,places.nationalPhoneNumber,places.websiteUri,places.priceLevel,places.photos,places.regularOpeningHours,places.paymentOptions,places.parkingOptions,places.accessibilityOptions",
+                "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.currentOpeningHours,places.nationalPhoneNumber,places.websiteUri,places.priceLevel",
               },
               body: JSON.stringify({
                 includedTypes: ["dentist"],
-                maxResultCount: 60,
+                maxResultCount: 20,
                 locationRestriction: {
                   circle: {
                     center: {
@@ -281,29 +281,9 @@ export default function Dentists() {
             const lng = d.location?.longitude;
             const distance = lat && lng ? getDistanceMiles(latitude, longitude, lat, lng) : null;
             
-            // ROYSE CITY DETECTION - simple and effective
+            // ROYSE CITY DETECTION
             const nameLower = d.displayName?.text?.toLowerCase() || "";
             const isRoyseCity = nameLower.includes("royse");
-
-            // Extract data from Google Places
-            const paymentMethods = [];
-            if (d.paymentOptions?.acceptsCreditCards) paymentMethods.push("Credit Cards");
-            if (d.paymentOptions?.acceptsDebitCards) paymentMethods.push("Debit Cards");
-            if (d.paymentOptions?.acceptsCashOnly) paymentMethods.push("Cash Only");
-            if (d.paymentOptions?.acceptsInsurance) paymentMethods.push("Insurance");
-
-            const accessibility = [];
-            if (d.accessibilityOptions?.wheelchairAccessibleEntrance) accessibility.push("Wheelchair Accessible");
-            if (d.accessibilityOptions?.wheelchairAccessibleParking) accessibility.push("Accessible Parking");
-            if (d.accessibilityOptions?.wheelchairAccessibleRestroom) accessibility.push("Accessible Restroom");
-            if (d.accessibilityOptions?.wheelchairAccessibleSeating) accessibility.push("Accessible Seating");
-
-            const parking = [];
-            if (d.parkingOptions?.freeParkingLot) parking.push("Free Parking Lot");
-            if (d.parkingOptions?.freeStreetParking) parking.push("Free Street Parking");
-            if (d.parkingOptions?.paidParkingLot) parking.push("Paid Parking Lot");
-            if (d.parkingOptions?.paidStreetParking) parking.push("Paid Street Parking");
-            if (d.parkingOptions?.valetParking) parking.push("Valet Parking");
 
             return {
               id: d.id,
@@ -313,22 +293,12 @@ export default function Dentists() {
               review_count: d.userRatingCount || 0,
               lat,
               lng,
-              review: d.reviews?.[0]?.text?.text || d.reviews?.[0]?.originalText?.text || null,
-              reviewAuthor: d.reviews?.[0]?.authorAttribution?.displayName || null,
-              reviewTime: d.reviews?.[0]?.publishTime ? new Date(d.reviews[0].publishTime).toLocaleDateString() : null,
               openNow: d.currentOpeningHours?.openNow,
               phone: d.nationalPhoneNumber,
               website: d.websiteUri,
               mapsLink: `https://www.google.com/maps/place/?q=place_id:${d.id}`,
               distance: distance ? parseFloat(distance) : null,
               priceLevel: d.priceLevel || null,
-              photos: d.photos?.slice(0, 3).map(p => ({
-                name: p.name
-              })) || [],
-              paymentMethods,
-              accessibility,
-              parking,
-              regularHours: d.regularOpeningHours?.weekdayDescriptions || [],
               isRoyseCity
             };
           });
@@ -435,29 +405,6 @@ export default function Dentists() {
 
   return (
     <section className="space-y-8 pb-8">
-      {/* Photo Modal */}
-      {showPhotoModal && selectedPhoto && (
-        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowPhotoModal(false)}>
-          <div className="relative max-w-4xl w-full" onClick={e => e.stopPropagation()}>
-            <img 
-              src={`https://places.googleapis.com/v1/${selectedPhoto.name}/media?key=${import.meta.env.VITE_GOOGLE_MAPS_KEY}&maxWidthPx=1200`}
-              alt="Dentist office"
-              className="w-full h-auto rounded-2xl"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = "https://via.placeholder.com/400x300?text=No+Image+Available";
-              }}
-            />
-            <button
-              onClick={() => setShowPhotoModal(false)}
-              className="absolute top-4 right-4 bg-black/50 text-white p-3 rounded-full hover:bg-black/70 transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Header */}
       <div className="bg-gradient-to-br from-blue-600 via-cyan-500 to-blue-500 text-white rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-20 translate-x-20" />
@@ -729,32 +676,6 @@ export default function Dentists() {
                   </div>
                 </div>
 
-                {/* Photos */}
-                {d.photos && d.photos.length > 0 && (
-                  <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-                    {d.photos.map((photo, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => {
-                          setSelectedPhoto(photo);
-                          setShowPhotoModal(true);
-                        }}
-                        className="flex-shrink-0 w-20 h-20 bg-gray-200 rounded-xl overflow-hidden hover:opacity-80 transition-opacity"
-                      >
-                        <img 
-                          src={`https://places.googleapis.com/v1/${photo.name}/media?key=${import.meta.env.VITE_GOOGLE_MAPS_KEY}&maxHeightPx=200`}
-                          alt={`${d.name} office`}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = "https://via.placeholder.com/200x200?text=📷";
-                          }}
-                        />
-                      </button>
-                    ))}
-                  </div>
-                )}
-
                 {/* Rating & Status */}
                 <div className="flex items-center gap-2 mb-4 flex-wrap">
                   {d.rating ? (
@@ -807,79 +728,6 @@ export default function Dentists() {
                   </p>
                 )}
 
-                {/* Amenities */}
-                {(d.paymentMethods?.length > 0 || d.accessibility?.length > 0 || d.parking?.length > 0) && (
-                  <div className="mb-4">
-                    {d.paymentMethods?.length > 0 && (
-                      <div className="flex items-center gap-2 mb-2">
-                        <CreditCard className="w-4 h-4 text-gray-400" />
-                        <div className="flex flex-wrap gap-1">
-                          {d.paymentMethods.map((method, i) => (
-                            <span key={i} className="text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-700">
-                              {method}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {d.accessibility?.length > 0 && (
-                      <div className="flex items-center gap-2 mb-2">
-                        <Wheelchair className="w-4 h-4 text-gray-400" />
-                        <div className="flex flex-wrap gap-1">
-                          {d.accessibility.map((item, i) => (
-                            <span key={i} className="text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-700">
-                              {item}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {d.parking?.length > 0 && (
-                      <div className="flex items-center gap-2">
-                        <Car className="w-4 h-4 text-gray-400" />
-                        <div className="flex flex-wrap gap-1">
-                          {d.parking.map((item, i) => (
-                            <span key={i} className="text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-700">
-                              {item}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Review */}
-                {d.review && (
-                  <div className="bg-gray-50 rounded-xl p-4 mb-4">
-                    <p className="text-xs text-gray-600 italic">"{d.review}"</p>
-                    {d.reviewAuthor && (
-                      <div className="flex items-center justify-between mt-2">
-                        <p className="text-xs text-gray-500">— {d.reviewAuthor}</p>
-                        {d.reviewTime && (
-                          <p className="text-xs text-gray-400">{d.reviewTime}</p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* More Reviews Button */}
-                {d.review_count > 1 && (
-                  <button
-                    onClick={() => fetchPlaceDetails(d.id)}
-                    className="text-xs text-blue-600 hover:text-blue-700 font-medium mb-4 flex items-center gap-1"
-                  >
-                    <Star className="w-3 h-3" />
-                    {translatedText.viewReviews} ({d.review_count})
-                    {loadingReviews[d.id] && (
-                      <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin ml-2" />
-                    )}
-                  </button>
-                )}
-
                 {/* Insurance Estimate */}
                 {insurance && estimate && (
                   <div className={`flex items-start gap-3 p-4 rounded-xl mb-4 ${
@@ -911,7 +759,7 @@ export default function Dentists() {
                 )}
 
                 {/* Actions */}
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   <a
                     href={d.mapsLink}
                     target="_blank"
@@ -919,7 +767,7 @@ export default function Dentists() {
                     className="flex items-center justify-center gap-1 bg-blue-500 text-white py-3 rounded-xl text-xs font-semibold hover:bg-blue-600 transition-all hover:scale-[1.02]"
                   >
                     <MapPin className="w-3 h-3" />
-                    <span className="hidden sm:inline">{translatedText.directions}</span>
+                    <span>{translatedText.directions}</span>
                   </a>
                   
                   {d.phone && (
@@ -928,30 +776,16 @@ export default function Dentists() {
                       className="flex items-center justify-center gap-1 bg-green-500 text-white py-3 rounded-xl text-xs font-semibold hover:bg-green-600 transition-all hover:scale-[1.02]"
                     >
                       <Phone className="w-3 h-3" />
-                      <span className="hidden sm:inline">{translatedText.call}</span>
-                    </a>
-                  )}
-
-                  {d.website && (
-                    <a
-                      href={d.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-1 bg-purple-500 text-white py-3 rounded-xl text-xs font-semibold hover:bg-purple-600 transition-all hover:scale-[1.02]"
-                    >
-                      <ExternalLink className="w-3 h-3" />
-                      <span className="hidden sm:inline">Website</span>
+                      <span>{translatedText.call}</span>
                     </a>
                   )}
 
                   <button
-                    onClick={() => {
-                      copyToClipboard(d.mapsLink);
-                    }}
+                    onClick={() => setSelectedDentist(d)}
                     className="flex items-center justify-center gap-1 bg-white border-2 border-gray-200 text-gray-900 py-3 rounded-xl text-xs font-semibold hover:border-blue-300 transition-all hover:scale-[1.02]"
                   >
-                    <Share2 className="w-3 h-3" />
-                    <span className="hidden sm:inline">{translatedText.share}</span>
+                    <Calendar className="w-3 h-3" />
+                    <span>Info</span>
                   </button>
                 </div>
               </div>
@@ -963,145 +797,20 @@ export default function Dentists() {
       {/* Info Modal */}
       {selectedDentist && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-[2rem] max-w-lg w-full p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-white rounded-[2rem] max-w-lg w-full p-8 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
               <h3 className="text-2xl font-black text-gray-900">{selectedDentist.name}</h3>
-              <button onClick={() => setSelectedDentist(null)} className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-xl transition-colors">
+              <button onClick={() => setSelectedDentist(null)} className="text-gray-400 hover:text-gray-600">
                 <X className="w-6 h-6" />
               </button>
             </div>
-
-            <div className="space-y-4">
-              {/* Photos */}
-              {selectedDentist.photos?.length > 0 && (
-                <div className="flex gap-2 overflow-x-auto pb-2">
-                  {selectedDentist.photos.map((photo, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => {
-                        setSelectedPhoto(photo);
-                        setShowPhotoModal(true);
-                      }}
-                      className="flex-shrink-0 w-24 h-24 bg-gray-200 rounded-xl overflow-hidden"
-                    >
-                      <img 
-                        src={`https://places.googleapis.com/v1/${photo.name}/media?key=${import.meta.env.VITE_GOOGLE_MAPS_KEY}&maxHeightPx=200`}
-                        alt=""
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = "https://via.placeholder.com/200x200?text=📷";
-                        }}
-                      />
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              <div className="bg-blue-50 p-5 rounded-xl">
-                <p className="text-sm text-gray-700 mb-2">{selectedDentist.address}</p>
-                {selectedDentist.phone && (
-                  <a href={`tel:${selectedDentist.phone}`} className="text-sm text-blue-600 font-semibold hover:underline block mb-1">
-                    📞 {selectedDentist.phone}
-                  </a>
-                )}
-                {selectedDentist.distance && (
-                  <p className="text-sm text-blue-600">📍 {selectedDentist.distance} miles away</p>
-                )}
-              </div>
-
-              {/* Regular Hours */}
-              {selectedDentist.regularHours?.length > 0 && (
-                <div className="bg-gray-50 p-5 rounded-xl">
-                  <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    Hours
-                  </h4>
-                  <div className="space-y-1">
-                    {selectedDentist.regularHours.map((hours, i) => (
-                      <p key={i} className="text-xs text-gray-600">{hours}</p>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Amenities */}
-              {(selectedDentist.paymentMethods?.length > 0 || selectedDentist.accessibility?.length > 0 || selectedDentist.parking?.length > 0) && (
-                <div className="bg-gray-50 p-5 rounded-xl">
-                  <h4 className="font-semibold text-gray-900 mb-3">Amenities</h4>
-                  
-                  {selectedDentist.paymentMethods?.length > 0 && (
-                    <div className="mb-3">
-                      <p className="text-xs font-medium text-gray-700 mb-2">Payment Methods:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {selectedDentist.paymentMethods.map((method, i) => (
-                          <span key={i} className="text-xs bg-white px-2 py-1 rounded-full text-gray-700 border border-gray-200">
-                            {method}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {selectedDentist.accessibility?.length > 0 && (
-                    <div className="mb-3">
-                      <p className="text-xs font-medium text-gray-700 mb-2">Accessibility:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {selectedDentist.accessibility.map((item, i) => (
-                          <span key={i} className="text-xs bg-white px-2 py-1 rounded-full text-gray-700 border border-gray-200">
-                            {item}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {selectedDentist.parking?.length > 0 && (
-                    <div>
-                      <p className="text-xs font-medium text-gray-700 mb-2">Parking:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {selectedDentist.parking.map((item, i) => (
-                          <span key={i} className="text-xs bg-white px-2 py-1 rounded-full text-gray-700 border border-gray-200">
-                            {item}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Actions */}
-              <div className="space-y-2">
-                {selectedDentist.website && (
-                  <a
-                    href={selectedDentist.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block text-center bg-blue-500 text-white py-4 rounded-xl font-semibold hover:bg-blue-600 transition-all hover:scale-[1.02]"
-                  >
-                    Visit Website
-                  </a>
-                )}
-
-                <a
-                  href={selectedDentist.mapsLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block text-center bg-green-500 text-white py-4 rounded-xl font-semibold hover:bg-green-600 transition-all hover:scale-[1.02]"
-                >
-                  Get Directions
+            <div className="bg-blue-50 p-4 rounded-xl">
+              <p className="text-sm text-gray-700">{selectedDentist.address}</p>
+              {selectedDentist.phone && (
+                <a href={`tel:${selectedDentist.phone}`} className="text-sm text-blue-600 font-semibold mt-2 block">
+                  📞 {selectedDentist.phone}
                 </a>
-
-                <button
-                  onClick={() => {
-                    copyToClipboard(selectedDentist.mapsLink);
-                  }}
-                  className="block text-center w-full bg-white border-2 border-gray-200 text-gray-900 py-4 rounded-xl font-semibold hover:border-blue-300 transition-all hover:scale-[1.02]"
-                >
-                  Share
-                </button>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -1110,59 +819,14 @@ export default function Dentists() {
       {/* Compare Modal */}
       {showCompare && selectedForCompare.length > 0 && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-[2rem] max-w-5xl w-full p-8 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-8">
-              <h3 className="text-2xl font-black text-gray-900 flex items-center gap-2">
-                <BarChart3 className="w-6 h-6 text-blue-600" />
-                Compare Dentists
-              </h3>
-              <button onClick={() => setShowCompare(false)} className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-xl transition-colors">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {selectedForCompare.map(dentist => (
-                <div key={dentist.id} className="space-y-4 bg-gray-50 p-6 rounded-2xl">
-                  <h4 className="font-bold text-gray-900 text-lg">{dentist.name}</h4>
-                  
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                      <span className="text-sm text-gray-600">Rating</span>
-                      <span className="font-bold text-gray-900">{dentist.rating || 'N/A'} ⭐</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                      <span className="text-sm text-gray-600">Distance</span>
-                      <span className="font-bold text-gray-900">{dentist.distance ? `${dentist.distance} mi` : 'N/A'}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                      <span className="text-sm text-gray-600">Price</span>
-                      <span className="font-bold text-gray-900">{dentist.priceLevel ? '$'.repeat(dentist.priceLevel) : 'N/A'}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                      <span className="text-sm text-gray-600">Open Now</span>
-                      <span className={dentist.openNow ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
-                        {dentist.openNow ? 'Yes' : 'No'}
-                      </span>
-                    </div>
-                    {dentist.phone && (
-                      <div className="flex justify-between items-center py-2">
-                        <span className="text-sm text-gray-600">Phone</span>
-                        <a href={`tel:${dentist.phone}`} className="text-sm text-blue-600 font-medium">
-                          Call
-                        </a>
-                      </div>
-                    )}
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      setSelectedForCompare(selectedForCompare.filter(d => d.id !== dentist.id));
-                    }}
-                    className="w-full py-3 text-sm text-red-600 border-2 border-red-200 rounded-xl hover:bg-red-50 transition-colors font-semibold"
-                  >
-                    Remove
-                  </button>
+          <div className="bg-white rounded-[2rem] max-w-4xl w-full p-8 max-h-[80vh] overflow-y-auto">
+            <h3 className="text-2xl font-black mb-4">Compare Dentists</h3>
+            <div className="grid grid-cols-3 gap-4">
+              {selectedForCompare.map(d => (
+                <div key={d.id} className="p-4 bg-gray-50 rounded-xl">
+                  <h4 className="font-bold">{d.name}</h4>
+                  <p className="text-sm mt-2">Rating: {d.rating || 'N/A'} ⭐</p>
+                  <p className="text-sm">Distance: {d.distance || '?'} mi</p>
                 </div>
               ))}
             </div>
@@ -1173,47 +837,14 @@ export default function Dentists() {
       {/* Favorites Modal */}
       {showFavorites && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-[2rem] max-w-lg w-full max-h-[80vh] overflow-hidden">
-            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Heart className="w-5 h-5 text-red-500 fill-red-500" />
-                <h3 className="font-black text-gray-900 text-lg">{translatedText.savedDentists}</h3>
+          <div className="bg-white rounded-[2rem] max-w-lg w-full p-8 max-h-[80vh] overflow-y-auto">
+            <h3 className="text-2xl font-black mb-4">Saved Dentists</h3>
+            {favorites.map(d => (
+              <div key={d.id} className="p-4 bg-gray-50 rounded-xl mb-2">
+                <p className="font-bold">{d.name}</p>
+                <p className="text-sm">{d.address}</p>
               </div>
-              <button onClick={() => setShowFavorites(false)} className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-xl transition-colors">
-                <X className="w-6 h-5" />
-              </button>
-            </div>
-            
-            <div className="p-4 overflow-y-auto max-h-[60vh] space-y-3">
-              {favorites.length === 0 ? (
-                <p className="text-center text-gray-500 py-8">{translatedText.noSavedDentists}</p>
-              ) : (
-                favorites.map((d) => (
-                  <div key={d.id} className="flex gap-4 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
-                    <div className="flex-1">
-                      <p className="font-bold text-gray-900 mb-1">{d.name}</p>
-                      <p className="text-xs text-gray-600 mb-2">{d.address}</p>
-                      <div className="flex gap-3">
-                        <a
-                          href={d.mapsLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-blue-600 hover:text-blue-700 font-medium"
-                        >
-                          {translatedText.directions}
-                        </a>
-                        <button
-                          onClick={() => toggleFavorite(d)}
-                          className="text-xs text-red-600 hover:text-red-700 font-medium"
-                        >
-                          {translatedText.remove}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+            ))}
           </div>
         </div>
       )}

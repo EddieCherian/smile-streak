@@ -1,4 +1,4 @@
-import { Heart, Shield, Target, Users, Lightbulb, Mail, Github, Award, Sparkles, CheckCircle2, Globe, Star, TrendingUp, Clock, Zap, Brain, BookOpen, Code, Coffee, Palette, Rocket, Smile, ThumbsUp, HelpCircle, MessageCircle, Share2, Download, ExternalLink, Lock, Eye, EyeOff, Bell, Calendar, Filter, RefreshCw, AlertTriangle, Gift, Crown, Medal, Users2, Building, Microscope, Newspaper, BookMarked, Video, Headphones, Instagram, Twitter, Linkedin, Youtube, Facebook } from "lucide-react";
+import { Heart, Shield, Target, Users, Lightbulb, Mail, Github, Award, Sparkles, CheckCircle2, Globe, Star, TrendingUp, Clock, Zap, Brain, BookOpen, Code, Coffee, Palette, Rocket, Smile, ThumbsUp, HelpCircle, MessageCircle, Share2, Download, ExternalLink, Lock, Eye, EyeOff, Bell, Calendar, Filter, RefreshCw, AlertTriangle, Gift, Crown, Medal, Users2, Building, Microscope, Newspaper, BookMarked, Video, Headphones, Instagram, Twitter, Linkedin, Youtube, Facebook, MapPin, Camera, Flame } from "lucide-react";
 import { useState, useContext, useEffect } from "react";
 import { TranslationContext } from "../App";
 
@@ -620,5 +620,4 @@ export default function Mission() {
           {[1, 2, 3, 4, 5].map((i) => (
             <div key={i} className="border border-gray-200 rounded-xl overflow-hidden">
               <button
-                onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
-                className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors
+                onClick={() => setExpandedFaq(expandedFaq === i

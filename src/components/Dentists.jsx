@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { MapPin, Star, Clock, Heart, Phone, ChevronRight, TrendingUp, Award, Navigation, Bookmark, X, CheckCircle2, AlertCircle } from "lucide-react";
+import { TranslationContext } from "../App";
 
 /* 🧠 Insurance intelligence profiles */
 const INSURANCE_PROFILES = {
@@ -33,6 +34,8 @@ function getDistanceMiles(lat1, lon1, lat2, lon2) {
 }
 
 export default function Dentists() {
+  const { t, currentLanguage, translating } = useContext(TranslationContext);
+  
   const [dentists, setDentists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [insurance, setInsurance] = useState("");
@@ -41,6 +44,83 @@ export default function Dentists() {
   const [showFavorites, setShowFavorites] = useState(false);
   const [selectedDentist, setSelectedDentist] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
+  const [translatedText, setTranslatedText] = useState({});
+
+  // Translation keys
+  const translationKeys = {
+    title: "Find Dentists",
+    subtitle: "Discover top-rated dental care nearby",
+    yourInsurance: "Your Insurance",
+    selectInsurance: "Select your insurance",
+    bestOverall: "Best Overall",
+    topRated: "Top Rated",
+    nearest: "Nearest",
+    loading: "Finding dentists near you...",
+    noDentists: "No dentists found nearby",
+    expandSearch: "Try expanding your search radius",
+    openNow: "Open now",
+    closed: "Closed",
+    milesAway: "miles away",
+    likelyAccepts: "Likely accepts",
+    mayNotAccept: "May not accept",
+    callToConfirm: "call to confirm",
+    directions: "Directions",
+    appointmentPrep: "Appointment Prep",
+    appointmentChecklist: "Appointment Checklist",
+    beforeYouGo: "Before You Go",
+    feelingNervous: "Feeling Nervous?",
+    call: "Call",
+    savedDentists: "Saved Dentists",
+    noSavedDentists: "No saved dentists yet",
+    remove: "Remove",
+    recommended: "⭐ Recommended",
+    topRatedBadge: "🏆 Top Rated",
+    closestBadge: "📍 Closest",
+    openNearby: "🟢 Open Nearby"
+  };
+
+  // Checklist items
+  const checklistItems = [
+    "Brush and floss your teeth",
+    "Bring your insurance card",
+    "Bring photo ID",
+    "List any medications you're taking",
+    "Write down questions for your dentist"
+  ];
+
+  // Anxiety tips
+  const anxietyTips = [
+    "Take deep breaths before your appointment",
+    "Listen to calming music in the waiting room",
+    "Tell your dentist if you're anxious",
+    "Schedule morning appointments when you're fresh"
+  ];
+
+  // Load translations when language changes
+  useEffect(() => {
+    const loadTranslations = async () => {
+      const translations = {};
+      
+      // Load main translations
+      for (const [key, value] of Object.entries(translationKeys)) {
+        translations[key] = await t(value);
+      }
+      
+      // Load checklist items
+      for (let i = 0; i < checklistItems.length; i++) {
+        translations[`checklist_${i}`] = await t(checklistItems[i]);
+      }
+      
+      // Load anxiety tips
+      for (let i = 0; i < anxietyTips.length; i++) {
+        translations[`anxietyTip_${i}`] = await t(anxietyTips[i]);
+      }
+      
+      setTranslatedText(translations);
+    };
+    
+    loadTranslations();
+  }, [currentLanguage, t]);
 
   // Load favorites from localStorage
   useEffect(() => {
@@ -171,19 +251,33 @@ export default function Dentists() {
   // Badge logic
   const getBadge = (dentist, index) => {
     if (dentist.name && dentist.name.toLowerCase().includes("royse city dental care") && sortBy === "best") {
-      return { text: "⭐ Recommended", color: "bg-gradient-to-r from-yellow-400 to-orange-400 text-white" };
+      return { text: translatedText.recommended || translationKeys.recommended, color: "bg-gradient-to-r from-yellow-400 to-orange-400 text-white" };
     }
     if (index === 0 && sortBy === "rating") {
-      return { text: "🏆 Top Rated", color: "bg-yellow-100 text-yellow-700" };
+      return { text: translatedText.topRatedBadge || translationKeys.topRatedBadge, color: "bg-yellow-100 text-yellow-700" };
     }
     if (index === 0 && sortBy === "distance") {
-      return { text: "📍 Closest", color: "bg-blue-100 text-blue-700" };
+      return { text: translatedText.closestBadge || translationKeys.closestBadge, color: "bg-blue-100 text-blue-700" };
     }
     if (dentist.openNow && dentist.distance < 5) {
-      return { text: "🟢 Open Nearby", color: "bg-green-100 text-green-700" };
+      return { text: translatedText.openNearby || translationKeys.openNearby, color: "bg-green-100 text-green-700" };
     }
     return null;
   };
+
+  // Show loading state while translating
+  if (translating || Object.keys(translatedText).length === 0) {
+    return (
+      <section className="space-y-6 pb-8">
+        <div className="bg-gradient-to-br from-blue-600 via-cyan-500 to-blue-500 text-white rounded-3xl p-6 shadow-xl">
+          <div className="animate-pulse flex items-center gap-2">
+            <MapPin className="w-6 h-6" />
+            <h2 className="text-2xl font-black">Loading...</h2>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-6 pb-8">
@@ -196,9 +290,9 @@ export default function Dentists() {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <MapPin className="w-6 h-6" />
-              <h2 className="text-2xl font-black">Find Dentists</h2>
+              <h2 className="text-2xl font-black">{translatedText.title}</h2>
             </div>
-            <p className="text-sm opacity-90">Discover top-rated dental care nearby</p>
+            <p className="text-sm opacity-90">{translatedText.subtitle}</p>
           </div>
           
           {favorites.length > 0 && (
@@ -217,13 +311,13 @@ export default function Dentists() {
 
       {/* Insurance Selector */}
       <div className="bg-white rounded-2xl p-4 shadow-md border border-blue-100">
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Your Insurance</label>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">{translatedText.yourInsurance}</label>
         <select
           value={insurance}
           onChange={(e) => setInsurance(e.target.value)}
           className="w-full p-3 rounded-xl border-2 border-gray-200 focus:border-blue-400 focus:outline-none font-medium"
         >
-          <option value="">Select your insurance</option>
+          <option value="">{translatedText.selectInsurance}</option>
           <option>Delta Dental</option>
           <option>Aetna</option>
           <option>Cigna</option>
@@ -236,9 +330,9 @@ export default function Dentists() {
       {/* Sort Options */}
       <div className="flex gap-2 overflow-x-auto pb-2">
         {[
-          { id: 'best', label: 'Best Overall', icon: <Award className="w-4 h-4" /> },
-          { id: 'rating', label: 'Top Rated', icon: <Star className="w-4 h-4" /> },
-          { id: 'distance', label: 'Nearest', icon: <Navigation className="w-4 h-4" /> }
+          { id: 'best', label: translatedText.bestOverall, icon: <Award className="w-4 h-4" /> },
+          { id: 'rating', label: translatedText.topRated, icon: <Star className="w-4 h-4" /> },
+          { id: 'distance', label: translatedText.nearest, icon: <Navigation className="w-4 h-4" /> }
         ].map(sort => (
           <button
             key={sort.id}
@@ -259,7 +353,7 @@ export default function Dentists() {
       {loading && (
         <div className="text-center py-12">
           <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 font-medium">Finding dentists near you...</p>
+          <p className="text-gray-600 font-medium">{translatedText.loading}</p>
         </div>
       )}
 
@@ -267,8 +361,8 @@ export default function Dentists() {
       {!loading && dentists.length === 0 && (
         <div className="text-center py-12 bg-gray-50 rounded-2xl">
           <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-          <p className="text-gray-600 font-medium">No dentists found nearby</p>
-          <p className="text-sm text-gray-500 mt-1">Try expanding your search radius</p>
+          <p className="text-gray-600 font-medium">{translatedText.noDentists}</p>
+          <p className="text-sm text-gray-500 mt-1">{translatedText.expandSearch}</p>
         </div>
       )}
 
@@ -324,7 +418,7 @@ export default function Dentists() {
                   }`}>
                     <Clock className={`w-4 h-4 ${d.openNow ? 'text-green-600' : 'text-gray-500'}`} />
                     <span className={`text-xs font-semibold ${d.openNow ? 'text-green-700' : 'text-gray-600'}`}>
-                      {d.openNow ? 'Open now' : 'Closed'}
+                      {d.openNow ? translatedText.openNow : translatedText.closed}
                     </span>
                   </div>
                 )}
@@ -340,7 +434,7 @@ export default function Dentists() {
 
               {d.distance && (
                 <p className="text-sm font-semibold text-blue-600 mb-3">
-                  📍 {d.distance} miles away
+                  📍 {d.distance} {translatedText.milesAway}
                 </p>
               )}
 
@@ -365,8 +459,8 @@ export default function Dentists() {
                     likelyAccepted ? 'text-green-700' : 'text-orange-700'
                   }`}>
                     {likelyAccepted
-                      ? `Likely accepts ${insurance}`
-                      : `May not accept ${insurance} — call to confirm`}
+                      ? `${translatedText.likelyAccepts} ${insurance}`
+                      : `${translatedText.mayNotAccept} ${insurance} — ${translatedText.callToConfirm}`}
                   </p>
                 </div>
               )}
@@ -380,14 +474,14 @@ export default function Dentists() {
                   className="flex items-center justify-center gap-2 bg-blue-500 text-white py-3 rounded-xl font-semibold hover:bg-blue-600 transition-colors"
                 >
                   <MapPin className="w-4 h-4" />
-                  Directions
+                  {translatedText.directions}
                 </a>
                 
                 <button
                   onClick={() => setSelectedDentist(d)}
                   className="flex items-center justify-center gap-2 bg-white border-2 border-gray-200 text-gray-900 py-3 rounded-xl font-semibold hover:border-blue-300 transition-colors"
                 >
-                  Appointment Prep
+                  {translatedText.appointmentPrep}
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
@@ -402,7 +496,7 @@ export default function Dentists() {
           <div className="bg-white rounded-3xl max-w-lg w-full max-h-[85vh] overflow-hidden animate-[scaleBounce_0.3s_ease-out]">
             <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-6">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-xl font-black">Appointment Checklist</h3>
+                <h3 className="text-xl font-black">{translatedText.appointmentChecklist}</h3>
                 <button
                   onClick={() => setSelectedDentist(null)}
                   className="text-white/80 hover:text-white"
@@ -418,19 +512,13 @@ export default function Dentists() {
               <div>
                 <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
                   <CheckCircle2 className="w-5 h-5 text-green-500" />
-                  Before You Go
+                  {translatedText.beforeYouGo}
                 </h4>
                 <div className="space-y-2">
-                  {[
-                    "Brush and floss your teeth",
-                    "Bring your insurance card",
-                    "Bring photo ID",
-                    "List any medications you're taking",
-                    "Write down questions for your dentist"
-                  ].map((item, i) => (
+                  {checklistItems.map((_, i) => (
                     <label key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors">
                       <input type="checkbox" className="w-5 h-5 rounded border-gray-300 text-blue-500 focus:ring-blue-500" />
-                      <span className="text-sm text-gray-700">{item}</span>
+                      <span className="text-sm text-gray-700">{translatedText[`checklist_${i}`]}</span>
                     </label>
                   ))}
                 </div>
@@ -440,13 +528,12 @@ export default function Dentists() {
               <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-2xl p-5">
                 <h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
                   <TrendingUp className="w-5 h-5 text-purple-600" />
-                  Feeling Nervous?
+                  {translatedText.feelingNervous}
                 </h4>
                 <ul className="text-sm text-gray-600 space-y-1">
-                  <li>• Take deep breaths before your appointment</li>
-                  <li>• Listen to calming music in the waiting room</li>
-                  <li>• Tell your dentist if you're anxious</li>
-                  <li>• Schedule morning appointments when you're fresh</li>
+                  {anxietyTips.map((_, i) => (
+                    <li key={i}>{translatedText[`anxietyTip_${i}`]}</li>
+                  ))}
                 </ul>
               </div>
 
@@ -457,7 +544,7 @@ export default function Dentists() {
                   className="flex items-center justify-center gap-2 w-full bg-green-500 text-white py-4 rounded-xl font-bold hover:bg-green-600 transition-colors"
                 >
                   <Phone className="w-5 h-5" />
-                  Call {selectedDentist.phone}
+                  {translatedText.call} {selectedDentist.phone}
                 </a>
               )}
             </div>
@@ -472,7 +559,7 @@ export default function Dentists() {
             <div className="p-6 border-b border-gray-200 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Heart className="w-5 h-5 text-red-500 fill-red-500" />
-                <h3 className="font-black text-gray-900">Saved Dentists</h3>
+                <h3 className="font-black text-gray-900">{translatedText.savedDentists}</h3>
               </div>
               <button onClick={() => setShowFavorites(false)} className="text-gray-400 hover:text-gray-600">
                 <X className="w-5 h-5" />
@@ -481,7 +568,7 @@ export default function Dentists() {
             
             <div className="p-4 overflow-y-auto max-h-[60vh] space-y-3">
               {favorites.length === 0 ? (
-                <p className="text-center text-gray-500 py-8">No saved dentists yet</p>
+                <p className="text-center text-gray-500 py-8">{translatedText.noSavedDentists}</p>
               ) : (
                 favorites.map((d) => (
                   <div key={d.id} className="flex gap-3 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
@@ -495,13 +582,13 @@ export default function Dentists() {
                           rel="noopener noreferrer"
                           className="text-xs text-blue-600 hover:text-blue-700 font-medium"
                         >
-                          Directions
+                          {translatedText.directions}
                         </a>
                         <button
                           onClick={() => toggleFavorite(d)}
                           className="text-xs text-red-600 hover:text-red-700 font-medium"
                         >
-                          Remove
+                          {translatedText.remove}
                         </button>
                       </div>
                     </div>

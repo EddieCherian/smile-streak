@@ -298,13 +298,12 @@ export default function Dentists() {
             const lng = d.location?.longitude;
             const distance = lat && lng ? getDistanceMiles(latitude, longitude, lat, lng) : null;
             
-            // Better Royse City detection - check multiple variations
+            // Explicit Royse City Dental Care detection
             const nameLower = d.displayName?.text?.toLowerCase() || "";
             const isRoyseCity = 
-              nameLower.includes("royse city") || 
-              nameLower.includes("royse-city") || 
-              nameLower.includes("roysecity") ||
-              (nameLower.includes("royse") && nameLower.includes("dental"));
+              nameLower.includes("royse city dental care") || 
+              nameLower.includes("royse city dental") ||
+              nameLower.includes("royse city") && nameLower.includes("dental");
 
             // Extract real data from Google Places
             const paymentMethods = [];
@@ -393,7 +392,7 @@ export default function Dentists() {
     let sorted = [...filteredDentists];
 
     if (sortBy === "best") {
-      // Find Royse City - case insensitive and multiple variations
+      // Find Royse City Dental Care - explicit check
       const royseCityIndex = sorted.findIndex(d => d.isRoyseCity);
       
       if (royseCityIndex !== -1) {
@@ -402,14 +401,13 @@ export default function Dentists() {
       }
 
       // Sort the rest by rating and distance
-      const royseCityDental = sorted[0];
       const rest = sorted.slice(1).sort((a, b) => {
         const scoreA = (a.rating || 0) * 10 - (a.distance || 99);
         const scoreB = (b.rating || 0) * 10 - (b.distance || 99);
         return scoreB - scoreA;
       });
 
-      return royseCityIndex !== -1 ? [royseCityDental, ...rest] : rest;
+      return sorted.length > 0 ? [sorted[0], ...rest] : rest;
     }
 
     if (sortBy === "rating") {
@@ -424,13 +422,13 @@ export default function Dentists() {
   const sortedDentists = getSortedDentists();
 
   const getBadge = (dentist, index) => {
-    if (dentist.isRoyseCity && sortBy === "best") {
+    if (dentist.isRoyseCity) {
       return { text: "⭐ Royse City Dental Care", color: "bg-gradient-to-r from-yellow-400 to-orange-400 text-white" };
     }
-    if (index === 0 && sortBy === "rating" && !dentist.isRoyseCity) {
+    if (index === 0 && sortBy === "rating") {
       return { text: "🏆 Top Rated", color: "bg-yellow-100 text-yellow-700" };
     }
-    if (index === 0 && sortBy === "distance" && !dentist.isRoyseCity) {
+    if (index === 0 && sortBy === "distance") {
       return { text: "📍 Closest", color: "bg-blue-100 text-blue-700" };
     }
     if (dentist.openNow && dentist.distance < 5) {

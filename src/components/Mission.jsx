@@ -13,6 +13,17 @@ import {
 import { useState, useContext, useEffect } from "react";
 import { TranslationContext } from "../App";
 
+// Create fallbacks for any icons that might not exist in your version
+const Apple = ({ className }) => <span className={className}>🍎</span>;
+const Android = ({ className }) => <span className={className}>🤖</span>;
+const Smartphone = ({ className }) => <span className={className}>📱</span>;
+const Database = ({ className }) => <span className={className}>💾</span>;
+const ChevronDown = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M6 9l6 6 6-6" />
+  </svg>
+);
+
 export default function Mission() {
   const { t, currentLanguage, translating } = useContext(TranslationContext);
   const [showFeedback, setShowFeedback] = useState(false);

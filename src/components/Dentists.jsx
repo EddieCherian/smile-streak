@@ -96,7 +96,8 @@ export default function Dentists() {
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   
-  // Fix: Max radius 100 miles, default 16
+  // FIXED: Max radius 100 miles, default 16 - but Google Places API has a limit of 50km (31 miles)
+  // We'll set the UI to 100 but cap the actual API call at 50km (31 miles)
   const [searchRadius, setSearchRadius] = useState(16);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedForCompare, setSelectedForCompare] = useState([]);
@@ -256,8 +257,9 @@ export default function Dentists() {
         setUserLocation({ latitude, longitude });
 
         try {
-          // Fix: Convert miles to meters correctly
-          const radiusInMeters = radius * 1609.34; // 1 mile = 1609.34 meters
+          // FIXED: Google Places API has a limit of 50,000 meters (50km ≈ 31 miles)
+          // Cap the radius at 50,000 meters regardless of what the user selects
+          const radiusInMeters = Math.min(radius * 1609.34, 50000); // Cap at 50km
           
           const res = await fetch(
             "https://places.googleapis.com/v1/places:searchNearby",
@@ -465,6 +467,10 @@ export default function Dentists() {
               src={`https://places.googleapis.com/v1/${selectedPhoto.name}/media?key=${import.meta.env.VITE_GOOGLE_MAPS_KEY}&maxWidthPx=1200`}
               alt="Dentist office"
               className="w-full h-auto rounded-2xl"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = "https://via.placeholder.com/400x300?text=No+Image+Available";
+              }}
             />
             <button
               onClick={() => setShowPhotoModal(false)}
@@ -576,6 +582,11 @@ export default function Dentists() {
               <span className="text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
                 {searchRadius} miles
               </span>
+              {searchRadius > 31 && (
+                <span className="text-xs text-amber-600 ml-2">
+                  (API max 31mi)
+                </span>
+              )}
             </div>
             <input
               type="range"
@@ -588,7 +599,7 @@ export default function Dentists() {
             <div className="flex justify-between text-xs text-gray-500 mt-2">
               <span>1 mile</span>
               <span>16 mi (default)</span>
-              <span>100 miles</span>
+              <span>100 mi (API caps at 31)</span>
             </div>
           </div>
         </div>
@@ -665,7 +676,7 @@ export default function Dentists() {
         <div className="flex justify-between items-center px-1">
           <p className="text-sm text-gray-600 font-medium">
             Found <span className="text-blue-600 font-bold">{filteredDentists.length}</span> dentists
-            {searchRadius > 16 && <span className="text-gray-400 ml-1">within {searchRadius} miles</span>}
+            {searchRadius > 16 && <span className="text-gray-400 ml-1">within {Math.min(searchRadius, 31)} miles</span>}
           </p>
           {selectedForCompare.length > 0 && (
             <button
@@ -747,7 +758,7 @@ export default function Dentists() {
                   </div>
                 </div>
 
-                {/* Photos */}
+                {/* Photos - FIXED: Added error handling for images */}
                 {d.photos && d.photos.length > 0 && (
                   <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
                     {d.photos.map((photo, idx) => (
@@ -763,6 +774,10 @@ export default function Dentists() {
                           src={`https://places.googleapis.com/v1/${photo.name}/media?key=${import.meta.env.VITE_GOOGLE_MAPS_KEY}&maxWidthPx=200`}
                           alt={`${d.name} office`}
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "https://via.placeholder.com/200x200?text=No+Image";
+                          }}
                         />
                       </button>
                     ))}
@@ -894,7 +909,7 @@ export default function Dentists() {
                   </button>
                 )}
 
-                {/* Insurance Estimate - Now shows for every dentist when insurance is selected */}
+                {/* Insurance Estimate */}
                 {insurance && estimate && (
                   <div className={`flex items-start gap-3 p-4 rounded-xl mb-4 ${
                     estimate.accepts ? 'bg-emerald-50' : 'bg-amber-50'
@@ -1002,6 +1017,10 @@ export default function Dentists() {
                         src={`https://places.googleapis.com/v1/${photo.name}/media?key=${import.meta.env.VITE_GOOGLE_MAPS_KEY}&maxWidthPx=200`}
                         alt=""
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = "https://via.placeholder.com/200x200?text=No+Image";
+                        }}
                       />
                     </button>
                   ))}

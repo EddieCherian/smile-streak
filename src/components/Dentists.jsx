@@ -33,11 +33,12 @@ const getInsuranceEstimate = (dentistName, dentistAddress, selectedInsurance) =>
   const name = dentistName.toLowerCase();
   const address = dentistAddress.toLowerCase();
   
-  if (name.includes('royse') && name.includes('city')) {
+  // IMPROVED: More flexible detection for Royse City Dental Care
+  if (name.includes('royse') && (name.includes('city') || name.includes('dental'))) {
     return {
       accepts: true,
       confidence: 'high',
-      reason: `✓ Verified Provider - Royse City Dental Care accepts all major insurance including ${selectedInsurance}`,
+      reason: `✓ Verified Provider - ${dentistName} accepts all major insurance including ${selectedInsurance}`,
       verified: true
     };
   }
@@ -80,7 +81,7 @@ export default function Dentists() {
   const [locationError, setLocationError] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
-  const [searchRadius, setSearchRadius] = useState(16);
+  const [searchRadius, setSearchRadius] = useState(31); // Increased default radius to 31 miles
   const [showFilters, setShowFilters] = useState(false);
   const [selectedForCompare, setSelectedForCompare] = useState([]);
   const [showCompare, setShowCompare] = useState(false);
@@ -217,20 +218,42 @@ export default function Dentists() {
             const lng = d.location?.longitude;
             const distance = lat && lng ? getDistanceMiles(latitude, longitude, lat, lng) : null;
             const nameLower = d.displayName?.text?.toLowerCase() || "";
-            const isRoyseCity = nameLower.includes("royse") && (nameLower.includes("city") || nameLower.includes("dental"));
+            
+            // IMPROVED: Much more flexible detection for Royse City Dental Care
+            const isRoyseCity = 
+              nameLower.includes("royse") && 
+              (nameLower.includes("city") || 
+               nameLower.includes("dental") || 
+               nameLower.includes("dentist") ||
+               nameLower.includes("family") ||
+               nameLower.includes("care"));
+            
+            // DEBUG: Log if found
+            if (isRoyseCity) {
+              console.log("✅ Found Royse City Dental:", d.displayName?.text);
+            }
 
             return {
-              id: d.id, name: d.displayName?.text || "Unknown",
+              id: d.id, 
+              name: d.displayName?.text || "Unknown",
               address: d.formattedAddress || "No address",
-              rating: d.rating, review_count: d.userRatingCount || 0,
-              lat, lng, openNow: d.currentOpeningHours?.openNow,
-              phone: d.nationalPhoneNumber, website: d.websiteUri,
+              rating: d.rating, 
+              review_count: d.userRatingCount || 0,
+              lat, lng, 
+              openNow: d.currentOpeningHours?.openNow,
+              phone: d.nationalPhoneNumber, 
+              website: d.websiteUri,
               mapsLink: `https://www.google.com/maps/place/?q=place_id:${d.id}`,
               distance: distance ? parseFloat(distance) : null,
-              priceLevel: d.priceLevel || null, photos: d.photos || [],
-              businessStatus: d.businessStatus, isRoyseCity
+              priceLevel: d.priceLevel || null, 
+              photos: d.photos || [],
+              businessStatus: d.businessStatus, 
+              isRoyseCity
             };
           });
+
+          console.log(`📊 Found ${enriched.length} dentists total`);
+          console.log(`📍 Royse City locations: ${enriched.filter(d => d.isRoyseCity).length}`);
 
           setDentists(enriched);
         } catch (err) {
@@ -264,24 +287,32 @@ export default function Dentists() {
 
   const getSortedDentists = () => {
     let sorted = [...filteredDentists];
+    
     if (sortBy === "recommended") {
-      const royseCityIndex = sorted.findIndex(d => d.isRoyseCity);
-      if (royseCityIndex !== -1) {
-        const royseCityDental = sorted.splice(royseCityIndex, 1)[0];
-        sorted.unshift(royseCityDental);
-      }
-      const rest = sorted.slice(1).sort((a, b) => {
+      // IMPROVED: Find ALL Royse City locations, not just one
+      const royseCityDentists = sorted.filter(d => d.isRoyseCity);
+      const others = sorted.filter(d => !d.isRoyseCity);
+      
+      // Sort Royse City dentists by distance
+      const sortedRoyseCity = royseCityDentists.sort((a, b) => 
+        (a.distance || 999) - (b.distance || 999)
+      );
+      
+      // Sort others by rating/distance
+      const sortedOthers = others.sort((a, b) => {
         const scoreA = (a.rating || 0) * 10 - (a.distance || 99);
         const scoreB = (b.rating || 0) * 10 - (b.distance || 99);
         return scoreB - scoreA;
       });
-      return sorted.length > 0 ? [sorted[0], ...rest] : rest;
+      
+      return [...sortedRoyseCity, ...sortedOthers];
     }
+    
     if (sortBy === "rating") {
-      const royseCity = sorted.find(d => d.isRoyseCity);
+      const royseCity = sorted.filter(d => d.isRoyseCity);
       const others = sorted.filter(d => !d.isRoyseCity);
       others.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-      return royseCity ? [royseCity, ...others] : others;
+      return [...royseCity, ...others];
     } else if (sortBy === "distance") {
       sorted.sort((a, b) => (a.distance || 999) - (b.distance || 999));
     }
@@ -375,7 +406,7 @@ export default function Dentists() {
         <div className="bg-white rounded-[2rem] p-6 shadow-lg border border-blue-100">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-gray-900">{translatedText.filters}</h3>
-            <button onClick={() => { setFilterOpenNow(false); setFilterMinRating(0); setSearchRadius(16); }} className="text-sm text-blue-600 hover:text-blue-700 font-semibold">{translatedText.clearFilters}</button>
+            <button onClick={() => { setFilterOpenNow(false); setFilterMinRating(0); setSearchRadius(31); }} className="text-sm text-blue-600 hover:text-blue-700 font-semibold">{translatedText.clearFilters}</button>
           </div>
           <div className="space-y-4">
             <div>

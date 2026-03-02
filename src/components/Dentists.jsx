@@ -105,6 +105,7 @@ export default function Dentists() {
   const [showInsuranceHelp, setShowInsuranceHelp] = useState(false);
   const [reviews, setReviews] = useState({});
   const [loadingReviews, setLoadingReviews] = useState({});
+  const [apiResponse, setApiResponse] = useState(null); // For debugging
 
   const translationKeys = {
     title: "Find Dentists",
@@ -270,7 +271,7 @@ export default function Dentists() {
               },
               body: JSON.stringify({
                 includedTypes: ["dentist"],
-                maxResultCount: 20, // This is fine - it's the max per request
+                maxResultCount: 20,
                 locationRestriction: {
                   circle: {
                     center: {
@@ -291,6 +292,9 @@ export default function Dentists() {
           }
 
           const json = await res.json();
+          setApiResponse(json); // Store for debugging
+          console.log("API Response:", json); // Log to see what's coming back
+          
           const data = json.places || [];
 
           const enriched = data.map((d) => {
@@ -298,12 +302,24 @@ export default function Dentists() {
             const lng = d.location?.longitude;
             const distance = lat && lng ? getDistanceMiles(latitude, longitude, lat, lng) : null;
             
-            // MORE AGGRESSIVE Royse City Dental Care detection
-            const nameLower = d.displayName?.text?.toLowerCase() || "";
+            // Log each dentist name to see what's coming back
+            const nameText = d.displayName?.text || "";
+            console.log("Dentist name from API:", nameText);
+            
+            // ULTRA AGGRESSIVE Royse City detection
+            const nameLower = nameText.toLowerCase();
             const isRoyseCity = 
-              nameLower.includes("royse city") || 
               nameLower.includes("royse") || 
-              (nameLower.includes("royse") && nameLower.includes("dental"));
+              nameLower.includes("royce") || // Common misspelling
+              nameLower.includes("royse city") ||
+              nameLower.includes("royce city") ||
+              (nameLower.includes("roy") && nameLower.includes("city")) ||
+              (nameLower.includes("roy") && nameLower.includes("dental"));
+
+            // If it matches, log it loudly
+            if (isRoyseCity) {
+              console.log("🔥🔥🔥 ROYSE CITY DETECTED! 🔥🔥🔥", nameText);
+            }
 
             // Extract real data from Google Places
             const paymentMethods = [];
@@ -387,34 +403,46 @@ export default function Dentists() {
     });
   }, [dentists, searchQuery]);
 
-  // Smart sorting with Royse City priority
+  // Smart sorting with Royse City priority - FIXED
   const getSortedDentists = () => {
     let sorted = [...filteredDentists];
 
-    if (sortBy === "best") {
-      // Find Royse City Dental Care - more aggressive search
-      const royseCityIndex = sorted.findIndex(d => d.isRoyseCity);
-      
-      if (royseCityIndex !== -1) {
-        const royseCityDental = sorted.splice(royseCityIndex, 1)[0];
-        sorted.unshift(royseCityDental);
-      }
+    // Log all dentists for debugging
+    console.log("All dentists for sorting:", sorted.map(d => ({ name: d.name, isRoyse: d.isRoyseCity })));
 
-      // Sort the rest by rating and distance
+    // Find Royse City - with fallback to manual check just in case
+    let royseCityIndex = sorted.findIndex(d => d.isRoyseCity);
+    
+    // Manual fallback check - sometimes the flag might not be set
+    if (royseCityIndex === -1) {
+      royseCityIndex = sorted.findIndex(d => 
+        d.name?.toLowerCase().includes("royse") || 
+        d.name?.toLowerCase().includes("royce")
+      );
+      if (royseCityIndex !== -1) {
+        console.log("Found Royse City via manual fallback!");
+        // Set the flag for this dentist
+        sorted[royseCityIndex].isRoyseCity = true;
+      }
+    }
+
+    if (royseCityIndex !== -1) {
+      console.log("✅ Moving Royse City to position 1:", sorted[royseCityIndex].name);
+      const royseCityDental = sorted.splice(royseCityIndex, 1)[0];
+      sorted.unshift(royseCityDental);
+    } else {
+      console.log("❌ Royse City not found in results");
+    }
+
+    // Sort the rest by rating and distance (but only if there are more items)
+    if (sorted.length > 1) {
       const royseCityDental = sorted[0];
       const rest = sorted.slice(1).sort((a, b) => {
         const scoreA = (a.rating || 0) * 10 - (a.distance || 99);
         const scoreB = (b.rating || 0) * 10 - (b.distance || 99);
         return scoreB - scoreA;
       });
-
-      return royseCityIndex !== -1 ? [royseCityDental, ...rest] : rest;
-    }
-
-    if (sortBy === "rating") {
-      sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-    } else if (sortBy === "distance") {
-      sorted.sort((a, b) => (a.distance || 999) - (b.distance || 999));
+      return [royseCityDental, ...rest];
     }
 
     return sorted;
@@ -467,6 +495,15 @@ export default function Dentists() {
 
   return (
     <section className="space-y-8 pb-8">
+      {/* DEBUG PANEL - REMOVE AFTER FIXING */}
+      {apiResponse && process.env.NODE_ENV === 'development' && (
+        <div className="bg-gray-800 text-white p-4 rounded-lg text-xs overflow-auto max-h-40">
+          <p>API Response Status: {apiResponse.status || 'OK'}</p>
+          <p>Places found: {apiResponse.places?.length || 0}</p>
+          <p>Dentist names: {dentists.map(d => d.name).join(', ')}</p>
+        </div>
+      )}
+
       {/* Photo Modal */}
       {showPhotoModal && selectedPhoto && (
         <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowPhotoModal(false)}>

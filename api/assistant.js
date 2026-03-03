@@ -26,15 +26,8 @@ export default async function handler(req, res) {
     // Initialize the Gemini API with your key
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     
-    // List of models to try, from oldest to newest
-    const modelsToTry = [
-      "gemini-1.5-flash",      // Oldest, most stable
-      "gemini-1.5-pro",        // Older pro version
-      "gemini-2.0-flash",      // 2.0 flash
-      "gemini-2.0-flash-001",  // 2.0 flash specific version
-      "gemini-2.5-flash",      // Newest flash
-      "gemini-2.5-pro",        // Newest pro
-    ];
+    // Use gemini-2.5-flash (your preferred model)
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = `You are a friendly and knowledgeable dental assistant. Answer the user's question about dental health, procedures, or finding a dentist. 
 
@@ -45,44 +38,25 @@ Provide a helpful, accurate response that:
 - Gives practical advice
 - Encourages professional dental visits when appropriate
 - Is warm and encouraging
+- Keep responses concise but informative (2-4 paragraphs max)
 
 If you're unsure about something, say so honestly rather than guessing.`;
 
-    let lastError = null;
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const answer = response.text();
     
-    // Try each model in order until one works
-    for (const modelName of modelsToTry) {
-      try {
-        console.log(`Trying model: ${modelName}`);
-        
-        const model = genAI.getGenerativeModel({ model: modelName });
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const answer = response.text();
-        
-        console.log(`✅ Success with model: ${modelName}`);
-        return res.status(200).json({ 
-          answer,
-          modelUsed: modelName 
-        });
-        
-      } catch (modelError) {
-        console.log(`❌ Model ${modelName} failed:`, modelError.message);
-        lastError = modelError;
-        // Continue to next model
-      }
-    }
-
-    // If all models failed
-    throw lastError || new Error("No models available");
+    return res.status(200).json({ 
+      answer,
+      modelUsed: "gemini-2.5-flash" 
+    });
 
   } catch (err) {
     console.error("ASSISTANT ERROR:", err);
     console.error("ERROR DETAILS:", err.message);
     res.status(500).json({ 
       error: "Failed to get answer", 
-      details: err.message,
-      note: "Tried multiple models, all failed"
+      details: err.message
     });
   }
 }

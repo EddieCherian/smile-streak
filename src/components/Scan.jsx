@@ -282,14 +282,13 @@ export default function Scan() {
     reader.readAsDataURL(file);
   };
 
-  // Analyze photo with API
- // In scan.jsx - replace your analyzePhoto function with this:
+// Analyze photo with API
 const analyzePhoto = async (imageData) => {
   setLoading(true);
   setFeedback(null);
 
   try {
-    const response = await fetch("/api/scan", {
+    const res = await fetch("/api/scan", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -297,26 +296,21 @@ const analyzePhoto = async (imageData) => {
       body: JSON.stringify({ image: imageData || image }),
     });
 
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.error || 'Failed to analyze');
-    }
-    
-    const feedbackText = data.feedback || "Unable to analyze image. Please try again.";
+    const data = await res.json();
+    const feedbackText = data.feedback || data.error || "No response";
     setFeedback(feedbackText);
 
-      // Save to history
-      saveScanToHistory(imageData || image, feedbackText);
-      
-      setMode('results');
-    } catch (err) {
-      setFeedback(translatedText.failedAnalysis || translationKeys.failedAnalysis);
-      setMode('results');
-    }
+    // Save to history
+    saveScanToHistory(imageData || image, feedbackText);
+    
+    setMode('results');
+  } catch (err) {
+    setFeedback("Failed to analyze image. Please try again.");
+    setMode('results');
+  }
 
-    setLoading(false);
-  };
+  setLoading(false);
+};
 
   // Progress through guidance steps
   const nextGuidanceStep = () => {

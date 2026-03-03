@@ -218,39 +218,32 @@ export default function Dentists() {
   };
 
   // FIXED: AI Assistant function using Gemini with GEMINI_API_KEY
+// Updated AI Assistant function using the new API endpoint
 const askAIAssistant = async () => {
-  if (!aiQuery.trim()) return;
-  setAiLoading(true);
-  try {
-    // Using v2 endpoint like in scan.jsx
-    const response = await fetch("https://generativelanguage.googleapis.com/v2/models/gemini-pro:generateContent?key=" + import.meta.env.GEMINI_API_KEY, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: `You are a dental assistant. Answer this question about dental health, procedures, or finding a dentist: ${aiQuery}. Keep responses concise and helpful.`
-          }]
-        }]
-      })
-    });
-    
-    const data = await response.json();
-    console.log("Gemini response:", data);
-    
-    if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
-      setAiResponse(data.candidates[0].content.parts[0].text);
-    } else {
-      setAiResponse("I'm sorry, I couldn't process that request. Please try again. Error: " + (data.error?.message || "Unknown"));
-    }
-  } catch (error) {
-    console.error("AI Assistant error:", error);
-    setAiResponse("Sorry, I'm having trouble connecting. Please try again later.");
-  } finally {
-    setAiLoading(false);
-  }
+  if (!aiQuery.trim()) return;
+  setAiLoading(true);
+  try {
+    const response = await fetch("/api/assistant", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query: aiQuery }),
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to get answer');
+    }
+    
+    setAiResponse(data.answer);
+  } catch (error) {
+    console.error("AI Assistant error:", error);
+    setAiResponse("Sorry, I'm having trouble connecting. Please try again later.");
+  } finally {
+    setAiLoading(false);
+  }
 };
 
   // NEW: Handle symptom selection for treatment planner

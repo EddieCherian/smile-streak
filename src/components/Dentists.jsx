@@ -218,47 +218,37 @@ export default function Dentists() {
   };
 
   // FIXED: AI Assistant function using Gemini with GEMINI_API_KEY
-  const askAIAssistant = async () => {
-  console.log("🔑 API Key exists:", !!import.meta.env.GEMINI_API_KEY);
-  console.log("🔑 API Key value:", import.meta.env.GEMINI_API_KEY ? "Key is set" : "Key is MISSING");
-  
-  if (!aiQuery.trim()) return;
-  setAiLoading(true);
-  
-  try {
-    console.log("📡 Sending request to Gemini API...");
-    // ... rest of your code
-    if (!aiQuery.trim()) return;
-    setAiLoading(true);
-    try {
-      // Using Gemini API with GEMINI_API_KEY (no VITE_ prefix)
-      const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + import.meta.env.GEMINI_API_KEY, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `You are a dental assistant. Answer this question about dental health, procedures, or finding a dentist: ${aiQuery}. Keep responses concise and helpful.`
-            }]
-          }]
-        })
-      });
-      
-      const data = await response.json();
-      if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
-        setAiResponse(data.candidates[0].content.parts[0].text);
-      } else {
-        setAiResponse("I'm sorry, I couldn't process that request. Please try again.");
-      }
-    } catch (error) {
-      console.error("AI Assistant error:", error);
-      setAiResponse("Sorry, I'm having trouble connecting. Please try again later.");
-    } finally {
-      setAiLoading(false);
-    }
-  };
+const askAIAssistant = async () => {
+  if (!aiQuery.trim()) return;
+  setAiLoading(true);
+  try {
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + import.meta.env.GEMINI_API_KEY, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: `You are a dental assistant. Answer this question about dental health, procedures, or finding a dentist: ${aiQuery}. Keep responses concise and helpful.`
+          }]
+        }]
+      })
+    });
+    
+    const data = await response.json();
+    if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+      setAiResponse(data.candidates[0].content.parts[0].text);
+    } else {
+      setAiResponse("I'm sorry, I couldn't process that request. Please try again.");
+    }
+  } catch (error) {
+    console.error("AI Assistant error:", error);
+    setAiResponse("Sorry, I'm having trouble connecting. Please try again later.");
+  } finally {
+    setAiLoading(false);
+  }
+};
 
   // NEW: Handle symptom selection for treatment planner
   const handleSymptomChange = (selectedSymptom) => {

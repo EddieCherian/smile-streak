@@ -965,7 +965,7 @@ const askAIAssistant = async () => {
                 )}
               </button>
               {aiResponse && (
-                <div className="bg-blue-50 p-4 rounded-xl border-2 border-blue-200">
+                <div className="bg-blue-50 p-4 rounded-xl border-2 border-blue-200 max-h-96 overflow-y-auto">
                   <p className="text-sm text-gray-700 whitespace-pre-wrap">{aiResponse}</p>
                 </div>
               )}

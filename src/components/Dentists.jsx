@@ -222,7 +222,8 @@ const askAIAssistant = async () => {
   if (!aiQuery.trim()) return;
   setAiLoading(true);
   try {
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + import.meta.env.GEMINI_API_KEY, {
+    // Using v2 endpoint like in scan.jsx
+    const response = await fetch("https://generativelanguage.googleapis.com/v2/models/gemini-pro:generateContent?key=" + import.meta.env.GEMINI_API_KEY, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -237,10 +238,12 @@ const askAIAssistant = async () => {
     });
     
     const data = await response.json();
+    console.log("Gemini response:", data);
+    
     if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
       setAiResponse(data.candidates[0].content.parts[0].text);
     } else {
-      setAiResponse("I'm sorry, I couldn't process that request. Please try again.");
+      setAiResponse("I'm sorry, I couldn't process that request. Please try again. Error: " + (data.error?.message || "Unknown"));
     }
   } catch (error) {
     console.error("AI Assistant error:", error);

@@ -26,6 +26,11 @@ export default function Mission() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState(null);
   const [translatedText, setTranslatedText] = useState({});
+  
+  // Feedback form state
+  const [feedbackType, setFeedbackType] = useState('general');
+  const [feedbackRating, setFeedbackRating] = useState(5);
+  const [feedbackEmail, setFeedbackEmail] = useState('');
 
   // Translation keys - only what's actually used
   const translationKeys = {
@@ -396,107 +401,126 @@ export default function Mission() {
         </div>
       </div>
 
-      {/* Feedback Modal */}
+      {/* Feedback Modal - FIXED with clean UI */}
       {showFeedback && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-black text-gray-900">{translatedText.feedbackTitle}</h3>
-              <button onClick={() => setShowFeedback(false)} className="text-gray-400 hover:text-gray-600">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <MessageCircle className="w-5 h-5 text-blue-600" />
+                <h3 className="text-xl font-black text-gray-900">{translatedText.feedbackTitle}</h3>
+              </div>
+              <button onClick={() => setShowFeedback(false)} className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                {translatedText.feedbackType}
-              </label>
-              <select
-                value={feedbackType}
-                onChange={(e) => setFeedbackType(e.target.value)}
-                className="w-full p-3 rounded-xl border-2 border-gray-200 focus:border-blue-400 focus:outline-none"
-              >
-                <option value="general">{translatedText.feedbackGeneral}</option>
-                <option value="bug">{translatedText.feedbackBug}</option>
-                <option value="feature">{translatedText.feedbackFeature}</option>
-              </select>
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                {translatedText.feedbackRating}
-              </label>
-              <div className="flex gap-2">
-                {[1, 2, 3, 4, 5].map((rating) => (
-                  <button
-                    key={rating}
-                    onClick={() => setFeedbackRating(rating)}
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                      feedbackRating === rating
-                        ? 'bg-yellow-400 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    <Star className="w-5 h-5" />
-                  </button>
-                ))}
+            <form
+              action="https://formspree.io/f/mqedoavq"
+              method="POST"
+              className="space-y-4"
+            >
+              {/* Feedback Type */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  {translatedText.feedbackType}
+                </label>
+                <select
+                  name="type"
+                  value={feedbackType}
+                  onChange={(e) => setFeedbackType(e.target.value)}
+                  className="w-full p-3 rounded-xl border-2 border-gray-200 focus:border-blue-400 focus:outline-none bg-white"
+                >
+                  <option value="general">{translatedText.feedbackGeneral}</option>
+                  <option value="bug">{translatedText.feedbackBug}</option>
+                  <option value="feature">{translatedText.feedbackFeature}</option>
+                </select>
               </div>
-            </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                {translatedText.feedbackEmail}
-              </label>
-              <input
-                type="email"
-                value={feedbackEmail}
-                onChange={(e) => setFeedbackEmail(e.target.value)}
-                placeholder="your@email.com"
-                className="w-full p-3 rounded-xl border-2 border-gray-200 focus:border-blue-400 focus:outline-none"
-              />
-            </div>
+              {/* Rating */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  {translatedText.feedbackRating}
+                </label>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map((rating) => (
+                    <label key={rating} className="cursor-pointer">
+                      <input
+                        type="radio"
+                        name="rating"
+                        value={rating}
+                        checked={feedbackRating === rating}
+                        onChange={(e) => setFeedbackRating(parseInt(e.target.value))}
+                        className="sr-only peer"
+                      />
+                      <div className={`w-12 h-12 flex items-center justify-center border-2 rounded-xl transition-all ${
+                        feedbackRating === rating
+                          ? 'border-yellow-400 bg-yellow-50'
+                          : 'border-gray-200 hover:border-yellow-300'
+                      }`}>
+                        <Star className={`w-6 h-6 ${
+                          feedbackRating === rating
+                            ? 'text-yellow-500 fill-yellow-500'
+                            : 'text-gray-400'
+                        }`} />
+                      </div>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">1 = Not satisfied, 5 = Very satisfied</p>
+              </div>
 
-            <textarea
-              id="feedbackBox"
-              className="w-full h-32 p-3 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:outline-none resize-none mb-4"
-              placeholder={translatedText.feedbackPlaceholder}
-            />
+              {/* Email (optional) */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  {translatedText.feedbackEmail}
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={feedbackEmail}
+                  onChange={(e) => setFeedbackEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  className="w-full p-3 rounded-xl border-2 border-gray-200 focus:border-blue-400 focus:outline-none"
+                />
+              </div>
 
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowFeedback(false)}
-                className="flex-1 py-3 rounded-xl border-2 border-gray-200 font-bold text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                {translatedText.cancel}
-              </button>
-              <button
-                onClick={async () => {
-                  const msg = document.getElementById("feedbackBox")?.value || "";
-                  const feedbackData = {
-                    type: feedbackType,
-                    rating: feedbackRating,
-                    email: feedbackEmail,
-                    message: msg,
-                    timestamp: new Date().toISOString()
-                  };
+              {/* Message */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Your Feedback <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  name="feedback"
+                  id="feedbackBox"
+                  required
+                  rows={4}
+                  className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:outline-none resize-none"
+                  placeholder={translatedText.feedbackPlaceholder}
+                />
+              </div>
 
-                  await fetch("https://formspree.io/f/mqedoavq", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(feedbackData)
-                  });
+              {/* Buttons */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowFeedback(false)}
+                  className="flex-1 py-3 rounded-xl border-2 border-gray-200 font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  {translatedText.cancel}
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold hover:shadow-lg transition-all hover:scale-[1.02]"
+                >
+                  {translatedText.submit}
+                </button>
+              </div>
+            </form>
 
-                  alert(translatedText.thankYou);
-                  setShowFeedback(false);
-                  setFeedbackType('general');
-                  setFeedbackRating(5);
-                  setFeedbackEmail('');
-                }}
-                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold hover:shadow-lg transition-all"
-              >
-                {translatedText.submit}
-              </button>
-            </div>
+            <p className="text-xs text-gray-400 text-center mt-4">
+              Your feedback helps us improve Smile Streak!
+            </p>
           </div>
         </div>
       )}

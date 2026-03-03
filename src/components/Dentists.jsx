@@ -219,6 +219,15 @@ export default function Dentists() {
 
   // FIXED: AI Assistant function using Gemini with GEMINI_API_KEY
   const askAIAssistant = async () => {
+  console.log("🔑 API Key exists:", !!import.meta.env.GEMINI_API_KEY);
+  console.log("🔑 API Key value:", import.meta.env.GEMINI_API_KEY ? "Key is set" : "Key is MISSING");
+  
+  if (!aiQuery.trim()) return;
+  setAiLoading(true);
+  
+  try {
+    console.log("📡 Sending request to Gemini API...");
+    // ... rest of your code
     if (!aiQuery.trim()) return;
     setAiLoading(true);
     try {

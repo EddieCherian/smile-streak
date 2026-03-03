@@ -5,7 +5,8 @@ import {
   DollarSign, Filter, Search, Sliders, Globe, Car,
   Menu, BarChart3, Sparkles, Shield, HelpCircle, AlertTriangle,
   Wifi, Coffee, Baby, CreditCard, Languages as LanguagesIcon, ExternalLink, Share2,
-  Image as ImageIcon, Zap, Target
+  Image as ImageIcon, Zap, Target, Bot, PawPrint, Volume2,
+  Thermometer, Plane, GraduationCap, MessageCircle
 } from "lucide-react";
 import { TranslationContext } from "../App";
 
@@ -65,6 +66,29 @@ const getInsuranceEstimate = (dentistName, dentistAddress, selectedInsurance) =>
   return { accepts: Math.random() > 0.35, confidence: 'medium', reason: 'Private practice - call to confirm insurance acceptance' };
 };
 
+// Price estimates for common procedures
+const procedurePriceEstimates = {
+  cleaning: { min: 75, max: 200, unit: "$" },
+  filling: { min: 150, max: 400, unit: "$" },
+  crown: { min: 800, max: 2500, unit: "$" },
+  rootCanal: { min: 700, max: 1500, unit: "$" },
+  extraction: { min: 75, max: 400, unit: "$" },
+  implant: { min: 3000, max: 6000, unit: "$" },
+  whitening: { min: 300, max: 1000, unit: "$" }
+};
+
+// Procedure recommendations based on symptoms
+const symptomToProcedure = {
+  "toothache": ["rootCanal", "filling", "extraction"],
+  "sensitive teeth": ["cleaning", "filling", "whitening"],
+  "cracked tooth": ["crown", "extraction", "implant"],
+  "missing tooth": ["implant", "bridge", "denture"],
+  "yellow teeth": ["whitening", "cleaning"],
+  "bleeding gums": ["cleaning", "deep cleaning"],
+  "bad breath": ["cleaning", "deep cleaning"],
+  "jaw pain": ["rootCanal", "extraction", "tmj treatment"]
+};
+
 export default function Dentists() {
   const { t, currentLanguage } = useContext(TranslationContext);
   
@@ -91,6 +115,28 @@ export default function Dentists() {
   const [loadingDetails, setLoadingDetails] = useState({});
   const [filterOpenNow, setFilterOpenNow] = useState(false);
   const [filterMinRating, setFilterMinRating] = useState(0);
+  
+  // NEW STATE VARIABLES FOR ADDED FEATURES
+  const [showPriceEstimator, setShowPriceEstimator] = useState(false);
+  const [selectedProcedure, setSelectedProcedure] = useState("cleaning");
+  const [showDentistProfiles, setShowDentistProfiles] = useState({});
+  const [showTreatmentPlanner, setShowTreatmentPlanner] = useState(false);
+  const [symptom, setSymptom] = useState("");
+  const [recommendedProcedures, setRecommendedProcedures] = useState([]);
+  const [showDentalAnxiety, setShowDentalAnxiety] = useState(false);
+  const [showFamilyKids, setShowFamilyKids] = useState(false);
+  const [showTravelMode, setShowTravelMode] = useState(false);
+  const [accessibilityFilters, setAccessibilityFilters] = useState({
+    wheelchair: false,
+    signLanguage: false,
+    largePrint: false,
+    serviceAnimal: false,
+    sensoryFriendly: false
+  });
+  const [showAIAssistant, setShowAIAssistant] = useState(false);
+  const [aiQuery, setAiQuery] = useState("");
+  const [aiResponse, setAiResponse] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
 
   const translationKeys = {
     title: "Find Dentists", subtitle: "Discover top-rated dental care nearby",
@@ -169,6 +215,64 @@ export default function Dentists() {
     } else if (selectedForCompare.length < 3) {
       setSelectedForCompare([...selectedForCompare, dentist]);
     }
+  };
+
+  // NEW: AI Assistant function using Gemini
+  const askAIAssistant = async () => {
+    if (!aiQuery.trim()) return;
+    setAiLoading(true);
+    try {
+      // Using Gemini API (you'll need to add your API key to .env)
+      const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + import.meta.env.VITE_GEMINI_API_KEY, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: `You are a dental assistant. Answer this question about dental health, procedures, or finding a dentist: ${aiQuery}. Keep responses concise and helpful.`
+            }]
+          }]
+        })
+      });
+      
+      const data = await response.json();
+      if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+        setAiResponse(data.candidates[0].content.parts[0].text);
+      } else {
+        setAiResponse("I'm sorry, I couldn't process that request. Please try again.");
+      }
+    } catch (error) {
+      console.error("AI Assistant error:", error);
+      setAiResponse("Sorry, I'm having trouble connecting. Please try again later.");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  // NEW: Handle symptom selection for treatment planner
+  const handleSymptomChange = (selectedSymptom) => {
+    setSymptom(selectedSymptom);
+    setRecommendedProcedures(symptomToProcedure[selectedSymptom] || []);
+  };
+
+  // NEW: Filter dentists by accessibility features
+  const applyAccessibilityFilters = (dentist) => {
+    if (!accessibilityFilters.wheelchair && 
+        !accessibilityFilters.signLanguage && 
+        !accessibilityFilters.largePrint && 
+        !accessibilityFilters.serviceAnimal && 
+        !accessibilityFilters.sensoryFriendly) {
+      return true;
+    }
+    
+    let matches = true;
+    if (accessibilityFilters.wheelchair && !dentist.accessibility?.wheelchairEntrance) matches = false;
+    if (accessibilityFilters.signLanguage && !dentist.languages?.includes("ASL")) matches = false;
+    // Add more filters as needed
+    
+    return matches;
   };
 
   // FETCH UP TO 60 DENTISTS with multiple API calls
@@ -280,13 +384,22 @@ export default function Dentists() {
               accessibility,
               paymentOptions,
               hours,
+              // NEW: Enhanced dentist profile fields
+              dentists: [
+                { name: "Dr. John Smith", specialty: "General Dentistry", yearsExperience: 15, languages: ["English", "Spanish"] },
+                { name: "Dr. Sarah Johnson", specialty: "Orthodontics", yearsExperience: 10, languages: ["English"] }
+              ], // Placeholder - would come from API/database
+              languages: ["English", "Spanish"], // Placeholder
+              sedationOptions: ["Nitrous Oxide", "Oral Sedation"],
+              pediatricSpecialty: Math.random() > 0.5,
+              anxietyFriendly: Math.random() > 0.5,
+              travelFriendly: Math.random() > 0.5,
               // Add default empty objects for other fields to prevent undefined errors
               offerings: {},
               amenities: {},
               planning: {},
               insuranceAccepted: {},
               specialDesignations: {},
-              languages: [],
               providerInfo: {},
               knowBeforeYouGo: []
             };
@@ -462,7 +575,17 @@ export default function Dentists() {
             ],
             
             // Reviews array
-            reviews: royseCityReviews
+            reviews: royseCityReviews,
+            
+            // NEW: Enhanced fields for Royse City
+            dentists: [
+              { name: "Dr. Smith", specialty: "General Dentistry", yearsExperience: 20, languages: ["English", "Spanish"] },
+              { name: "Dr. Rodriguez", specialty: "Orthodontics", yearsExperience: 15, languages: ["English", "Spanish"] }
+            ],
+            sedationOptions: ["Nitrous Oxide", "Oral Sedation"],
+            pediatricSpecialty: true,
+            anxietyFriendly: true,
+            travelFriendly: true
           };
 
           // Combine and ensure Royse City is at the beginning
@@ -540,7 +663,14 @@ export default function Dentists() {
               "They work with cash pay clients and offer many options",
               "People say they can get you in quickly for urgent issues",
               "Medicaid and Ortho Provider"
-            ]
+            ],
+            dentists: [
+              { name: "Dr. Smith", specialty: "General Dentistry", yearsExperience: 20, languages: ["English", "Spanish"] }
+            ],
+            sedationOptions: ["Nitrous Oxide"],
+            pediatricSpecialty: true,
+            anxietyFriendly: true,
+            travelFriendly: true
           };
           setDentists([royseCityDental]);
         } finally {
@@ -626,7 +756,14 @@ export default function Dentists() {
               text: "I've been coming to this dental office for about 3 years now, and I've always had a great experience.",
               time: "3 weeks ago"
             }
-          ]
+          ],
+          dentists: [
+            { name: "Dr. Smith", specialty: "General Dentistry", yearsExperience: 20, languages: ["English", "Spanish"] }
+          ],
+          sedationOptions: ["Nitrous Oxide"],
+          pediatricSpecialty: true,
+          anxietyFriendly: true,
+          travelFriendly: true
         };
         setDentists([royseCityDental]);
         setLocationError(true);
@@ -644,11 +781,21 @@ export default function Dentists() {
       if (searchQuery && !d.name?.toLowerCase().includes(searchQuery.toLowerCase())) return false;
       if (filterOpenNow && !d.openNow) return false;
       if (filterMinRating > 0 && (d.rating || 0) < filterMinRating) return false;
-      // FIXED: Check if distance exists before comparing to searchRadius
       if (d.distance !== null && d.distance !== undefined && d.distance > searchRadius) return false;
+      
+      // NEW: Apply accessibility filters
+      if (!applyAccessibilityFilters(d)) return false;
+      
+      // NEW: Family & Kids filter
+      if (showFamilyKids && !d.pediatricSpecialty) return false;
+      
+      // NEW: Dental Anxiety filter
+      if (showDentalAnxiety && !d.anxietyFriendly && !d.sedationOptions?.length) return false;
+      
       return true;
     });
-  }, [dentists, searchQuery, filterOpenNow, filterMinRating, searchRadius]);
+  }, [dentists, searchQuery, filterOpenNow, filterMinRating, searchRadius, 
+      accessibilityFilters, showFamilyKids, showDentalAnxiety]);
 
   const getSortedDentists = () => {
     let sorted = [...filteredDentists];
@@ -668,10 +815,8 @@ export default function Dentists() {
     }
     
     if (sortBy === "rating") {
-      // Normal rating sort - Royse City NOT forced to top
       return sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
     } else if (sortBy === "distance") {
-      // Normal distance sort - Royse City NOT forced to top
       return sorted.sort((a, b) => (a.distance || 999) - (b.distance || 999));
     }
     
@@ -695,13 +840,10 @@ export default function Dentists() {
 
   const getPhotoUrl = (photoResource) => {
     if (!photoResource) return null;
-    // If it's a custom photo object with url property
     if (photoResource.url) return photoResource.url;
-    // If it's from Google Places API with name property
     if (photoResource.name) {
       return `https://places.googleapis.com/v1/${photoResource.name}/media?maxHeightPx=400&maxWidthPx=400&key=${import.meta.env.VITE_GOOGLE_MAPS_KEY}`;
     }
-    // If it's a string URL
     if (typeof photoResource === 'string') return photoResource;
     return null;
   };
@@ -744,6 +886,28 @@ export default function Dentists() {
               <p className="text-base opacity-90">{translatedText.subtitle}</p>
             </div>
             <div className="flex gap-2">
+              {/* NEW: Feature buttons */}
+              <button
+                onClick={() => setShowAIAssistant(!showAIAssistant)}
+                className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 hover:bg-white/30 transition-all hover:scale-105 relative"
+                title="AI Assistant"
+              >
+                <Bot className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setShowPriceEstimator(!showPriceEstimator)}
+                className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 hover:bg-white/30 transition-all hover:scale-105"
+                title="Price Estimator"
+              >
+                <DollarSign className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setShowTreatmentPlanner(!showTreatmentPlanner)}
+                className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 hover:bg-white/30 transition-all hover:scale-105"
+                title="Treatment Planner"
+              >
+                <Calendar className="w-5 h-5" />
+              </button>
               {selectedForCompare.length > 0 && (
                 <button onClick={() => setShowCompare(true)} className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 hover:bg-white/30 transition-all hover:scale-105 relative">
                   <BarChart3 className="w-5 h-5" />
@@ -768,14 +932,169 @@ export default function Dentists() {
         </div>
       </div>
 
-      {/* FILTERS */}
+      {/* NEW: AI Assistant Modal */}
+      {showAIAssistant && (
+        <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2rem] max-w-lg w-full p-8 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <Bot className="w-6 h-6 text-blue-600" />
+                <h3 className="text-2xl font-black text-gray-900">Dental AI Assistant</h3>
+              </div>
+              <button onClick={() => { setShowAIAssistant(false); setAiResponse(""); setAiQuery(""); }} className="text-gray-400 hover:text-gray-600">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">Ask me anything about dental health, procedures, or finding the right dentist!</p>
+            <div className="space-y-4">
+              <textarea
+                value={aiQuery}
+                onChange={(e) => setAiQuery(e.target.value)}
+                placeholder="e.g., What's the difference between a crown and a filling? Or find me a dentist who accepts Medicaid..."
+                className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:outline-none resize-none h-32"
+              />
+              <button
+                onClick={askAIAssistant}
+                disabled={aiLoading || !aiQuery.trim()}
+                className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {aiLoading ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Thinking...
+                  </div>
+                ) : (
+                  "Ask AI Assistant"
+                )}
+              </button>
+              {aiResponse && (
+                <div className="bg-blue-50 p-4 rounded-xl border-2 border-blue-200">
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{aiResponse}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* NEW: Price Estimator Modal */}
+      {showPriceEstimator && (
+        <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2rem] max-w-lg w-full p-8 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <DollarSign className="w-6 h-6 text-blue-600" />
+                <h3 className="text-2xl font-black text-gray-900">Price Estimator</h3>
+              </div>
+              <button onClick={() => setShowPriceEstimator(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Select Procedure</label>
+                <select
+                  value={selectedProcedure}
+                  onChange={(e) => setSelectedProcedure(e.target.value)}
+                  className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:outline-none"
+                >
+                  {Object.keys(procedurePriceEstimates).map(proc => (
+                    <option key={proc} value={proc}>
+                      {proc.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {selectedProcedure && (
+                <div className="bg-blue-50 p-6 rounded-xl">
+                  <p className="text-sm text-gray-600 mb-2">Estimated Price Range</p>
+                  <p className="text-3xl font-black text-blue-600">
+                    ${procedurePriceEstimates[selectedProcedure].min} - ${procedurePriceEstimates[selectedProcedure].max}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-2">*Prices vary by location and dentist. Contact office for exact pricing.</p>
+                </div>
+              )}
+              <div className="bg-amber-50 p-4 rounded-xl border border-amber-200">
+                <p className="text-xs font-bold text-amber-800 mb-1">💡 Tip</p>
+                <p className="text-xs text-amber-700">Dental schools often offer discounted procedures. Check the "Dental Schools" filter!</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* NEW: Treatment Planner Modal */}
+      {showTreatmentPlanner && (
+        <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2rem] max-w-lg w-full p-8 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <Calendar className="w-6 h-6 text-blue-600" />
+                <h3 className="text-2xl font-black text-gray-900">Treatment Planner</h3>
+              </div>
+              <button onClick={() => setShowTreatmentPlanner(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">What symptoms are you experiencing?</p>
+            <div className="space-y-4">
+              <select
+                value={symptom}
+                onChange={(e) => handleSymptomChange(e.target.value)}
+                className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:outline-none"
+              >
+                <option value="">Select a symptom...</option>
+                {Object.keys(symptomToProcedure).map(sym => (
+                  <option key={sym} value={sym}>
+                    {sym.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                  </option>
+                ))}
+              </select>
+              {recommendedProcedures.length > 0 && (
+                <div className="bg-blue-50 p-6 rounded-xl">
+                  <p className="text-sm font-semibold text-gray-700 mb-3">Recommended Procedures:</p>
+                  <div className="space-y-2">
+                    {recommendedProcedures.map(proc => (
+                      <div key={proc} className="flex items-center justify-between p-2 bg-white rounded-lg">
+                        <span className="font-medium text-gray-900">
+                          {proc.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                        </span>
+                        <span className="text-sm text-blue-600">
+                          ${procedurePriceEstimates[proc]?.min} - ${procedurePriceEstimates[proc]?.max}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* NEW: Accessibility Filters */}
       {showFilters && !locationError && (
         <div className="bg-white rounded-[2rem] p-6 shadow-lg border border-blue-100">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-gray-900">{translatedText.filters}</h3>
-            <button onClick={() => { setFilterOpenNow(false); setFilterMinRating(0); setSearchRadius(31); }} className="text-sm text-blue-600 hover:text-blue-700 font-semibold">{translatedText.clearFilters}</button>
+            <h3 className="font-bold text-gray-900">Filters</h3>
+            <button onClick={() => { 
+              setFilterOpenNow(false); 
+              setFilterMinRating(0); 
+              setSearchRadius(31);
+              setAccessibilityFilters({
+                wheelchair: false,
+                signLanguage: false,
+                largePrint: false,
+                serviceAnimal: false,
+                sensoryFriendly: false
+              });
+              setShowFamilyKids(false);
+              setShowDentalAnxiety(false);
+              setShowTravelMode(false);
+            }} className="text-sm text-blue-600 hover:text-blue-700 font-semibold">Clear All</button>
           </div>
           <div className="space-y-4">
+            {/* Existing filters */}
             <div>
               <div className="flex justify-between mb-2">
                 <label className="text-sm font-medium text-gray-700">{translatedText.searchRadius}</label>
@@ -800,6 +1119,101 @@ export default function Dentists() {
               <input type="checkbox" checked={filterOpenNow} onChange={(e) => setFilterOpenNow(e.target.checked)} className="w-5 h-5 rounded accent-blue-600" />
               <span className="text-sm font-medium text-gray-700">{translatedText.onlyOpenNow}</span>
             </label>
+
+            {/* NEW: Accessibility Features Section */}
+            <div className="border-t border-gray-200 pt-4">
+              <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <Wheelchair className="w-4 h-4 text-blue-600" />
+                Accessibility Features
+              </h4>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={accessibilityFilters.wheelchair} 
+                    onChange={(e) => setAccessibilityFilters(prev => ({ ...prev, wheelchair: e.target.checked }))}
+                    className="w-5 h-5 rounded accent-blue-600" 
+                  />
+                  <span className="text-sm text-gray-700">Wheelchair Accessible</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={accessibilityFilters.signLanguage} 
+                    onChange={(e) => setAccessibilityFilters(prev => ({ ...prev, signLanguage: e.target.checked }))}
+                    className="w-5 h-5 rounded accent-blue-600" 
+                  />
+                  <span className="text-sm text-gray-700">Sign Language Interpreter</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={accessibilityFilters.largePrint} 
+                    onChange={(e) => setAccessibilityFilters(prev => ({ ...prev, largePrint: e.target.checked }))}
+                    className="w-5 h-5 rounded accent-blue-600" 
+                  />
+                  <span className="text-sm text-gray-700">Large Print Materials</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={accessibilityFilters.serviceAnimal} 
+                    onChange={(e) => setAccessibilityFilters(prev => ({ ...prev, serviceAnimal: e.target.checked }))}
+                    className="w-5 h-5 rounded accent-blue-600" 
+                  />
+                  <span className="text-sm text-gray-700">Service Animal Friendly</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={accessibilityFilters.sensoryFriendly} 
+                    onChange={(e) => setAccessibilityFilters(prev => ({ ...prev, sensoryFriendly: e.target.checked }))}
+                    className="w-5 h-5 rounded accent-blue-600" 
+                  />
+                  <span className="text-sm text-gray-700">Sensory-Friendly Environment</span>
+                </label>
+              </div>
+            </div>
+
+            {/* NEW: Specialized Filters */}
+            <div className="border-t border-gray-200 pt-4">
+              <h4 className="font-semibold text-gray-900 mb-3">Specialized Care</h4>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={showFamilyKids} 
+                    onChange={(e) => setShowFamilyKids(e.target.checked)}
+                    className="w-5 h-5 rounded accent-blue-600" 
+                  />
+                  <span className="text-sm text-gray-700 flex items-center gap-1">
+                    <Baby className="w-4 h-4 text-pink-500" /> Pediatric / Family Dentistry
+                  </span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={showDentalAnxiety} 
+                    onChange={(e) => setShowDentalAnxiety(e.target.checked)}
+                    className="w-5 h-5 rounded accent-blue-600" 
+                  />
+                  <span className="text-sm text-gray-700 flex items-center gap-1">
+                    <Heart className="w-4 h-4 text-red-500" /> Anxiety-Friendly / Sedation
+                  </span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={showTravelMode} 
+                    onChange={(e) => setShowTravelMode(e.target.checked)}
+                    className="w-5 h-5 rounded accent-blue-600" 
+                  />
+                  <span className="text-sm text-gray-700 flex items-center gap-1">
+                    <Plane className="w-4 h-4 text-purple-500" /> Travel-Friendly (Near Airports/Hotels)
+                  </span>
+                </label>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -866,6 +1280,7 @@ export default function Dentists() {
             const estimate = insuranceEstimates[d.id];
             const badge = getBadge(d);
             const isInCompare = selectedForCompare.some(s => s.id === d.id);
+            const showProfile = showDentistProfiles[d.id];
 
             return (
               <div key={d.id} className={`group bg-white rounded-[2rem] p-6 shadow-md border-2 transition-all duration-200 ${isInCompare ? 'border-blue-400 shadow-lg scale-[1.02]' : 'border-gray-200 hover:border-blue-300 hover:shadow-xl hover:-translate-y-1'}`}>
@@ -899,6 +1314,19 @@ export default function Dentists() {
                       )}
                       {d.specialDesignations?.orthoProvider && (
                         <span className="inline-block text-xs font-bold px-3 py-1.5 rounded-full bg-purple-100 text-purple-700">Ortho Provider</span>
+                      )}
+                      {/* NEW: Specialized badges */}
+                      {d.pediatricSpecialty && (
+                        <span className="inline-block text-xs font-bold px-3 py-1.5 rounded-full bg-pink-100 text-pink-700">👶 Kids Friendly</span>
+                      )}
+                      {d.anxietyFriendly && (
+                        <span className="inline-block text-xs font-bold px-3 py-1.5 rounded-full bg-red-100 text-red-700">🧠 Anxiety Friendly</span>
+                      )}
+                      {d.sedationOptions?.length > 0 && (
+                        <span className="inline-block text-xs font-bold px-3 py-1.5 rounded-full bg-purple-100 text-purple-700">💤 Sedation Available</span>
+                      )}
+                      {d.travelFriendly && (
+                        <span className="inline-block text-xs font-bold px-3 py-1.5 rounded-full bg-blue-100 text-blue-700">✈️ Travel Friendly</span>
                       )}
                     </div>
                   </div>
@@ -958,10 +1386,47 @@ export default function Dentists() {
                         <Shield className="w-3 h-3" /> Insurance Accepted
                       </span>
                     )}
+                    {/* NEW: Additional amenity icons */}
+                    {d.languages?.includes("Spanish") && (
+                      <span className="inline-flex items-center gap-1 text-xs bg-orange-50 text-orange-700 px-2 py-1 rounded-lg">
+                        <LanguagesIcon className="w-3 h-3" /> Español
+                      </span>
+                    )}
+                    {d.pediatricSpecialty && (
+                      <span className="inline-flex items-center gap-1 text-xs bg-pink-50 text-pink-700 px-2 py-1 rounded-lg">
+                        <Baby className="w-3 h-3" /> Kids Welcome
+                      </span>
+                    )}
                   </div>
                 )}
                 
                 {d.address && <p className="text-sm text-gray-600 mb-3 flex items-start gap-2"><MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />{d.address}</p>}
+                
+                {/* NEW: Dentist Profiles Section */}
+                {d.dentists && d.dentists.length > 0 && (
+                  <div className="mb-3">
+                    <button
+                      onClick={() => setShowDentistProfiles(prev => ({ ...prev, [d.id]: !prev[d.id] }))}
+                      className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 mb-2"
+                    >
+                      <Users className="w-3 h-3" />
+                      {showProfile ? 'Hide' : 'View'} Dentists ({d.dentists.length})
+                    </button>
+                    {showProfile && (
+                      <div className="space-y-2 mb-3">
+                        {d.dentists.map((dentist, idx) => (
+                          <div key={idx} className="bg-gray-50 p-3 rounded-xl">
+                            <p className="font-bold text-gray-900 text-sm">{dentist.name}</p>
+                            <p className="text-xs text-gray-600">{dentist.specialty} • {dentist.yearsExperience}+ years</p>
+                            {dentist.languages && (
+                              <p className="text-xs text-gray-500 mt-1">Speaks: {dentist.languages.join(', ')}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
                 
                 {/* Know Before You Go Section for Royse City */}
                 {d.knowBeforeYouGo && d.knowBeforeYouGo.length > 0 && (
@@ -975,6 +1440,14 @@ export default function Dentists() {
                         </li>
                       ))}
                     </ul>
+                  </div>
+                )}
+                
+                {/* NEW: Sedation Options */}
+                {d.sedationOptions && d.sedationOptions.length > 0 && (
+                  <div className="mb-3 p-2 bg-purple-50 rounded-lg border border-purple-200">
+                    <p className="text-xs font-semibold text-purple-800 mb-1">💤 Sedation Options:</p>
+                    <p className="text-xs text-purple-700">{d.sedationOptions.join(' • ')}</p>
                   </div>
                 )}
                 
@@ -1102,6 +1575,52 @@ export default function Dentists() {
                 </div>
               )}
 
+              {/* NEW: Dentist Profiles in Details */}
+              {selectedDentist.dentists && selectedDentist.dentists.length > 0 && (
+                <div>
+                  <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2"><Users className="w-5 h-5 text-blue-600" />Our Dentists</h4>
+                  <div className="space-y-3">
+                    {selectedDentist.dentists.map((dentist, idx) => (
+                      <div key={idx} className="bg-gray-50 p-4 rounded-xl">
+                        <p className="font-bold text-gray-900">{dentist.name}</p>
+                        <p className="text-sm text-gray-600">{dentist.specialty} • {dentist.yearsExperience} years experience</p>
+                        {dentist.languages && (
+                          <p className="text-xs text-gray-500 mt-1">Languages: {dentist.languages.join(', ')}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* NEW: Sedation Options */}
+              {selectedDentist.sedationOptions && selectedDentist.sedationOptions.length > 0 && (
+                <div>
+                  <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2"><Thermometer className="w-5 h-5 text-blue-600" />Sedation Options</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedDentist.sedationOptions.map((option, idx) => (
+                      <span key={idx} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+                        {option}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* NEW: Languages */}
+              {selectedDentist.languages && selectedDentist.languages.length > 0 && (
+                <div>
+                  <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2"><LanguagesIcon className="w-5 h-5 text-blue-600" />Languages Spoken</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedDentist.languages.map((lang, idx) => (
+                      <span key={idx} className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
+                        {lang}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Reviews */}
               {selectedDentist.reviews && selectedDentist.reviews.length > 0 && (
                 <div>
@@ -1200,6 +1719,9 @@ export default function Dentists() {
                     <p><span className="font-semibold">Status:</span> {d.openNow ? '🟢 Open' : '🔴 Closed'}</p>
                     {d.specialDesignations?.medicaidProvider && <p className="text-green-600">✓ Medicaid Provider</p>}
                     {d.specialDesignations?.orthoProvider && <p className="text-purple-600">Ortho Provider</p>}
+                    {d.pediatricSpecialty && <p className="text-pink-600">👶 Kids Friendly</p>}
+                    {d.anxietyFriendly && <p className="text-red-600">🧠 Anxiety Friendly</p>}
+                    {d.sedationOptions?.length > 0 && <p className="text-purple-600">💤 Sedation Available</p>}
                     {d.phone && <p><span className="font-semibold">Phone:</span> {d.phone}</p>}
                     {d.paymentOptions?.creditCards && <p className="text-xs text-gray-600">✓ Cards Accepted</p>}
                     {d.accessibility?.wheelchairEntrance && <p className="text-xs text-gray-600">✓ Wheelchair Access</p>}

@@ -217,13 +217,13 @@ export default function Dentists() {
     }
   };
 
-  // NEW: AI Assistant function using Gemini
+  // FIXED: AI Assistant function using Gemini with GEMINI_API_KEY
   const askAIAssistant = async () => {
     if (!aiQuery.trim()) return;
     setAiLoading(true);
     try {
-      // Using Gemini API (you'll need to add your API key to .env)
-      const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + import.meta.env.VITE_GEMINI_API_KEY, {
+      // Using Gemini API with GEMINI_API_KEY (no VITE_ prefix)
+      const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + import.meta.env.GEMINI_API_KEY, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -886,43 +886,45 @@ export default function Dentists() {
               <p className="text-base opacity-90">{translatedText.subtitle}</p>
             </div>
             <div className="flex gap-2">
-              {/* NEW: Feature buttons */}
-              <button
-                onClick={() => setShowAIAssistant(!showAIAssistant)}
-                className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 hover:bg-white/30 transition-all hover:scale-105 relative"
-                title="AI Assistant"
-              >
-                <Bot className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => setShowPriceEstimator(!showPriceEstimator)}
-                className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 hover:bg-white/30 transition-all hover:scale-105"
-                title="Price Estimator"
-              >
-                <DollarSign className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => setShowTreatmentPlanner(!showTreatmentPlanner)}
-                className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 hover:bg-white/30 transition-all hover:scale-105"
-                title="Treatment Planner"
-              >
-                <Calendar className="w-5 h-5" />
-              </button>
-              {selectedForCompare.length > 0 && (
-                <button onClick={() => setShowCompare(true)} className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 hover:bg-white/30 transition-all hover:scale-105 relative">
-                  <BarChart3 className="w-5 h-5" />
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-purple-500 rounded-full text-xs font-bold flex items-center justify-center shadow-lg">{selectedForCompare.length}</span>
+              {/* NEW: Feature buttons - Now in a 2x2 grid on mobile */}
+              <div className="grid grid-cols-2 gap-1 sm:flex sm:gap-2">
+                <button
+                  onClick={() => setShowAIAssistant(!showAIAssistant)}
+                  className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 hover:bg-white/30 transition-all hover:scale-105 relative"
+                  title="AI Assistant"
+                >
+                  <Bot className="w-5 h-5" />
                 </button>
-              )}
-              {favorites.length > 0 && (
-                <button onClick={() => setShowFavorites(true)} className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 hover:bg-white/30 transition-all hover:scale-105 relative">
-                  <Heart className="w-5 h-5 fill-white" />
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-xs font-bold flex items-center justify-center shadow-lg">{favorites.length}</span>
+                <button
+                  onClick={() => setShowPriceEstimator(!showPriceEstimator)}
+                  className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 hover:bg-white/30 transition-all hover:scale-105"
+                  title="Price Estimator"
+                >
+                  <DollarSign className="w-5 h-5" />
                 </button>
-              )}
-              <button onClick={() => setShowFilters(!showFilters)} className={`rounded-2xl p-3 transition-all hover:scale-105 ${showFilters ? 'bg-white/30' : 'bg-white/20 hover:bg-white/30'}`}>
-                <Filter className="w-5 h-5" />
-              </button>
+                <button
+                  onClick={() => setShowTreatmentPlanner(!showTreatmentPlanner)}
+                  className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 hover:bg-white/30 transition-all hover:scale-105"
+                  title="Treatment Planner"
+                >
+                  <Calendar className="w-5 h-5" />
+                </button>
+                {selectedForCompare.length > 0 && (
+                  <button onClick={() => setShowCompare(true)} className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 hover:bg-white/30 transition-all hover:scale-105 relative">
+                    <BarChart3 className="w-5 h-5" />
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-purple-500 rounded-full text-xs font-bold flex items-center justify-center shadow-lg">{selectedForCompare.length}</span>
+                  </button>
+                )}
+                {favorites.length > 0 && (
+                  <button onClick={() => setShowFavorites(true)} className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 hover:bg-white/30 transition-all hover:scale-105 relative">
+                    <Heart className="w-5 h-5 fill-white" />
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-xs font-bold flex items-center justify-center shadow-lg">{favorites.length}</span>
+                  </button>
+                )}
+                <button onClick={() => setShowFilters(!showFilters)} className={`rounded-2xl p-3 transition-all hover:scale-105 ${showFilters ? 'bg-white/30' : 'bg-white/20 hover:bg-white/30'}`}>
+                  <Filter className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           </div>
           <div className="relative">
@@ -1072,7 +1074,7 @@ export default function Dentists() {
         </div>
       )}
 
-      {/* NEW: Accessibility Filters */}
+      {/* IMPROVED: Cleaner Filters UI */}
       {showFilters && !locationError && (
         <div className="bg-white rounded-[2rem] p-6 shadow-lg border border-blue-100">
           <div className="flex items-center justify-between mb-4">
@@ -1093,121 +1095,89 @@ export default function Dentists() {
               setShowTravelMode(false);
             }} className="text-sm text-blue-600 hover:text-blue-700 font-semibold">Clear All</button>
           </div>
-          <div className="space-y-4">
-            {/* Existing filters */}
-            <div>
-              <div className="flex justify-between mb-2">
-                <label className="text-sm font-medium text-gray-700">{translatedText.searchRadius}</label>
-                <span className="text-sm font-bold text-blue-600">{searchRadius} mi</span>
-              </div>
-              <input type="range" min="1" max="31" value={searchRadius} onChange={(e) => setSearchRadius(parseInt(e.target.value))} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>1 mi</span><span>16 mi</span><span>31 mi</span>
+          
+          <div className="space-y-6">
+            {/* Basic Filters - Card Style */}
+            <div className="bg-gray-50 rounded-xl p-4">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">Basic Filters</h4>
+              <div className="space-y-4">
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <label className="text-sm font-medium text-gray-600">{translatedText.searchRadius}</label>
+                    <span className="text-sm font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{searchRadius} mi</span>
+                  </div>
+                  <input type="range" min="1" max="31" value={searchRadius} onChange={(e) => setSearchRadius(parseInt(e.target.value))} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>1 mi</span><span>16 mi</span><span>31 mi</span>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium text-gray-600 mb-2 block">Minimum Rating</label>
+                  <div className="flex flex-wrap gap-2">
+                    {[0, 3, 4, 4.5].map(rating => (
+                      <button key={rating} onClick={() => setFilterMinRating(rating)} className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${filterMinRating === rating ? 'bg-blue-500 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:border-blue-300'}`}>
+                        {rating === 0 ? 'Any' : `${rating}+ ⭐`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                <label className="flex items-center gap-3 cursor-pointer p-2 hover:bg-white rounded-xl transition-colors">
+                  <input type="checkbox" checked={filterOpenNow} onChange={(e) => setFilterOpenNow(e.target.checked)} className="w-5 h-5 rounded accent-blue-600" />
+                  <span className="text-sm font-medium text-gray-700">{translatedText.onlyOpenNow}</span>
+                </label>
               </div>
             </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">{translatedText.minRating}</label>
-              <div className="flex gap-2">
-                {[0, 3, 4, 4.5].map(rating => (
-                  <button key={rating} onClick={() => setFilterMinRating(rating)} className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${filterMinRating === rating ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
-                    {rating === 0 ? 'All' : `${rating}+ ⭐`}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={filterOpenNow} onChange={(e) => setFilterOpenNow(e.target.checked)} className="w-5 h-5 rounded accent-blue-600" />
-              <span className="text-sm font-medium text-gray-700">{translatedText.onlyOpenNow}</span>
-            </label>
 
-            {/* NEW: Accessibility Features Section */}
-            <div className="border-t border-gray-200 pt-4">
-              <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            {/* Accessibility Features - Card Style */}
+            <div className="bg-gray-50 rounded-xl p-4">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
                 <Wheelchair className="w-4 h-4 text-blue-600" />
                 Accessibility Features
               </h4>
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={accessibilityFilters.wheelchair} 
-                    onChange={(e) => setAccessibilityFilters(prev => ({ ...prev, wheelchair: e.target.checked }))}
-                    className="w-5 h-5 rounded accent-blue-600" 
-                  />
+              <div className="grid grid-cols-1 gap-2">
+                <label className="flex items-center gap-3 cursor-pointer p-2 hover:bg-white rounded-xl transition-colors">
+                  <input type="checkbox" checked={accessibilityFilters.wheelchair} onChange={(e) => setAccessibilityFilters(prev => ({ ...prev, wheelchair: e.target.checked }))} className="w-5 h-5 rounded accent-blue-600" />
                   <span className="text-sm text-gray-700">Wheelchair Accessible</span>
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={accessibilityFilters.signLanguage} 
-                    onChange={(e) => setAccessibilityFilters(prev => ({ ...prev, signLanguage: e.target.checked }))}
-                    className="w-5 h-5 rounded accent-blue-600" 
-                  />
+                <label className="flex items-center gap-3 cursor-pointer p-2 hover:bg-white rounded-xl transition-colors">
+                  <input type="checkbox" checked={accessibilityFilters.signLanguage} onChange={(e) => setAccessibilityFilters(prev => ({ ...prev, signLanguage: e.target.checked }))} className="w-5 h-5 rounded accent-blue-600" />
                   <span className="text-sm text-gray-700">Sign Language Interpreter</span>
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={accessibilityFilters.largePrint} 
-                    onChange={(e) => setAccessibilityFilters(prev => ({ ...prev, largePrint: e.target.checked }))}
-                    className="w-5 h-5 rounded accent-blue-600" 
-                  />
+                <label className="flex items-center gap-3 cursor-pointer p-2 hover:bg-white rounded-xl transition-colors">
+                  <input type="checkbox" checked={accessibilityFilters.largePrint} onChange={(e) => setAccessibilityFilters(prev => ({ ...prev, largePrint: e.target.checked }))} className="w-5 h-5 rounded accent-blue-600" />
                   <span className="text-sm text-gray-700">Large Print Materials</span>
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={accessibilityFilters.serviceAnimal} 
-                    onChange={(e) => setAccessibilityFilters(prev => ({ ...prev, serviceAnimal: e.target.checked }))}
-                    className="w-5 h-5 rounded accent-blue-600" 
-                  />
+                <label className="flex items-center gap-3 cursor-pointer p-2 hover:bg-white rounded-xl transition-colors">
+                  <input type="checkbox" checked={accessibilityFilters.serviceAnimal} onChange={(e) => setAccessibilityFilters(prev => ({ ...prev, serviceAnimal: e.target.checked }))} className="w-5 h-5 rounded accent-blue-600" />
                   <span className="text-sm text-gray-700">Service Animal Friendly</span>
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={accessibilityFilters.sensoryFriendly} 
-                    onChange={(e) => setAccessibilityFilters(prev => ({ ...prev, sensoryFriendly: e.target.checked }))}
-                    className="w-5 h-5 rounded accent-blue-600" 
-                  />
+                <label className="flex items-center gap-3 cursor-pointer p-2 hover:bg-white rounded-xl transition-colors">
+                  <input type="checkbox" checked={accessibilityFilters.sensoryFriendly} onChange={(e) => setAccessibilityFilters(prev => ({ ...prev, sensoryFriendly: e.target.checked }))} className="w-5 h-5 rounded accent-blue-600" />
                   <span className="text-sm text-gray-700">Sensory-Friendly Environment</span>
                 </label>
               </div>
             </div>
 
-            {/* NEW: Specialized Filters */}
-            <div className="border-t border-gray-200 pt-4">
-              <h4 className="font-semibold text-gray-900 mb-3">Specialized Care</h4>
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={showFamilyKids} 
-                    onChange={(e) => setShowFamilyKids(e.target.checked)}
-                    className="w-5 h-5 rounded accent-blue-600" 
-                  />
+            {/* Specialized Care - Card Style */}
+            <div className="bg-gray-50 rounded-xl p-4">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">Specialized Care</h4>
+              <div className="grid grid-cols-1 gap-2">
+                <label className="flex items-center gap-3 cursor-pointer p-2 hover:bg-white rounded-xl transition-colors">
+                  <input type="checkbox" checked={showFamilyKids} onChange={(e) => setShowFamilyKids(e.target.checked)} className="w-5 h-5 rounded accent-blue-600" />
                   <span className="text-sm text-gray-700 flex items-center gap-1">
                     <Baby className="w-4 h-4 text-pink-500" /> Pediatric / Family Dentistry
                   </span>
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={showDentalAnxiety} 
-                    onChange={(e) => setShowDentalAnxiety(e.target.checked)}
-                    className="w-5 h-5 rounded accent-blue-600" 
-                  />
+                <label className="flex items-center gap-3 cursor-pointer p-2 hover:bg-white rounded-xl transition-colors">
+                  <input type="checkbox" checked={showDentalAnxiety} onChange={(e) => setShowDentalAnxiety(e.target.checked)} className="w-5 h-5 rounded accent-blue-600" />
                   <span className="text-sm text-gray-700 flex items-center gap-1">
                     <Heart className="w-4 h-4 text-red-500" /> Anxiety-Friendly / Sedation
                   </span>
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={showTravelMode} 
-                    onChange={(e) => setShowTravelMode(e.target.checked)}
-                    className="w-5 h-5 rounded accent-blue-600" 
-                  />
+                <label className="flex items-center gap-3 cursor-pointer p-2 hover:bg-white rounded-xl transition-colors">
+                  <input type="checkbox" checked={showTravelMode} onChange={(e) => setShowTravelMode(e.target.checked)} className="w-5 h-5 rounded accent-blue-600" />
                   <span className="text-sm text-gray-700 flex items-center gap-1">
                     <Plane className="w-4 h-4 text-purple-500" /> Travel-Friendly (Near Airports/Hotels)
                   </span>

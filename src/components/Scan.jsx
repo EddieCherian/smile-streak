@@ -283,23 +283,29 @@ export default function Scan() {
   };
 
   // Analyze photo with API
-  const analyzePhoto = async (imageData) => {
-    setLoading(true);
-    setFeedback(null);
+ // In scan.jsx - replace your analyzePhoto function with this:
+const analyzePhoto = async (imageData) => {
+  setLoading(true);
+  setFeedback(null);
 
-    try {
-      const res = await fetch("/api/scan", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ image: imageData || image }),
-      });
+  try {
+    const response = await fetch("/api/scan", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ image: imageData || image }),
+    });
 
-      const data = await res.json();
-      const feedbackText = data.feedback || data.error || "Unable to analyze image. Please try again.";
-      setFeedback(feedbackText);
-      
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to analyze');
+    }
+    
+    const feedbackText = data.feedback || "Unable to analyze image. Please try again.";
+    setFeedback(feedbackText);
+
       // Save to history
       saveScanToHistory(imageData || image, feedbackText);
       

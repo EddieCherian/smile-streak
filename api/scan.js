@@ -26,15 +26,8 @@ export default async function handler(req, res) {
     // Initialize the Gemini API with your key
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     
-    // List of models to try, from oldest to newest
-    const modelsToTry = [
-      "gemini-1.5-flash",      // Oldest, most stable
-      "gemini-1.5-pro",        // Older pro version
-      "gemini-2.0-flash",      // 2.0 flash
-      "gemini-2.0-flash-001",  // 2.0 flash specific version
-      "gemini-2.5-flash",      // Newest flash
-      "gemini-2.5-pro",        // Newest pro
-    ];
+    // Use only gemini-2.5-flash
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     // Extract base64 data (remove the data URL prefix)
     const base64 = image.split(",")[1];
@@ -62,43 +55,21 @@ export default async function handler(req, res) {
 
 Keep your tone encouraging and educational. Do NOT diagnose specific diseases like cavities or periodontitis - instead say "possible signs of decay" or "consult a dentist if concerned." Write in clear, simple language that's easy to understand.`;
 
-    let lastError = null;
+    const result = await model.generateContent([prompt, ...imageParts]);
+    const response = await result.response;
+    const feedback = response.text();
     
-    // Try each model in order until one works
-    for (const modelName of modelsToTry) {
-      try {
-        console.log(`Trying model: ${modelName}`);
-        
-        const model = genAI.getGenerativeModel({ model: modelName });
-        const result = await model.generateContent([prompt, ...imageParts]);
-        const response = await result.response;
-        const feedback = response.text();
-        
-        // If we get here, it worked!
-        console.log(`✅ Success with model: ${modelName}`);
-        return res.status(200).json({ 
-          feedback,
-          modelUsed: modelName 
-        });
-        
-      } catch (modelError) {
-        console.log(`❌ Model ${modelName} failed:`, modelError.message);
-        lastError = modelError;
-        // Continue to next model
-      }
-    }
-
-    // If all models failed
-    console.error("All models failed");
-    throw lastError || new Error("No models available");
+    return res.status(200).json({ 
+      feedback,
+      modelUsed: "gemini-2.5-flash" 
+    });
 
   } catch (err) {
     console.error("SCAN ERROR:", err);
     console.error("ERROR DETAILS:", err.message);
     res.status(500).json({ 
       error: "AI analysis failed", 
-      details: err.message,
-      note: "Tried multiple models, all failed"
+      details: err.message
     });
   }
 }

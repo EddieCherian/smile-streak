@@ -1,4 +1,3 @@
-import React, { useEffect, useState, useContext, useMemo } from "react";
 import {
   MapPin, Star, Clock, Heart, Phone, ChevronRight, TrendingUp, Award,
   Navigation, X, CheckCircle2, AlertCircle, Calendar, Users,
@@ -1426,9 +1425,10 @@ const askAIAssistant = async () => {
                     </div>
                   </div>
                 )}
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   <a href={d.mapsLink} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1 bg-blue-500 text-white py-3 rounded-xl text-xs font-semibold hover:bg-blue-600 transition-all hover:scale-[1.02]"><MapPin className="w-3 h-3" /><span>{translatedText.directions}</span></a>
                   {d.phone && <a href={`tel:${d.phone}`} className="flex items-center justify-center gap-1 bg-green-500 text-white py-3 rounded-xl text-xs font-semibold hover:bg-green-600 transition-all hover:scale-[1.02]"><Phone className="w-3 h-3" /><span>{translatedText.call}</span></a>}
+                  <button onClick={() => { fetchPlaceDetails(d.id); setSelectedDentist(d); }} className="flex items-center justify-center gap-1 bg-white border-2 border-gray-200 text-gray-900 py-3 rounded-xl text-xs font-semibold hover:border-blue-300 transition-all hover:scale-[1.02]"><ChevronRight className="w-3 h-3" /><span>{translatedText.viewDetails}</span></button>
                 </div>
               </div>
             );

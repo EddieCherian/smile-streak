@@ -1,3 +1,4 @@
+import React, { useEffect, useState, useContext, useMemo } from "react";
 import {
   MapPin, Star, Clock, Heart, Phone, ChevronRight, TrendingUp, Award,
   Navigation, X, CheckCircle2, AlertCircle, Calendar, Users,
@@ -118,7 +119,6 @@ export default function Dentists() {
   // NEW STATE VARIABLES FOR ADDED FEATURES
   const [showPriceEstimator, setShowPriceEstimator] = useState(false);
   const [selectedProcedure, setSelectedProcedure] = useState("cleaning");
-  const [showDentistProfiles, setShowDentistProfiles] = useState({});
   const [showTreatmentPlanner, setShowTreatmentPlanner] = useState(false);
   const [symptom, setSymptom] = useState("");
   const [recommendedProcedures, setRecommendedProcedures] = useState([]);
@@ -378,17 +378,7 @@ const askAIAssistant = async () => {
               accessibility,
               paymentOptions,
               hours,
-              // NEW: Enhanced dentist profile fields
-              dentists: [
-                { name: "Dr. John Smith", specialty: "General Dentistry", yearsExperience: 15, languages: ["English", "Spanish"] },
-                { name: "Dr. Sarah Johnson", specialty: "Orthodontics", yearsExperience: 10, languages: ["English"] }
-              ], // Placeholder - would come from API/database
-              languages: ["English", "Spanish"], // Placeholder
-              sedationOptions: ["Nitrous Oxide", "Oral Sedation"],
-              pediatricSpecialty: Math.random() > 0.5,
-              anxietyFriendly: Math.random() > 0.5,
-              travelFriendly: Math.random() > 0.5,
-              // Add default empty objects for other fields to prevent undefined errors
+              // REMOVED: Enhanced dentist profile fields (dentists array, languages, sedationOptions, etc.)
               offerings: {},
               amenities: {},
               planning: {},
@@ -571,15 +561,7 @@ const askAIAssistant = async () => {
             // Reviews array
             reviews: royseCityReviews,
             
-            // NEW: Enhanced fields for Royse City
-            dentists: [
-              { name: "Dr. Smith", specialty: "General Dentistry", yearsExperience: 20, languages: ["English", "Spanish"] },
-              { name: "Dr. Rodriguez", specialty: "Orthodontics", yearsExperience: 15, languages: ["English", "Spanish"] }
-            ],
-            sedationOptions: ["Nitrous Oxide", "Oral Sedation"],
-            pediatricSpecialty: true,
-            anxietyFriendly: true,
-            travelFriendly: true
+            // REMOVED: Enhanced fields for Royse City (dentists, sedationOptions, etc.)
           };
 
           // Combine and ensure Royse City is at the beginning
@@ -658,13 +640,7 @@ const askAIAssistant = async () => {
               "People say they can get you in quickly for urgent issues",
               "Medicaid and Ortho Provider"
             ],
-            dentists: [
-              { name: "Dr. Smith", specialty: "General Dentistry", yearsExperience: 20, languages: ["English", "Spanish"] }
-            ],
-            sedationOptions: ["Nitrous Oxide"],
-            pediatricSpecialty: true,
-            anxietyFriendly: true,
-            travelFriendly: true
+            // REMOVED: dentists array, sedationOptions, pediatricSpecialty, anxietyFriendly, travelFriendly
           };
           setDentists([royseCityDental]);
         } finally {
@@ -751,13 +727,7 @@ const askAIAssistant = async () => {
               time: "3 weeks ago"
             }
           ],
-          dentists: [
-            { name: "Dr. Smith", specialty: "General Dentistry", yearsExperience: 20, languages: ["English", "Spanish"] }
-          ],
-          sedationOptions: ["Nitrous Oxide"],
-          pediatricSpecialty: true,
-          anxietyFriendly: true,
-          travelFriendly: true
+          // REMOVED: dentists array, sedationOptions, pediatricSpecialty, anxietyFriendly, travelFriendly
         };
         setDentists([royseCityDental]);
         setLocationError(true);
@@ -1244,7 +1214,6 @@ const askAIAssistant = async () => {
             const estimate = insuranceEstimates[d.id];
             const badge = getBadge(d);
             const isInCompare = selectedForCompare.some(s => s.id === d.id);
-            const showProfile = showDentistProfiles[d.id];
 
             return (
               <div key={d.id} className={`group bg-white rounded-[2rem] p-6 shadow-md border-2 transition-all duration-200 ${isInCompare ? 'border-blue-400 shadow-lg scale-[1.02]' : 'border-gray-200 hover:border-blue-300 hover:shadow-xl hover:-translate-y-1'}`}>
@@ -1278,19 +1247,6 @@ const askAIAssistant = async () => {
                       )}
                       {d.specialDesignations?.orthoProvider && (
                         <span className="inline-block text-xs font-bold px-3 py-1.5 rounded-full bg-purple-100 text-purple-700">Ortho Provider</span>
-                      )}
-                      {/* NEW: Specialized badges */}
-                      {d.pediatricSpecialty && (
-                        <span className="inline-block text-xs font-bold px-3 py-1.5 rounded-full bg-pink-100 text-pink-700">👶 Kids Friendly</span>
-                      )}
-                      {d.anxietyFriendly && (
-                        <span className="inline-block text-xs font-bold px-3 py-1.5 rounded-full bg-red-100 text-red-700">🧠 Anxiety Friendly</span>
-                      )}
-                      {d.sedationOptions?.length > 0 && (
-                        <span className="inline-block text-xs font-bold px-3 py-1.5 rounded-full bg-purple-100 text-purple-700">💤 Sedation Available</span>
-                      )}
-                      {d.travelFriendly && (
-                        <span className="inline-block text-xs font-bold px-3 py-1.5 rounded-full bg-blue-100 text-blue-700">✈️ Travel Friendly</span>
                       )}
                     </div>
                   </div>
@@ -1366,31 +1322,7 @@ const askAIAssistant = async () => {
                 
                 {d.address && <p className="text-sm text-gray-600 mb-3 flex items-start gap-2"><MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />{d.address}</p>}
                 
-                {/* NEW: Dentist Profiles Section */}
-                {d.dentists && d.dentists.length > 0 && (
-                  <div className="mb-3">
-                    <button
-                      onClick={() => setShowDentistProfiles(prev => ({ ...prev, [d.id]: !prev[d.id] }))}
-                      className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 mb-2"
-                    >
-                      <Users className="w-3 h-3" />
-                      {showProfile ? 'Hide' : 'View'} Dentists ({d.dentists.length})
-                    </button>
-                    {showProfile && (
-                      <div className="space-y-2 mb-3">
-                        {d.dentists.map((dentist, idx) => (
-                          <div key={idx} className="bg-gray-50 p-3 rounded-xl">
-                            <p className="font-bold text-gray-900 text-sm">{dentist.name}</p>
-                            <p className="text-xs text-gray-600">{dentist.specialty} • {dentist.yearsExperience}+ years</p>
-                            {dentist.languages && (
-                              <p className="text-xs text-gray-500 mt-1">Speaks: {dentist.languages.join(', ')}</p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
+                {/* REMOVED: Dentist Profiles Section */}
                 
                 {/* Know Before You Go Section for Royse City */}
                 {d.knowBeforeYouGo && d.knowBeforeYouGo.length > 0 && (
@@ -1407,13 +1339,7 @@ const askAIAssistant = async () => {
                   </div>
                 )}
                 
-                {/* NEW: Sedation Options */}
-                {d.sedationOptions && d.sedationOptions.length > 0 && (
-                  <div className="mb-3 p-2 bg-purple-50 rounded-lg border border-purple-200">
-                    <p className="text-xs font-semibold text-purple-800 mb-1">💤 Sedation Options:</p>
-                    <p className="text-xs text-purple-700">{d.sedationOptions.join(' • ')}</p>
-                  </div>
-                )}
+                {/* REMOVED: Sedation Options section */}
                 
                 {insurance && estimate && (
                   <div className={`flex items-start gap-3 p-4 rounded-xl mb-4 ${estimate.accepts ? 'bg-emerald-50 border-2 border-emerald-200' : 'bg-amber-50'}`}>
@@ -1539,51 +1465,11 @@ const askAIAssistant = async () => {
                 </div>
               )}
 
-              {/* NEW: Dentist Profiles in Details */}
-              {selectedDentist.dentists && selectedDentist.dentists.length > 0 && (
-                <div>
-                  <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2"><Users className="w-5 h-5 text-blue-600" />Our Dentists</h4>
-                  <div className="space-y-3">
-                    {selectedDentist.dentists.map((dentist, idx) => (
-                      <div key={idx} className="bg-gray-50 p-4 rounded-xl">
-                        <p className="font-bold text-gray-900">{dentist.name}</p>
-                        <p className="text-sm text-gray-600">{dentist.specialty} • {dentist.yearsExperience} years experience</p>
-                        {dentist.languages && (
-                          <p className="text-xs text-gray-500 mt-1">Languages: {dentist.languages.join(', ')}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* REMOVED: Dentist Profiles in Details */}
 
-              {/* NEW: Sedation Options */}
-              {selectedDentist.sedationOptions && selectedDentist.sedationOptions.length > 0 && (
-                <div>
-                  <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2"><Thermometer className="w-5 h-5 text-blue-600" />Sedation Options</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedDentist.sedationOptions.map((option, idx) => (
-                      <span key={idx} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
-                        {option}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* REMOVED: Sedation Options */}
 
-              {/* NEW: Languages */}
-              {selectedDentist.languages && selectedDentist.languages.length > 0 && (
-                <div>
-                  <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2"><LanguagesIcon className="w-5 h-5 text-blue-600" />Languages Spoken</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedDentist.languages.map((lang, idx) => (
-                      <span key={idx} className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
-                        {lang}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* REMOVED: Languages */}
 
               {/* Reviews */}
               {selectedDentist.reviews && selectedDentist.reviews.length > 0 && (
@@ -1683,9 +1569,6 @@ const askAIAssistant = async () => {
                     <p><span className="font-semibold">Status:</span> {d.openNow ? '🟢 Open' : '🔴 Closed'}</p>
                     {d.specialDesignations?.medicaidProvider && <p className="text-green-600">✓ Medicaid Provider</p>}
                     {d.specialDesignations?.orthoProvider && <p className="text-purple-600">Ortho Provider</p>}
-                    {d.pediatricSpecialty && <p className="text-pink-600">👶 Kids Friendly</p>}
-                    {d.anxietyFriendly && <p className="text-red-600">🧠 Anxiety Friendly</p>}
-                    {d.sedationOptions?.length > 0 && <p className="text-purple-600">💤 Sedation Available</p>}
                     {d.phone && <p><span className="font-semibold">Phone:</span> {d.phone}</p>}
                     {d.paymentOptions?.creditCards && <p className="text-xs text-gray-600">✓ Cards Accepted</p>}
                     {d.accessibility?.wheelchairEntrance && <p className="text-xs text-gray-600">✓ Wheelchair Access</p>}

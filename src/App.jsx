@@ -42,6 +42,11 @@ export default function App() {
   );
 
   const isRemoteUpdate = useRef(false);
+  const currentLanguageRef = useRef(currentLanguage);
+
+  useEffect(() => {
+    currentLanguageRef.current = currentLanguage;
+  }, [currentLanguage]);
 
   const t = useCallback(async (text) => {
     if (currentLanguage === 'en') return text;
@@ -96,7 +101,7 @@ export default function App() {
         isRemoteUpdate.current = true;
         const data = snap.data();
         setHabitData(data.habitData || {});
-        if (data.userProfile?.language && data.userProfile.language !== currentLanguage) {
+        if (data.userProfile?.language && data.userProfile.language !== currentLanguageRef.current) {
           setCurrentLanguage(data.userProfile.language);
           saveLanguagePreference(data.userProfile.language);
         }

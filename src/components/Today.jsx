@@ -167,10 +167,11 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
     }
   };
 
-  // FIXED: Timer now properly stops when toggled OFF
+  // FIXED: Timer now COMPLETES the task when turned OFF while running
   const toggleTimer = () => {
     if (timerEnabled && activeTimer) {
-      // If turning timer OFF and a task is active, stop the timer WITHOUT completing the task
+      // If turning timer OFF and a task is active, COMPLETE the task
+      toggleTask(activeTimer);  // This marks the task as complete
       clearInterval(timerIntervalRef.current);
       setActiveTimer(null);
       setTimeLeft(BRUSH_TIME);

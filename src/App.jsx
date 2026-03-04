@@ -43,10 +43,15 @@ export default function App() {
 
   const isRemoteUpdate = useRef(false);
   const currentLanguageRef = useRef(currentLanguage);
+  const habitDataRef = useRef(habitData);
 
   useEffect(() => {
     currentLanguageRef.current = currentLanguage;
   }, [currentLanguage]);
+
+  useEffect(() => {
+    habitDataRef.current = habitData;
+  }, [habitData]);
 
   const t = useCallback(async (text) => {
     if (currentLanguage === 'en') return text;
@@ -98,9 +103,13 @@ export default function App() {
     // REALTIME LISTENER
     const unsub = onSnapshot(ref, (snap) => {
       if (snap.exists()) {
-        isRemoteUpdate.current = true;
         const data = snap.data();
-        setHabitData(data.habitData || {});
+        const incoming = JSON.stringify(data.habitData || {});
+        const current = JSON.stringify(habitDataRef.current);
+        if (incoming !== current) {
+          isRemoteUpdate.current = true;
+          setHabitData(data.habitData || {});
+        }
         if (data.userProfile?.language && data.userProfile.language !== currentLanguageRef.current) {
           setCurrentLanguage(data.userProfile.language);
           saveLanguagePreference(data.userProfile.language);
@@ -124,7 +133,6 @@ export default function App() {
 
     const ref = doc(db, "users", user.uid);
     
-    // Save habitData + user profile + language + dark mode
     setDoc(ref, { 
       habitData,
       userProfile: {
@@ -223,7 +231,6 @@ export default function App() {
       setUser(null);
       setShowAccountMenu(false);
       setCloudLoaded(false);
-      // Immediately trigger login again
       setTimeout(() => login(), 100);
     });
   }
@@ -259,7 +266,6 @@ export default function App() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {/* DARK MODE TOGGLE - NEW - Left of language button */}
                     <button
                       onClick={toggleDarkMode}
                       className={`flex items-center gap-2 px-3 py-2 rounded-xl border-2 transition-all text-sm font-semibold ${
@@ -364,14 +370,12 @@ export default function App() {
                           />
                         </button>
 
-                        {/* Account Menu Dropdown */}
                         {showAccountMenu && (
                           <div className={`absolute right-0 mt-2 w-64 rounded-2xl shadow-2xl border py-2 z-50 ${
                             darkMode
                               ? 'bg-gray-800 border-gray-700'
                               : 'bg-white border-gray-200'
                           }`}>
-                            {/* User Info */}
                             <div className={`px-4 py-3 border-b ${
                               darkMode ? 'border-gray-700' : 'border-gray-100'
                             }`}>
@@ -392,7 +396,6 @@ export default function App() {
                               </div>
                             </div>
 
-                            {/* Menu Options */}
                             <div className="py-1">
                               <button
                                 onClick={switchAccount}
@@ -445,7 +448,6 @@ export default function App() {
               </div>
             </header>
 
-            {/* Click outside to close menus */}
             {(showAccountMenu || showLanguageMenu) && (
               <div 
                 className="fixed inset-0 z-40" 
@@ -456,7 +458,6 @@ export default function App() {
               />
             )}
 
-            {/* Translation Loading Overlay */}
             {translating && (
               <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-blue-600 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-2">
                 <Languages className="w-5 h-5 animate-spin" />
@@ -480,7 +481,6 @@ export default function App() {
               {activeTab === "legal" && <Legal />}
             </main>
 
-            {/* FLOATING FEEDBACK BUTTON */}
             <button
               onClick={() => setShowFeedback(true)}
               className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-blue-600 to-cyan-600 text-white p-4 rounded-full shadow-2xl hover:shadow-xl hover:scale-110 transition-all duration-200 group"
@@ -490,7 +490,6 @@ export default function App() {
               <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse" />
             </button>
 
-            {/* FEEDBACK MODAL */}
             {showFeedback && (
               <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
                 <div className={`rounded-3xl max-w-lg w-full p-6 shadow-2xl ${
@@ -526,16 +525,12 @@ export default function App() {
                       e.preventDefault();
                       const form = e.target;
                       const formData = new FormData(form);
-                      
                       try {
                         const response = await fetch('https://formspree.io/f/mqedoavq', {
                           method: 'POST',
                           body: formData,
-                          headers: {
-                            'Accept': 'application/json'
-                          }
+                          headers: { 'Accept': 'application/json' }
                         });
-                        
                         if (response.ok) {
                           alert('Thank you for your feedback!');
                           form.reset();

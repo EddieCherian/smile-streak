@@ -3,8 +3,8 @@ import { getDateKey, getYesterdayKey } from "../utils/date.js";
 import { calculateStreaks } from "../utils/streak.js";
 import { 
   Flame, Trophy, Clock, CheckCircle2, Circle, Sparkles, 
-  Target, Activity, Brush, Home, Award, Bell, Share2,
-  Droplets, ChevronRight
+  Target, Activity, Brush, Home, Award, Share2,
+  ChevronRight, Calendar, Zap, Star
 } from "lucide-react";
 import { TranslationContext } from "../App";
 
@@ -167,11 +167,10 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
     }
   };
 
-  // FIXED: Timer now COMPLETES the task when turned OFF while running
+  // Timer completes task when turned off
   const toggleTimer = () => {
     if (timerEnabled && activeTimer) {
-      // If turning timer OFF and a task is active, COMPLETE the task
-      toggleTask(activeTimer);  // This marks the task as complete
+      toggleTask(activeTimer);
       clearInterval(timerIntervalRef.current);
       setActiveTimer(null);
       setTimeLeft(BRUSH_TIME);
@@ -184,7 +183,6 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
   useEffect(() => {
     if (!activeTimer) return;
 
-    // Clear any existing interval
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
     }
@@ -220,12 +218,12 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
   };
 
   return (
-    <div className="min-h-screen pb-20 bg-gradient-to-br from-blue-50 via-white to-blue-50">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       
       {/* Completion Celebration */}
       {showCompletion && (
         <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl px-8 py-6 shadow-xl border border-blue-100">
+          <div className="bg-white rounded-2xl px-8 py-6 shadow-xl border border-blue-100 animate-scaleUp">
             <div className="text-center">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Sparkles className="w-8 h-8 text-blue-600" />
@@ -238,7 +236,7 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
               </p>
               {streakMultiplier > 1 && (
                 <p className="text-xs text-blue-600 mt-2 font-medium">
-                  {streakMultiplier}x Streak Multiplier Active!
+                  {streakMultiplier}x Multiplier Active!
                 </p>
               )}
             </div>
@@ -246,47 +244,51 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
         </div>
       )}
 
-      {/* Header */}
-      <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-blue-100 px-4 py-3">
+      {/* Header - Clean and simple */}
+      <div className="px-4 py-4 border-b border-blue-100 bg-white/50 backdrop-blur-sm sticky top-0 z-30">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-400 rounded-lg flex items-center justify-center">
-              <Brush className="w-4 h-4 text-white" />
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-400 rounded-lg flex items-center justify-center shadow-sm">
+              <Calendar className="w-4 h-4 text-white" />
             </div>
-            <h1 className="text-lg font-medium text-gray-900">Today's Routine</h1>
+            <div>
+              <h1 className="text-base font-medium text-gray-900">Today's Routine</h1>
+              <p className="text-xs text-gray-500">{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+            </div>
           </div>
           <button
             onClick={() => setActiveTab('home')}
-            className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
+            className="flex items-center gap-1 px-3 py-1.5 bg-white border border-blue-200 rounded-lg text-sm text-gray-600 hover:bg-blue-50 transition-colors"
           >
-            <Home className="w-5 h-5 text-gray-600" />
+            <Home className="w-4 h-4" />
+            <span>Home</span>
           </button>
         </div>
       </div>
 
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
 
-        {/* Stats Cards - Clean white with light blue accents */}
+        {/* Stats Cards - Clean, minimal */}
         <div className="grid grid-cols-4 gap-2">
-          <div className="bg-white rounded-xl p-3 text-center border border-blue-100 shadow-sm">
+          <div className="bg-white rounded-xl p-3 text-center border border-blue-100">
             <Flame className="w-4 h-4 text-blue-500 mx-auto mb-1" />
             <p className="text-xs text-gray-500">Current</p>
             <p className="text-base font-semibold text-gray-900">{current}</p>
           </div>
           
-          <div className="bg-white rounded-xl p-3 text-center border border-blue-100 shadow-sm">
+          <div className="bg-white rounded-xl p-3 text-center border border-blue-100">
             <Trophy className="w-4 h-4 text-blue-500 mx-auto mb-1" />
             <p className="text-xs text-gray-500">Best</p>
             <p className="text-base font-semibold text-gray-900">{longest}</p>
           </div>
 
-          <div className="bg-white rounded-xl p-3 text-center border border-blue-100 shadow-sm">
+          <div className="bg-white rounded-xl p-3 text-center border border-blue-100">
             <CheckCircle2 className="w-4 h-4 text-blue-500 mx-auto mb-1" />
             <p className="text-xs text-gray-500">Today</p>
             <p className="text-base font-semibold text-gray-900">{completedCount}/3</p>
           </div>
 
-          <div className="bg-white rounded-xl p-3 text-center border border-blue-100 shadow-sm">
+          <div className="bg-white rounded-xl p-3 text-center border border-blue-100">
             <Target className="w-4 h-4 text-blue-500 mx-auto mb-1" />
             <p className="text-xs text-gray-500">Score</p>
             <p className="text-base font-semibold text-gray-900">{consistencyScore}%</p>
@@ -294,8 +296,8 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
         </div>
 
         {/* Progress Bar */}
-        <div className="bg-white rounded-xl p-4 border border-blue-100 shadow-sm">
-          <div className="flex justify-between items-center mb-2">
+        <div className="bg-white rounded-xl p-4 border border-blue-100">
+          <div className="flex justify-between items-center mb-3">
             <div className="flex items-center gap-2">
               <Activity className="w-4 h-4 text-blue-500" />
               <span className="text-sm text-gray-700">Daily Progress</span>
@@ -327,7 +329,7 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
             <div className="mt-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
               <p className="text-xs text-blue-700 flex items-center gap-1">
                 <Sparkles className="w-3 h-3" />
-                Recovery day! Complete all tasks to restore streak.
+                Recovery day! Complete all to restore streak.
               </p>
             </div>
           )}
@@ -335,12 +337,12 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
           {streakMilestones.length > 0 && streakMilestones[0].remaining > 0 && (
             <div className="mt-3 flex items-center justify-between text-xs">
               <span className="text-gray-500">Next: {streakMilestones[0].next} days</span>
-              <span className="text-blue-600 font-medium">{streakMilestones[0].remaining} days left</span>
+              <span className="text-blue-600 font-medium">{streakMilestones[0].remaining} left</span>
             </div>
           )}
         </div>
 
-        {/* Task List */}
+        {/* Task List - With classic emojis */}
         <div className="space-y-2">
           {["morning", "night"].map((task) => {
             const isDone = todayData[task];
@@ -377,7 +379,7 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
                       {task === "morning" ? "Morning Brushing" : "Night Brushing"}
                     </span>
                     {isRunning && (
-                      <span className="text-xs text-blue-600 block mt-0.5">Brush in circular motions...</span>
+                      <span className="text-xs text-blue-600 block mt-0.5">Brush in circles...</span>
                     )}
                   </div>
                 </div>
@@ -438,7 +440,7 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
           </button>
         </div>
 
-        {/* Daily Tip */}
+        {/* Daily Tip - Clean card */}
         <div className="bg-gradient-to-r from-blue-50 to-white rounded-xl p-4 border border-blue-100">
           <div className="flex gap-3">
             <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -456,7 +458,7 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
           </div>
         </div>
 
-        {/* Achievements Preview */}
+        {/* Achievements - Clean tags */}
         {badges.length > 0 && (
           <div className="bg-white rounded-xl p-4 border border-blue-100">
             <p className="text-sm font-medium text-gray-700 mb-2">Your Achievements</p>
@@ -469,33 +471,21 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
             </div>
           </div>
         )}
+
+        {/* Share Button - Clean and visible */}
+        <button
+          onClick={() => setShowShareModal(true)}
+          className="w-full py-3 bg-white border border-blue-200 rounded-xl text-sm text-gray-600 hover:bg-blue-50 transition-colors flex items-center justify-center gap-2"
+        >
+          <Share2 className="w-4 h-4 text-blue-500" />
+          Share Your Progress
+        </button>
       </div>
-
-      {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-blue-100 px-4 py-2">
-        <div className="max-w-3xl mx-auto flex justify-around items-center">
-          <button
-            onClick={() => setActiveTab('home')}
-            className="flex flex-col items-center p-2 text-gray-500 hover:text-blue-600 transition-colors"
-          >
-            <Home className="w-5 h-5" />
-            <span className="text-xs mt-1">Home</span>
-          </button>
-
-          <button
-            onClick={() => setShowShareModal(true)}
-            className="flex flex-col items-center p-2 text-gray-500 hover:text-blue-600 transition-colors"
-          >
-            <Share2 className="w-5 h-5" />
-            <span className="text-xs mt-1">Share</span>
-          </button>
-        </div>
-      </nav>
 
       {/* Share Modal */}
       {showShareModal && (
         <div className="fixed inset-0 bg-black/20 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-sm w-full p-5 border border-blue-100">
+          <div className="bg-white rounded-xl max-w-sm w-full p-5 border border-blue-100 shadow-xl">
             <h3 className="text-base font-medium text-gray-900 mb-3">Share Your Progress</h3>
             <div className="space-y-2">
               <button className="w-full flex items-center gap-3 p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors border border-blue-200">

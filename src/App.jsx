@@ -1,4 +1,4 @@
-import { useEffect, useState, createContext } from "react";
+import { useEffect, useState, createContext, useCallback, useRef } from "react";
 import NavTabs from "./components/NavTabs";
 import Home from "./components/Home";
 import Today from "./components/Today";
@@ -41,10 +41,12 @@ export default function App() {
     storage.get("habitData", {})
   );
 
-  const t = async (text) => {
+  const isRemoteUpdate = useRef(false);
+
+  const t = useCallback(async (text) => {
     if (currentLanguage === 'en') return text;
     return await translateText(text, currentLanguage, 'en');
-  };
+  }, [currentLanguage]);
 
   // Apply dark mode class to html element
   useEffect(() => {
@@ -91,6 +93,7 @@ export default function App() {
     // REALTIME LISTENER
     const unsub = onSnapshot(ref, (snap) => {
       if (snap.exists()) {
+        isRemoteUpdate.current = true;
         const data = snap.data();
         setHabitData(data.habitData || {});
         if (data.userProfile?.language && data.userProfile.language !== currentLanguage) {
@@ -109,6 +112,10 @@ export default function App() {
   // SAVE TO FIRESTORE WHEN DATA CHANGES
   useEffect(() => {
     if (!user || !cloudLoaded) return;
+    if (isRemoteUpdate.current) {
+      isRemoteUpdate.current = false;
+      return;
+    }
 
     const ref = doc(db, "users", user.uid);
     

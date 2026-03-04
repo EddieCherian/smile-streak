@@ -1245,7 +1245,6 @@ const askAIAssistant = async () => {
             const estimate = insuranceEstimates[d.id];
             const badge = getBadge(d);
             const isInCompare = selectedForCompare.some(s => s.id === d.id);
-            const showProfile = showDentistProfiles[d.id];
 
             return (
               <div key={d.id} className={`group bg-white rounded-[2rem] p-6 shadow-md border-2 transition-all duration-200 ${isInCompare ? 'border-blue-400 shadow-lg scale-[1.02]' : 'border-gray-200 hover:border-blue-300 hover:shadow-xl hover:-translate-y-1'}`}>
@@ -1366,32 +1365,6 @@ const askAIAssistant = async () => {
                 )}
                 
                 {d.address && <p className="text-sm text-gray-600 mb-3 flex items-start gap-2"><MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />{d.address}</p>}
-                
-                {/* NEW: Dentist Profiles Section */}
-                {d.dentists && d.dentists.length > 0 && (
-                  <div className="mb-3">
-                    <button
-                      onClick={() => setShowDentistProfiles(prev => ({ ...prev, [d.id]: !prev[d.id] }))}
-                      className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 mb-2"
-                    >
-                      <Users className="w-3 h-3" />
-                      {showProfile ? 'Hide' : 'View'} Dentists ({d.dentists.length})
-                    </button>
-                    {showProfile && (
-                      <div className="space-y-2 mb-3">
-                        {d.dentists.map((dentist, idx) => (
-                          <div key={idx} className="bg-gray-50 p-3 rounded-xl">
-                            <p className="font-bold text-gray-900 text-sm">{dentist.name}</p>
-                            <p className="text-xs text-gray-600">{dentist.specialty} • {dentist.yearsExperience}+ years</p>
-                            {dentist.languages && (
-                              <p className="text-xs text-gray-500 mt-1">Speaks: {dentist.languages.join(', ')}</p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
                 
                 {/* Know Before You Go Section for Royse City */}
                 {d.knowBeforeYouGo && d.knowBeforeYouGo.length > 0 && (

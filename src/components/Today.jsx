@@ -3,31 +3,23 @@ import { getDateKey, getYesterdayKey } from "../utils/date.js";
 import { calculateStreaks } from "../utils/streak.js";
 import { 
   Flame, Trophy, Clock, CheckCircle2, Circle, Sparkles, 
-  Calendar, Target, TrendingUp, Award, Zap, Activity,
-  ChevronRight, BarChart3, Share2, Bell, Wind, Home,
-  User, Settings, Info, Moon, Sun, Droplets, Brush
+  Target, Activity, Brush, Home, Award, Bell, Share2,
+  Droplets, ChevronRight
 } from "lucide-react";
-import { TranslationContext, ThemeContext } from "../App";
+import { TranslationContext } from "../App";
 
 const BRUSH_TIME = 120;
 const RECOVERY_KEY = "__lastRecoveryUsed";
 
 export default function Today({ habitData, setHabitData, setActiveTab }) {
   const { t, currentLanguage } = useContext(TranslationContext);
-  const { darkMode, toggleDarkMode } = useContext(ThemeContext);
   const [texts, setTexts] = useState({});
-  const [showInsights, setShowInsights] = useState(false);
-  const [showAchievements, setShowAchievements] = useState(false);
-  const [showReminders, setShowReminders] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false);
-  const [streakFreeze, setStreakFreeze] = useState(false);
   const [consistencyScore, setConsistencyScore] = useState(0);
-  const [hoveredTask, setHoveredTask] = useState(null);
-  const [touchRipple, setTouchRipple] = useState({ active: false, x: 0, y: 0 });
   const [streakMilestones, setStreakMilestones] = useState([]);
   const [streakMultiplier, setStreakMultiplier] = useState(1);
   const [badges, setBadges] = useState([]);
   const [showCompletion, setShowCompletion] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const today = getDateKey();
   const yesterday = getYesterdayKey(today);
@@ -92,10 +84,6 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
         motivate1: await t("Great start! Keep going! 🌟"),
         motivate2: await t("Almost there! One more to go! 🎯"),
         motivate3: await t("Perfect day! You're unstoppable! 🔥"),
-        insights: await t("Insights"),
-        achievements: await t("Achievements"),
-        reminders: await t("Reminders"),
-        shareProgress: await t("Share Progress"),
         consistencyScore: await t("Consistency Score"),
         streakMultiplier: await t("Streak Multiplier"),
         nextMilestone: await t("Next Milestone"),
@@ -107,7 +95,6 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
 
   // Calculate stats
   useEffect(() => {
-    // Calculate consistency score
     const weekData = [];
     for (let i = 0; i < 7; i++) {
       const date = new Date();
@@ -122,21 +109,18 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
     const avg = weekData.reduce((a, b) => a + b, 0) / 7 * 100;
     setConsistencyScore(Math.round(avg) || 0);
     
-    // Set streak multiplier
-    const { current } = calculateStreaks(habitData);
+    const { current, longest } = calculateStreaks(habitData);
+    
     if (current >= 30) setStreakMultiplier(2);
     else if (current >= 14) setStreakMultiplier(1.5);
     else if (current >= 7) setStreakMultiplier(1.25);
     else setStreakMultiplier(1);
     
-    // Generate badges
     const newBadges = [];
-    const { longest } = calculateStreaks(habitData);
     if (longest >= 7) newBadges.push('Week Warrior');
     if (longest >= 30) newBadges.push('Monthly Master');
     if (longest >= 100) newBadges.push('Century Club');
     
-    // Check for perfect week
     let perfectWeek = true;
     for (let i = 0; i < 7; i++) {
       const date = new Date();
@@ -152,7 +136,6 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
     
     setBadges(newBadges);
     
-    // Set streak milestones
     const milestones = [7, 30, 60, 90, 180, 365];
     const next = milestones.find(m => m > current) || 365;
     setStreakMilestones([{ current, next, remaining: next - current }]);
@@ -178,20 +161,37 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
       return updated;
     });
 
-    // Show completion only when ALL THREE tasks are done
     if (completedNow === 3) {
       setShowCompletion(true);
       setTimeout(() => setShowCompletion(false), 2000);
     }
   };
 
+  // FIXED: Timer now properly stops when toggled OFF
+  const toggleTimer = () => {
+    if (timerEnabled && activeTimer) {
+      // If turning timer OFF and a task is active, stop the timer WITHOUT completing the task
+      clearInterval(timerIntervalRef.current);
+      setActiveTimer(null);
+      setTimeLeft(BRUSH_TIME);
+    }
+    setTimerEnabled(!timerEnabled);
+  };
+
+  const timerIntervalRef = useRef(null);
+
   useEffect(() => {
     if (!activeTimer) return;
 
-    const interval = setInterval(() => {
+    // Clear any existing interval
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+    }
+
+    timerIntervalRef.current = setInterval(() => {
       setTimeLeft((t) => {
         if (t <= 1) {
-          clearInterval(interval);
+          clearInterval(timerIntervalRef.current);
           toggleTask(activeTimer);
           setActiveTimer(null);
           return BRUSH_TIME;
@@ -200,7 +200,11 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
       });
     }, 1000);
 
-    return () => clearInterval(interval);
+    return () => {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+      }
+    };
   }, [activeTimer]);
 
   const completedCount = ["morning", "night", "floss"].filter((k) => todayData[k]).length;
@@ -214,28 +218,18 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
     return texts.motivate3 || "Perfect day! You're unstoppable! 🔥";
   };
 
-  const handleTouchStart = (e, task) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.touches[0].clientX - rect.left;
-    const y = e.touches[0].clientY - rect.top;
-    setTouchRipple({ active: true, x, y });
-    setTimeout(() => setTouchRipple({ active: false, x: 0, y: 0 }), 500);
-  };
-
   return (
-    <div className={`min-h-screen pb-20 transition-colors duration-300 ${
-      darkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-blue-50 via-white to-blue-50'
-    }`}>
+    <div className="min-h-screen pb-20 bg-gradient-to-br from-blue-50 via-white to-blue-50">
       
-      {/* Completion Celebration - Only shows when ALL tasks are done */}
+      {/* Completion Celebration */}
       {showCompletion && (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 animate-fadeIn">
-          <div className="bg-white rounded-2xl px-8 py-6 shadow-2xl animate-scaleUp">
+        <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl px-8 py-6 shadow-xl border border-blue-100">
             <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Sparkles className="w-8 h-8 text-green-600" />
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Sparkles className="w-8 h-8 text-blue-600" />
               </div>
-              <p className="text-2xl font-bold text-gray-900 mb-1">
+              <p className="text-2xl font-semibold text-gray-900 mb-1">
                 {texts.dayComplete || "Day Complete!"}
               </p>
               <p className="text-sm text-gray-600">
@@ -258,43 +252,43 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
             <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-400 rounded-lg flex items-center justify-center">
               <Brush className="w-4 h-4 text-white" />
             </div>
-            <h1 className="text-lg font-semibold text-gray-900">Today's Routine</h1>
+            <h1 className="text-lg font-medium text-gray-900">Today's Routine</h1>
           </div>
           <button
-            onClick={toggleDarkMode}
+            onClick={() => setActiveTab('home')}
             className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
           >
-            {darkMode ? <Sun className="w-5 h-5 text-gray-600" /> : <Moon className="w-5 h-5 text-gray-600" />}
+            <Home className="w-5 h-5 text-gray-600" />
           </button>
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+      <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
 
         {/* Stats Cards - Clean white with light blue accents */}
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-4 gap-2">
           <div className="bg-white rounded-xl p-3 text-center border border-blue-100 shadow-sm">
             <Flame className="w-4 h-4 text-blue-500 mx-auto mb-1" />
             <p className="text-xs text-gray-500">Current</p>
-            <p className="text-lg font-semibold text-gray-900">{current}</p>
+            <p className="text-base font-semibold text-gray-900">{current}</p>
           </div>
           
           <div className="bg-white rounded-xl p-3 text-center border border-blue-100 shadow-sm">
             <Trophy className="w-4 h-4 text-blue-500 mx-auto mb-1" />
             <p className="text-xs text-gray-500">Best</p>
-            <p className="text-lg font-semibold text-gray-900">{longest}</p>
+            <p className="text-base font-semibold text-gray-900">{longest}</p>
           </div>
 
           <div className="bg-white rounded-xl p-3 text-center border border-blue-100 shadow-sm">
             <CheckCircle2 className="w-4 h-4 text-blue-500 mx-auto mb-1" />
             <p className="text-xs text-gray-500">Today</p>
-            <p className="text-lg font-semibold text-gray-900">{completedCount}/3</p>
+            <p className="text-base font-semibold text-gray-900">{completedCount}/3</p>
           </div>
 
           <div className="bg-white rounded-xl p-3 text-center border border-blue-100 shadow-sm">
             <Target className="w-4 h-4 text-blue-500 mx-auto mb-1" />
             <p className="text-xs text-gray-500">Score</p>
-            <p className="text-lg font-semibold text-gray-900">{consistencyScore}%</p>
+            <p className="text-base font-semibold text-gray-900">{consistencyScore}%</p>
           </div>
         </div>
 
@@ -303,12 +297,12 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
           <div className="flex justify-between items-center mb-2">
             <div className="flex items-center gap-2">
               <Activity className="w-4 h-4 text-blue-500" />
-              <span className="text-sm font-medium text-gray-700">Daily Progress</span>
+              <span className="text-sm text-gray-700">Daily Progress</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-blue-600">{percent}%</span>
+              <span className="text-sm font-medium text-blue-600">{percent}%</span>
               <button
-                onClick={() => setTimerEnabled(!timerEnabled)}
+                onClick={toggleTimer}
                 className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
                   timerEnabled 
                     ? 'bg-blue-500 text-white' 
@@ -329,8 +323,8 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
           </div>
 
           {isRecoveryDay && (
-            <div className="mt-3 p-2 bg-amber-50 rounded-lg border border-amber-200">
-              <p className="text-xs text-amber-700 flex items-center gap-1">
+            <div className="mt-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-xs text-blue-700 flex items-center gap-1">
                 <Sparkles className="w-3 h-3" />
                 Recovery day! Complete all tasks to restore streak.
               </p>
@@ -345,48 +339,44 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
           )}
         </div>
 
-        {/* Task List - Clean and simple */}
-        <div className="space-y-3">
+        {/* Task List */}
+        <div className="space-y-2">
           {["morning", "night"].map((task) => {
             const isDone = todayData[task];
             const isRunning = activeTimer === task;
-            const isHovered = hoveredTask === task;
 
             return (
               <button
                 key={task}
                 onClick={() => {
                   if (isDone) toggleTask(task);
-                  else if (timerEnabled) {
+                  else if (timerEnabled && !isDone) {
                     setActiveTimer(task);
                     setTimeLeft(BRUSH_TIME);
-                  } else toggleTask(task);
+                  } else if (!isDone) {
+                    toggleTask(task);
+                  }
                 }}
-                onMouseEnter={() => setHoveredTask(task)}
-                onMouseLeave={() => setHoveredTask(null)}
-                onTouchStart={(e) => handleTouchStart(e, task)}
-                className={`relative w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all ${
+                className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all ${
                   isDone
-                    ? 'bg-green-50 border-green-200'
+                    ? 'bg-blue-50 border-blue-200'
                     : isRunning
-                    ? 'bg-blue-50 border-blue-300 shadow-md'
-                    : 'bg-white border-gray-200 hover:border-blue-200 hover:shadow-md'
+                    ? 'bg-white border-blue-300 shadow-md'
+                    : 'bg-white border-gray-200 hover:border-blue-200 hover:shadow-sm'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   {isDone ? (
-                    <CheckCircle2 className="w-6 h-6 text-green-600" />
+                    <CheckCircle2 className="w-5 h-5 text-blue-600" />
                   ) : (
-                    <Circle className={`w-6 h-6 transition-colors ${
-                      isHovered ? 'text-blue-400' : 'text-gray-300'
-                    }`} />
+                    <Circle className="w-5 h-5 text-gray-300" />
                   )}
                   <div className="text-left">
                     <span className="font-medium text-gray-900">
                       {task === "morning" ? "Morning Brushing" : "Night Brushing"}
                     </span>
                     {isRunning && (
-                      <span className="text-xs text-blue-600 block">Brush in circular motions...</span>
+                      <span className="text-xs text-blue-600 block mt-0.5">Brush in circular motions...</span>
                     )}
                   </div>
                 </div>
@@ -398,11 +388,9 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
                       {formatTime(timeLeft)}
                     </div>
                   ) : isDone ? (
-                    <span className="text-sm text-green-600">Complete ✓</span>
+                    <span className="text-sm text-blue-600">Complete</span>
                   ) : (
-                    <span className="text-sm text-gray-400 group-hover:text-blue-500 transition-colors">
-                      Start
-                    </span>
+                    <span className="text-sm text-gray-400">Start</span>
                   )}
                   <span className="text-2xl">{task === "morning" ? "☀️" : "🌙"}</span>
                 </div>
@@ -412,26 +400,26 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
 
           {/* Interdental Care */}
           <button
-            onClick={() => toggleTask("floss")}
-            className={`relative w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all ${
+            onClick={() => !todayData.floss && toggleTask("floss")}
+            className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all ${
               todayData.floss
-                ? 'bg-green-50 border-green-200'
-                : 'bg-white border-gray-200 hover:border-blue-200 hover:shadow-md'
+                ? 'bg-blue-50 border-blue-200'
+                : 'bg-white border-gray-200 hover:border-blue-200 hover:shadow-sm'
             }`}
           >
             <div className="flex items-center gap-3">
               {todayData.floss ? (
-                <CheckCircle2 className="w-6 h-6 text-green-600" />
+                <CheckCircle2 className="w-5 h-5 text-blue-600" />
               ) : (
-                <Circle className="w-6 h-6 text-gray-300" />
+                <Circle className="w-5 h-5 text-gray-300" />
               )}
               <div className="text-left">
-                <span className="font-medium text-gray-900 block">Interdental Care</span>
+                <span className="font-medium text-gray-900">Interdental Care</span>
                 <select
                   value={interdentalType}
                   onChange={(e) => setInterdentalType(e.target.value)}
                   onClick={(e) => e.stopPropagation()}
-                  className="text-xs mt-1 px-2 py-1 bg-gray-50 border border-gray-200 rounded-lg text-gray-600 focus:outline-none focus:border-blue-300"
+                  className="text-xs mt-1 px-2 py-0.5 bg-white border border-gray-200 rounded-lg text-gray-600 focus:outline-none focus:border-blue-300"
                 >
                   <option>Floss</option>
                   <option>Water Pick</option>
@@ -442,7 +430,7 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
 
             <div className="flex items-center gap-3">
               {todayData.floss && (
-                <span className="text-sm text-green-600">Complete ✓</span>
+                <span className="text-sm text-blue-600">Complete</span>
               )}
               <span className="text-2xl">🧵</span>
             </div>
@@ -450,7 +438,7 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
         </div>
 
         {/* Daily Tip */}
-        <div className="bg-gradient-to-r from-blue-50 to-blue-50/50 rounded-xl p-4 border border-blue-100">
+        <div className="bg-gradient-to-r from-blue-50 to-white rounded-xl p-4 border border-blue-100">
           <div className="flex gap-3">
             <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
               <Sparkles className="w-4 h-4 text-white" />
@@ -482,7 +470,7 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
         )}
       </div>
 
-      {/* Bottom Navigation - Clean and functional */}
+      {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-blue-100 px-4 py-2">
         <div className="max-w-3xl mx-auto flex justify-around items-center">
           <button
@@ -491,35 +479,6 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
           >
             <Home className="w-5 h-5" />
             <span className="text-xs mt-1">Home</span>
-          </button>
-
-          <button
-            onClick={() => setShowInsights(!showInsights)}
-            className="flex flex-col items-center p-2 text-gray-500 hover:text-blue-600 transition-colors"
-          >
-            <BarChart3 className="w-5 h-5" />
-            <span className="text-xs mt-1">Insights</span>
-          </button>
-
-          <button
-            onClick={() => setShowAchievements(!showAchievements)}
-            className="flex flex-col items-center p-2 text-gray-500 hover:text-blue-600 transition-colors relative"
-          >
-            <Award className="w-5 h-5" />
-            <span className="text-xs mt-1">Achievements</span>
-            {badges.length > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full text-[10px] text-white flex items-center justify-center">
-                {badges.length}
-              </span>
-            )}
-          </button>
-
-          <button
-            onClick={() => setShowReminders(!showReminders)}
-            className="flex flex-col items-center p-2 text-gray-500 hover:text-blue-600 transition-colors"
-          >
-            <Bell className="w-5 h-5" />
-            <span className="text-xs mt-1">Reminders</span>
           </button>
 
           <button
@@ -534,21 +493,13 @@ export default function Today({ habitData, setHabitData, setActiveTab }) {
 
       {/* Share Modal */}
       {showShareModal && (
-        <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-sm w-full p-5">
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Share Your Progress</h3>
+        <div className="fixed inset-0 bg-black/20 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl max-w-sm w-full p-5 border border-blue-100">
+            <h3 className="text-base font-medium text-gray-900 mb-3">Share Your Progress</h3>
             <div className="space-y-2">
-              <button className="w-full flex items-center gap-3 p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
-                <Download className="w-4 h-4 text-blue-600" />
-                <span className="text-sm text-gray-700">Save as Image</span>
-              </button>
-              <button className="w-full flex items-center gap-3 p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+              <button className="w-full flex items-center gap-3 p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors border border-blue-200">
                 <Share2 className="w-4 h-4 text-blue-600" />
                 <span className="text-sm text-gray-700">Share with Friends</span>
-              </button>
-              <button className="w-full flex items-center gap-3 p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
-                <BarChart3 className="w-4 h-4 text-blue-600" />
-                <span className="text-sm text-gray-700">Export Data</span>
               </button>
             </div>
             <button

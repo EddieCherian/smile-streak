@@ -337,22 +337,70 @@ export default function Home({ setActiveTab, user, habitData }) {
         )}
 
         {/* WEEKLY ACTIVITY CHART */}
-        <div className={`bg-white border border-blue-100 rounded-2xl shadow-lg p-5 ${fadeInUpClass('delay-300')} hover:shadow-xl transition-all duration-300`}>
-          <h3 className="font-bold text-gray-900 mb-4">{texts.weeklyActivity || "Weekly Activity"}</h3>
-          <div className="flex justify-between items-end h-24 gap-1">
-            {weeklyActivity.map((day, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
-                <div className="w-full flex justify-center">
-                  <div 
-                    className="w-full max-w-[24px] bg-gradient-to-t from-blue-400 to-blue-600 rounded-t-lg transition-all duration-500 group-hover:scale-110 group-hover:from-blue-500 group-hover:to-blue-700"
-                    style={{ height: `${day.percentage}%`, minHeight: '4px' }}
-                  />
-                </div>
-                <span className="text-xs text-gray-500 group-hover:text-blue-600 transition-colors">{day.day}</span>
-              </div>
-            ))}
+<div className={`bg-white border border-blue-100 rounded-2xl shadow-lg p-5 ${fadeInUpClass('delay-300')} hover:shadow-xl transition-all duration-300`}>
+  <h3 className="font-bold text-gray-900 mb-4">{texts.weeklyActivity || "Weekly Activity"}</h3>
+  <div className="flex justify-between items-end h-24 gap-1">
+    {weeklyActivity.map((day, i) => {
+      const pct = Math.round(
+        (() => {
+          const d = new Date();
+          d.setDate(d.getDate() - (6 - i));
+          const key = d.toISOString().split("T")[0];
+          const entry = habitData[key];
+          if (!entry) return 0;
+          const done = ["morning", "night", "floss"].filter(k => entry[k]).length;
+          return (done / 3) * 100;
+        })()
+      );
+      const label = new Date(
+        (() => { const d = new Date(); d.setDate(d.getDate() - (6 - i)); return d; })()
+      ).toLocaleDateString("en-US", { weekday: "short" }).slice(0, 1);
+
+      return (
+        <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
+          {pct > 0 && (
+            <span className="text-[9px] font-bold text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity">
+              {pct}%
+            </span>
+          )}
+          <div className="w-full flex justify-center items-end" style={{ height: "72px" }}>
+            <div
+              className={`w-full max-w-[24px] rounded-t-lg transition-all duration-700 ${
+                pct === 0
+                  ? "bg-blue-50 border border-blue-100"
+                  : pct === 33
+                  ? "bg-gradient-to-t from-blue-300 to-blue-400"
+                  : pct === 67
+                  ? "bg-gradient-to-t from-blue-400 to-blue-500"
+                  : "bg-gradient-to-t from-blue-500 to-blue-600"
+              } group-hover:brightness-110`}
+              style={{ height: pct === 0 ? "4px" : `${(pct / 100) * 72}px` }}
+            />
           </div>
+          <span className={`text-xs font-medium transition-colors ${
+            new Date().toLocaleDateString("en-US", { weekday: "short" }).slice(0,1) === label && 
+            new Date().toISOString().split("T")[0] === (() => { const d = new Date(); d.setDate(d.getDate() - (6 - i)); return d.toISOString().split("T")[0]; })()
+              ? "text-blue-600 font-bold"
+              : "text-gray-400 group-hover:text-blue-500"
+          }`}>{label}</span>
         </div>
+      );
+    })}
+  </div>
+  <div className="flex justify-between mt-3 pt-3 border-t border-blue-50 text-[10px] text-gray-400 font-medium">
+    <span>0%</span>
+    <span className="flex items-center gap-1">
+      <span className="w-2 h-2 rounded-full bg-blue-300 inline-block" /> 33%
+    </span>
+    <span className="flex items-center gap-1">
+      <span className="w-2 h-2 rounded-full bg-blue-400 inline-block" /> 67%
+    </span>
+    <span className="flex items-center gap-1">
+      <span className="w-2 h-2 rounded-full bg-blue-600 inline-block" /> 100%
+    </span>
+  </div>
+</div>
+
 
         {/* SCAN STATS */}
         <div className={`grid grid-cols-2 gap-4 ${fadeInUpClass('delay-350')}`}>

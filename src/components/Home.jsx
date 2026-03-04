@@ -3,7 +3,7 @@ import {
   Scan, Calendar, MapPin, TrendingUp, Sparkles, Flame, 
   Award, Bell, Clock, Target, Star, Heart, Shield, 
   Activity, Smile, Coffee, Moon, Zap, AlertCircle,
-  ChevronRight, Droplets, Brush, Pill, Apple
+  ChevronRight, Droplets, Brush, Pill, Apple, Camera
 } from "lucide-react";
 import { getCurrentStreak, getLongestStreak, getTodayProgress, getWeeklyActivity } from "../utils/streak";
 import { TranslationContext, ThemeContext } from "../App";
@@ -234,7 +234,7 @@ export default function Home({ setActiveTab, user, habitData }) {
               className="p-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all"
               title="Quick Scan"
             >
-              <Scan className="w-5 h-5" />
+              <Camera className="w-5 h-5" />
             </button>
             <button
               onClick={() => go("today")}

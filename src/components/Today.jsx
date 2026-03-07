@@ -90,6 +90,12 @@ export default function Today({ habitData, setHabitData }) {
   const [tipsOpen, setTipsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // ── DENTIST VISIT STATE (new) ──
+  const [showDentistModal, setShowDentistModal] = useState(false);
+  const [customMonths, setCustomMonths] = useState(6);
+  const lastDentistVisit = habitData.__lastDentistVisit || null;
+  const nextDentistVisit = habitData.__nextDentistVisit || null;
+
   const today = getDateKey();
   const yesterday = getYesterdayKey(today);
   const todayData = habitData[today] || { morning: false, night: false, floss: false, reflection: null, mood: null, waterOz: 0 };
@@ -271,6 +277,34 @@ export default function Today({ habitData, setHabitData }) {
     }
   };
 
+  // ── DENTIST VISIT HANDLERS (new) ──
+  const logDentistVisit = () => {
+    setShowDentistModal(true);
+  };
+
+  const confirmDentistVisit = (months) => {
+    const visitDate = new Date().toISOString();
+    const nextDate = new Date();
+    nextDate.setMonth(nextDate.getMonth() + months);
+    setHabitData(prev => ({
+      ...prev,
+      __lastDentistVisit: visitDate,
+      __nextDentistVisit: nextDate.toISOString(),
+    }));
+    setShowDentistModal(false);
+  };
+
+  const getDaysUntilNextVisit = () => {
+    if (!nextDentistVisit) return null;
+    const diff = new Date(nextDentistVisit) - new Date();
+    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  };
+
+  const formatVisitDate = (iso) => {
+    if (!iso) return "";
+    return new Date(iso).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  };
+
   const completedCount = ["morning","night","floss"].filter(k => todayData[k]).length;
   const percent = Math.round((completedCount / 3) * 100);
   const { current, longest } = calculateStreaks(habitData);
@@ -292,6 +326,8 @@ export default function Today({ habitData, setHabitData }) {
 
   const currentMoodOption = MOOD_OPTIONS.find(m => m.labelKey === currentMood);
   const currentMoodTranslated = translatedMoods.find(m => m.labelKey === currentMood);
+
+  const daysUntilVisit = getDaysUntilNextVisit();
 
   // Loading state — matches Reminders pattern
   if (translating || !txReady) {
@@ -561,7 +597,39 @@ export default function Today({ habitData, setHabitData }) {
             </div>
           </div>
         </button>
+
+        {/* ── LOG DENTIST VISIT BUTTON (new) ── */}
+        <button
+          onClick={logDentistVisit}
+          className="press hover-lift w-full py-3.5 rounded-2xl text-sm font-bold border-2 border-teal-200 bg-gradient-to-r from-teal-50 to-cyan-50 text-teal-700 hover:border-teal-400 transition-all flex items-center justify-center gap-2"
+        >
+          🦷 Log Dentist Visit
+        </button>
       </div>
+
+      {/* ── NEXT DENTIST VISIT CARD (new) ── */}
+      {nextDentistVisit && daysUntilVisit !== null && (
+        <div className="bg-white rounded-3xl p-5 shadow-lg border border-teal-100">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xl">🏥</span>
+            <p className="font-bold text-gray-900">Next Dentist Visit</p>
+          </div>
+          {daysUntilVisit > 0 ? (
+            <>
+              <p className="text-2xl font-black text-teal-600">In {daysUntilVisit} days</p>
+              <p className="text-xs text-gray-500 mt-1">{formatVisitDate(nextDentistVisit)}</p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-bold text-amber-600">⚠️ Your dentist visit is overdue!</p>
+              <p className="text-xs text-gray-500 mt-1">Was due: {formatVisitDate(nextDentistVisit)}</p>
+            </>
+          )}
+          {lastDentistVisit && (
+            <p className="text-xs text-gray-400 mt-2">Last visit: {formatVisitDate(lastDentistVisit)}</p>
+          )}
+        </div>
+      )}
 
       {/* ── WATER TRACKER ── */}
       <div className="bg-white rounded-3xl p-5 shadow-lg border border-blue-100">
@@ -812,6 +880,57 @@ export default function Today({ habitData, setHabitData }) {
           </div>
         </div>
       )}
+
+      {/* ── DENTIST VISIT INTERVAL MODAL (new) ── */}
+      {showDentistModal && (
+        <div className="fixed inset-0 bg-blue-900/25 backdrop-blur-sm flex items-end sm:items-center justify-center z-50"
+          style={{animation:"fadeIn .22s ease"}} onClick={() => setShowDentistModal(false)}>
+          <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-md p-6 shadow-2xl"
+            style={{animation:"slideUp .35s cubic-bezier(.22,1,.36,1)"}}
+            onClick={e => e.stopPropagation()}>
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5 sm:hidden" />
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-2xl">🦷</span>
+              <h3 className="text-lg font-black text-gray-900">Log Dentist Visit</h3>
+            </div>
+            <p className="text-xs text-gray-500 mb-5">When should your next visit be?</p>
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              {[3, 6, 12].map(months => (
+                <button
+                  key={months}
+                  onClick={() => confirmDentistVisit(months)}
+                  className="press hover-lift py-4 rounded-2xl border-2 border-teal-200 bg-gradient-to-br from-teal-50 to-cyan-50 text-teal-700 font-black text-sm hover:border-teal-400 transition-all text-center"
+                >
+                  {months} mo
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-3 p-4 rounded-2xl border-2 border-gray-200 bg-gray-50 mb-4">
+              <span className="text-sm font-bold text-gray-600">Custom:</span>
+              <input
+                type="number"
+                min="1"
+                max="24"
+                value={customMonths}
+                onChange={e => setCustomMonths(Math.max(1, Math.min(24, parseInt(e.target.value) || 1)))}
+                className="w-16 text-center border-2 border-teal-200 rounded-xl py-1.5 text-sm font-black text-teal-700 focus:outline-none focus:border-teal-400"
+              />
+              <span className="text-sm text-gray-500">months</span>
+              <button
+                onClick={() => confirmDentistVisit(customMonths)}
+                className="ml-auto press px-4 py-2 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 text-white text-xs font-bold hover:opacity-90"
+              >
+                Set
+              </button>
+            </div>
+            <button onClick={() => setShowDentistModal(false)}
+              className="w-full py-3 text-sm text-gray-400 hover:bg-gray-50 rounded-2xl press font-semibold">
+              {T("Cancel")}
+            </button>
+          </div>
+        </div>
+      )}
+
     </section>
   );
 }

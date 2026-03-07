@@ -982,53 +982,57 @@ return (
         <div className="mb-5">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">🗓️ Next Appointment</p>
 
-          <div className="grid grid-cols-3 gap-2 mb-3">
+          <div className="grid grid-cols-3 gap-2 mb-4">
             {[3, 6, 12].map(months => (
               <button
                 key={months}
-                onClick={() => setNextCustomMonths(months)}
-                className={`press py-3 rounded-2xl border-2 font-black text-sm transition-all text-center ${
+                onClick={() => {
+                  setNextCustomMonths(months);
+                  setNextDateInput("");
+                }}
+                className={`py-3 rounded-xl font-bold text-sm transition-all ${
                   nextCustomMonths === months && !nextDateInput
-                    ? "bg-gradient-to-br from-blue-500 to-cyan-500 border-transparent text-white shadow-md"
-                    : "border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50 text-blue-700 hover:border-blue-400"
+                    ? "bg-blue-600 text-white shadow-md"
+                    : "bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100"
                 }`}
               >
-                {months} mo
+                {months}mo
               </button>
             ))}
           </div>
 
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 p-3.5 rounded-2xl border-2 border-gray-200 bg-gray-50 mb-3">
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <input
-                type="number"
-                min="1"
-                max="24"
-                value={nextCustomMonths}
-                onChange={e => { setNextCustomMonths(Math.max(1, Math.min(24, parseInt(e.target.value) || 1))); setNextDateInput(""); }}
-                className="w-20 text-center border-2 border-blue-200 rounded-xl py-1.5 text-sm font-black text-blue-700 focus:outline-none focus:border-blue-400 bg-white"
-              />
-              <span className="text-sm text-gray-500 whitespace-nowrap">months</span>
-            </div>
-            <span className="text-sm text-gray-500 hidden sm:inline">from today</span>
-            <span className="text-sm text-gray-500 sm:hidden w-full text-center">from today</span>
+          <div className="flex items-center gap-2 p-3 rounded-xl bg-gray-50 border border-gray-200 mb-4">
+            <input
+              type="number"
+              min="1"
+              max="24"
+              value={nextCustomMonths}
+              onChange={e => { 
+                setNextCustomMonths(Math.max(1, Math.min(24, parseInt(e.target.value) || 1))); 
+                setNextDateInput(""); 
+              }}
+              className="w-16 text-center border border-blue-200 rounded-lg py-2 text-sm font-bold text-blue-700 focus:outline-none focus:border-blue-400 bg-white"
+            />
+            <span className="text-sm text-gray-600">months from today</span>
           </div>
 
-          <div className="p-3.5 rounded-2xl border-2 border-gray-200 bg-gray-50">
-            <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-2">Or pick a specific date</p>
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center mb-4">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center mb-4">
+              <span className="px-3 bg-white text-xs text-gray-500">OR</span>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-gray-50 border border-gray-200">
+            <p className="text-xs font-medium text-gray-500 mb-2">Pick a specific date</p>
             <input
               type="date"
               min={new Date().toISOString().split("T")[0]}
               value={nextDateInput}
               onChange={e => setNextDateInput(e.target.value)}
-              className="w-full border-2 border-blue-200 rounded-xl px-3 py-2 text-sm font-semibold text-blue-700 focus:outline-none focus:border-blue-400 bg-white"
-              style={{ 
-                maxWidth: '100%',
-                boxSizing: 'border-box',
-                WebkitAppearance: 'none',
-                MozAppearance: 'none',
-                appearance: 'none'
-              }}
+              className="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm text-blue-700 focus:outline-none focus:border-blue-400 bg-white"
             />
           </div>
         </div>

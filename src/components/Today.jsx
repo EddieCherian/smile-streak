@@ -951,8 +951,8 @@ return (
         <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5 sm:hidden" />
 
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-xl">🦷</div>
-          <div>
+          <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-xl flex-shrink-0">🦷</div>
+          <div className="min-w-0">
             <h3 className="text-lg font-black text-gray-900">Log Dentist Visit</h3>
             <p className="text-xs text-gray-500">Record your last visit and schedule the next one</p>
           </div>
@@ -967,6 +967,13 @@ return (
             value={lastVisitDateInput}
             onChange={e => setLastVisitDateInput(e.target.value)}
             className="w-full border-2 border-blue-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-blue-700 focus:outline-none focus:border-blue-400 bg-white"
+            style={{ 
+              maxWidth: '100%',
+              boxSizing: 'border-box',
+              WebkitAppearance: 'none',
+              MozAppearance: 'none',
+              appearance: 'none'
+            }}
           />
           <p className="text-[10px] text-gray-400 mt-2">When did you last visit the dentist?</p>
         </div>
@@ -991,16 +998,20 @@ return (
             ))}
           </div>
 
-          <div className="flex items-center gap-3 p-3.5 rounded-2xl border-2 border-gray-200 bg-gray-50 mb-3">
-            <input
-              type="number"
-              min="1"
-              max="24"
-              value={nextCustomMonths}
-              onChange={e => { setNextCustomMonths(Math.max(1, Math.min(24, parseInt(e.target.value) || 1))); setNextDateInput(""); }}
-              className="w-14 text-center border-2 border-blue-200 rounded-xl py-1.5 text-sm font-black text-blue-700 focus:outline-none focus:border-blue-400 bg-white"
-            />
-            <span className="text-sm text-gray-500 flex-1">months from today</span>
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 p-3.5 rounded-2xl border-2 border-gray-200 bg-gray-50 mb-3">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <input
+                type="number"
+                min="1"
+                max="24"
+                value={nextCustomMonths}
+                onChange={e => { setNextCustomMonths(Math.max(1, Math.min(24, parseInt(e.target.value) || 1))); setNextDateInput(""); }}
+                className="w-20 text-center border-2 border-blue-200 rounded-xl py-1.5 text-sm font-black text-blue-700 focus:outline-none focus:border-blue-400 bg-white"
+              />
+              <span className="text-sm text-gray-500 whitespace-nowrap">months</span>
+            </div>
+            <span className="text-sm text-gray-500 hidden sm:inline">from today</span>
+            <span className="text-sm text-gray-500 sm:hidden w-full text-center">from today</span>
           </div>
 
           <div className="p-3.5 rounded-2xl border-2 border-gray-200 bg-gray-50">
@@ -1011,6 +1022,13 @@ return (
               value={nextDateInput}
               onChange={e => setNextDateInput(e.target.value)}
               className="w-full border-2 border-blue-200 rounded-xl px-3 py-2 text-sm font-semibold text-blue-700 focus:outline-none focus:border-blue-400 bg-white"
+              style={{ 
+                maxWidth: '100%',
+                boxSizing: 'border-box',
+                WebkitAppearance: 'none',
+                MozAppearance: 'none',
+                appearance: 'none'
+              }}
             />
           </div>
         </div>

@@ -36,6 +36,19 @@ export default function Home({ setActiveTab, user, habitData }) {
     { id: 7, title: "Stay Hydrated", tip: "Drinking water helps wash away food particles and bacteria, and prevents dry mouth.", icon: <Coffee className="w-4 h-4" />, bgColor: "bg-blue-50", borderColor: "border-blue-200", textColor: "text-blue-600", iconBg: "bg-blue-500" }
   ];
 
+  // Derive today's completion directly from habitData so it's always in sync
+  const todayKey = new Date().toISOString().split("T")[0];
+  const todayEntry = habitData?.[todayKey] || {};
+  const todayDone = ["morning", "night", "floss"].filter(k => todayEntry[k]).length;
+  const todayPct = todayDone === 0 ? 0 : todayDone === 1 ? 33 : todayDone === 2 ? 67 : 100;
+  const progressStep = todayDone; // 0, 1, 2, or 3
+
+  const habitLabels = [
+    { key: "morning", label: "Morning", emoji: "🌅" },
+    { key: "floss",   label: "Floss",   emoji: "🪥" },
+    { key: "night",   label: "Night",   emoji: "🌙" },
+  ];
+
   useEffect(() => {
     const currentStreak = getCurrentStreak(habitData);
     setStreak(currentStreak);
@@ -144,111 +157,102 @@ export default function Home({ setActiveTab, user, habitData }) {
 
   const daysUntilVisit = getDaysUntilVisit();
 
-  const progressStep = todayProgress === 0 ? 0 : todayProgress <= 33 ? 1 : todayProgress <= 67 ? 2 : 3;
-  const habitLabels = [
-    { key: "morning", label: "Morning", emoji: "🌅" },
-    { key: "floss",   label: "Floss",   emoji: "🪥" },
-    { key: "night",   label: "Night",   emoji: "🌙" },
-  ];
-
   return (
     <div className={`min-h-screen transition-colors duration-300 ${darkMode ? "bg-gray-900" : "bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50"}`}>
 
-      {/* ── HERO BANNER ── */}
-      <div className="bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-500 px-5 pt-10 pb-20 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-44 h-44 bg-white/10 rounded-full translate-y-22 -translate-x-22 pointer-events-none" />
-        <div className="absolute top-1/2 right-12 w-20 h-20 bg-white/5 rounded-full pointer-events-none" />
-
-        <div className="relative z-10 max-w-lg mx-auto">
-          {/* Top bar */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <img
-                src="/icon-511.png"
-                alt="SmileStreak logo"
-                className="w-12 h-12 rounded-2xl shadow-lg object-cover ring-2 ring-white/40 ring-offset-1 ring-offset-blue-500"
-              />
-              <div>
-                <p className="text-blue-100 text-xs font-medium">
-                  {getGreeting()}{user?.displayName ? `, ${user.displayName.split(" ")[0]}` : ""} 👋
-                </p>
-                <h1 className="text-xl font-black text-white tracking-tight leading-tight">
-                  {texts.title || "SmileStreak"}
-                </h1>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => go("scan")}
-                className="p-2.5 bg-white/20 hover:bg-white/30 text-white rounded-xl border border-white/20 transition-all duration-200 active:scale-95"
-                title="Quick Scan"
-              >
-                <Camera className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => go("today")}
-                className="p-2.5 bg-white/20 hover:bg-white/30 text-white rounded-xl border border-white/20 transition-all duration-200 active:scale-95"
-                title="Quick Update"
-              >
-                <Calendar className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          {/* Streak display */}
-          <div className="mt-8 flex items-end justify-between">
-            <div>
-              <p className="text-blue-200 text-[10px] font-bold uppercase tracking-widest mb-1">
-                {texts.currentStreak || "Current Streak"}
-              </p>
-              <div className="flex items-end gap-2">
-                <span className="text-7xl font-black text-white leading-none">{streak}</span>
-                <span className="text-blue-200 font-semibold text-base pb-2">{texts.days || "days"} 🔥</span>
-              </div>
-            </div>
-            <div className="text-right pb-1">
-              <p className="text-blue-200 text-[10px] font-bold uppercase tracking-widest mb-1">
-                {texts.longestStreak || "Best"}
-              </p>
-              <div className="flex items-end gap-1 justify-end">
-                <span className="text-4xl font-black text-white leading-none">{longestStreak}</span>
-                <span className="text-blue-200 text-sm font-semibold pb-0.5">d</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── FLOATING STAT CARDS ── */}
-      <div className="max-w-lg mx-auto px-5 -mt-7 relative z-10">
-        <div className="grid grid-cols-3 gap-3">
-          {[
-            { label: "Today", value: `${todayProgress}%`, sub: null, bar: true },
-            { label: texts.nextMilestone || "Next Goal", value: nextMilestone ? `${nextMilestone}d` : "—", sub: nextMilestone && streak ? `${nextMilestone - streak} to go` : null, bar: false },
-            { label: texts.totalScans || "Scans", value: String(totalScans), sub: lastScanDate || "None yet", bar: false },
-          ].map(({ label, value, sub, bar }) => (
-            <div key={label} className="bg-white rounded-2xl shadow-xl border border-blue-100 px-4 py-4 flex flex-col gap-1.5">
-              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider leading-none">{label}</p>
-              <p className="text-2xl font-black text-blue-600 leading-none">{value}</p>
-              {bar && (
-                <div className="mt-0.5 h-1.5 bg-blue-50 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-blue-400 to-cyan-500 rounded-full transition-all duration-1000"
-                    style={{ width: `${todayProgress}%` }}
-                  />
-                </div>
-              )}
-              {sub && <p className="text-[10px] text-gray-400 leading-tight">{sub}</p>}
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* ── MAIN CONTENT ── */}
-      <div className="max-w-lg mx-auto px-5 pb-10 space-y-4 mt-5">
+      <div className="max-w-lg mx-auto px-5 pt-6 pb-10 space-y-4">
 
-        {/* TODAY'S PROGRESS — step tracker */}
+        {/* ── HERO CARD ── */}
+        <div className="bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-500 rounded-3xl px-5 pt-6 pb-5 relative overflow-hidden shadow-xl">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full -translate-y-24 translate-x-24 pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-36 h-36 bg-white/10 rounded-full translate-y-18 -translate-x-18 pointer-events-none" />
+          <div className="absolute top-1/2 right-10 w-16 h-16 bg-white/5 rounded-full pointer-events-none" />
+
+          <div className="relative z-10">
+            {/* Top bar */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <img
+                  src="/icon-511.png"
+                  alt="SmileStreak logo"
+                  className="w-11 h-11 rounded-2xl shadow-lg object-cover ring-2 ring-white/40"
+                />
+                <div>
+                  <p className="text-blue-100 text-xs font-medium">
+                    {getGreeting()}{user?.displayName ? `, ${user.displayName.split(" ")[0]}` : ""} 👋
+                  </p>
+                  <h1 className="text-lg font-black text-white tracking-tight leading-tight">
+                    {texts.title || "SmileStreak"}
+                  </h1>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => go("scan")}
+                  className="p-2.5 bg-white/20 hover:bg-white/30 text-white rounded-xl border border-white/20 transition-all duration-200 active:scale-95"
+                  title="Quick Scan"
+                >
+                  <Camera className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => go("today")}
+                  className="p-2.5 bg-white/20 hover:bg-white/30 text-white rounded-xl border border-white/20 transition-all duration-200 active:scale-95"
+                  title="Quick Update"
+                >
+                  <Calendar className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Streak + Best */}
+            <div className="flex items-end justify-between">
+              <div>
+                <p className="text-blue-200 text-[10px] font-bold uppercase tracking-widest mb-1">
+                  {texts.currentStreak || "Current Streak"}
+                </p>
+                <div className="flex items-end gap-2">
+                  <span className="text-6xl font-black text-white leading-none">{streak}</span>
+                  <span className="text-blue-200 font-semibold text-base pb-1.5">{texts.days || "days"} 🔥</span>
+                </div>
+              </div>
+              <div className="text-right pb-1">
+                <p className="text-blue-200 text-[10px] font-bold uppercase tracking-widest mb-1">
+                  {texts.longestStreak || "Best"}
+                </p>
+                <div className="flex items-end gap-1 justify-end">
+                  <span className="text-3xl font-black text-white leading-none">{longestStreak}</span>
+                  <span className="text-blue-200 text-sm font-semibold pb-0.5">d</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Stat pills inside the card */}
+            <div className="grid grid-cols-3 gap-2.5 mt-5">
+              {[
+                { label: "Today", value: `${todayPct}%`, bar: true },
+                { label: texts.nextMilestone || "Next Goal", value: nextMilestone ? `${nextMilestone}d` : "—", sub: nextMilestone && streak ? `${nextMilestone - streak} to go` : null },
+                { label: texts.totalScans || "Scans", value: String(totalScans), sub: lastScanDate || "None yet" },
+              ].map(({ label, value, sub, bar }) => (
+                <div key={label} className="bg-white/20 backdrop-blur-sm rounded-2xl px-3 py-3 flex flex-col gap-1 border border-white/20">
+                  <p className="text-[9px] font-bold text-blue-100 uppercase tracking-wider leading-none">{label}</p>
+                  <p className="text-xl font-black text-white leading-none">{value}</p>
+                  {bar && (
+                    <div className="mt-0.5 h-1 bg-white/20 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-white/70 rounded-full transition-all duration-1000"
+                        style={{ width: `${todayPct}%` }}
+                      />
+                    </div>
+                  )}
+                  {sub && <p className="text-[10px] text-blue-100 leading-tight">{sub}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* TODAY'S PROGRESS — step tracker, synced to today's habitData */}
         <div className={`bg-white border border-blue-100 rounded-2xl shadow-md p-5 ${fadeIn()} hover:shadow-lg transition-all duration-300`}>
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2.5">
@@ -258,31 +262,34 @@ export default function Home({ setActiveTab, user, habitData }) {
               <h3 className="font-bold text-gray-900 text-sm">{texts.todayProgress || "Today's Progress"}</h3>
             </div>
             <span className="text-xs font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
-              {todayProgress}%
+              {todayPct}%
             </span>
           </div>
 
           <div className="flex items-start">
             {habitLabels.map((h, i) => {
-              const completed = progressStep > i;
-              const active = progressStep === i + 1;
+              const completed = todayEntry[h.key] === true;
               const isLast = i === habitLabels.length - 1;
+              // connector after this dot is filled if next habit is also done
+              const nextCompleted = !isLast && todayEntry[habitLabels[i + 1].key] === true;
               return (
                 <div key={h.key} className={`flex items-center ${isLast ? "flex-none" : "flex-1"}`}>
                   <div className="flex flex-col items-center gap-2">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg transition-all duration-500 shadow-sm ${
-                      completed || active
+                      completed
                         ? "bg-gradient-to-br from-blue-500 to-cyan-500 shadow-blue-200 scale-110"
                         : "bg-blue-50 border-2 border-blue-100"
                     }`}>
-                      <span className={completed || active ? "" : "opacity-30"}>{h.emoji}</span>
+                      <span className={completed ? "" : "opacity-30"}>{h.emoji}</span>
                     </div>
-                    <span className={`text-[10px] font-semibold whitespace-nowrap ${completed || active ? "text-blue-600" : "text-gray-400"}`}>
+                    <span className={`text-[10px] font-semibold whitespace-nowrap ${completed ? "text-blue-600" : "text-gray-400"}`}>
                       {h.label}
                     </span>
                   </div>
                   {!isLast && (
-                    <div className={`flex-1 h-0.5 mx-2 mb-6 rounded-full transition-all duration-700 ${progressStep > i + 1 ? "bg-gradient-to-r from-blue-400 to-cyan-500" : "bg-blue-100"}`} />
+                    <div className={`flex-1 h-0.5 mx-2 mb-6 rounded-full transition-all duration-700 ${
+                      completed && nextCompleted ? "bg-gradient-to-r from-blue-400 to-cyan-500" : "bg-blue-100"
+                    }`} />
                   )}
                 </div>
               );
@@ -376,7 +383,7 @@ export default function Home({ setActiveTab, user, habitData }) {
               const done = entry ? ["morning", "night", "floss"].filter(k => entry[k]).length : 0;
               const pct = done === 0 ? 0 : done === 1 ? 33 : done === 2 ? 67 : 100;
               const label = d.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 1);
-              const isToday = key === new Date().toISOString().split("T")[0];
+              const isToday = key === todayKey;
 
               return (
                 <div key={i} className="flex-1 flex flex-col items-center gap-1.5 group">

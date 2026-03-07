@@ -280,6 +280,18 @@ export default function Today({ habitData, setHabitData }) {
   // ── DENTIST VISIT HANDLERS (new) ──
   const logDentistVisit = () => setShowDentistModal(true);
 
+  const confirmDentistVisit = (months) => {
+    const visitDate = new Date().toISOString();
+    const nextDate = new Date();
+    nextDate.setMonth(nextDate.getMonth() + months);
+    setHabitData(prev => ({
+      ...prev,
+      __lastDentistVisit: visitDate,
+      __nextDentistVisit: nextDate.toISOString(),
+    }));
+    setShowDentistModal(false);
+  };
+
   const confirmDentistVisitByDate = (dateStr) => {
     if (!dateStr) return;
     // Parse as local date (append T12:00:00 to avoid UTC midnight shifting the date back a day)

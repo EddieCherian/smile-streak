@@ -1,5 +1,3 @@
-Here’s the updated file. The core changes: the “Log Dentist Visit” button now opens a modal that has two separate sections — one for logging when the last visit was (with date picker), and one for setting the next appointment (with quick select, custom interval, and date picker). The next visit auto-defaults to 6 months from today so it’s never immediately overdue. The existing dentist visit card below shows both dates cleanly.
-
 import { useEffect, useState, useContext, useRef, useCallback } from "react";
 import { getDateKey, getYesterdayKey } from "../utils/date.js";
 import { calculateStreaks } from "../utils/streak.js";

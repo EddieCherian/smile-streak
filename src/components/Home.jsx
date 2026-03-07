@@ -141,182 +141,207 @@ export default function Home({ setActiveTab, user, habitData }) {
   const daysUntilVisit = getDaysUntilVisit();
 
   return (
-    <div className={`min-h-screen p-6 transition-colors duration-300 ${
-      darkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-blue-50 via-white to-blue-50'
+    <div className={`min-h-screen transition-colors duration-300 ${
+      darkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50'
     }`}>
-      <div className="max-w-3xl mx-auto space-y-6">
 
-        {/* WELCOME HEADER */}
-        <div className={`flex items-center justify-between ${fadeInUpClass('delay-0')}`}>
-          <div className="flex items-center gap-3">
-            <img
-              src="/icon-511.png"
-              alt="SmileStreak logo"
-              className="w-14 h-14 rounded-xl shadow-md object-cover ring-2 ring-blue-200 ring-offset-2"
-            />
+      {/* ── HERO BANNER ── */}
+      <div className="bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-500 px-6 pt-8 pb-16 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full -translate-y-24 translate-x-24" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full translate-y-16 -translate-x-16" />
+        <div className="absolute top-1/2 right-12 w-20 h-20 bg-white/5 rounded-full" />
+        <div className="relative z-10 max-w-3xl mx-auto">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <img
+                src="/icon-511.png"
+                alt="SmileStreak logo"
+                className="w-14 h-14 rounded-2xl shadow-xl object-cover ring-2 ring-white/40 ring-offset-2 ring-offset-blue-500"
+              />
+              <div>
+                <p className="text-blue-100 text-sm font-medium">
+                  {getGreeting()}{user?.displayName ? `, ${user.displayName.split(' ')[0]}` : ''} 👋
+                </p>
+                <h1 className="text-2xl font-black text-white tracking-tight">
+                  {texts.title || "SmileStreak"}
+                </h1>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => go("scan")}
+                className="p-3 bg-white/20 hover:bg-white/30 text-white rounded-xl backdrop-blur-sm border border-white/20 hover:scale-110 hover:-translate-y-0.5 transition-all duration-200"
+                title="Quick Scan"
+              >
+                <Camera className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => go("today")}
+                className="p-3 bg-white/20 hover:bg-white/30 text-white rounded-xl backdrop-blur-sm border border-white/20 hover:scale-110 hover:-translate-y-0.5 transition-all duration-200"
+                title="Quick Update"
+              >
+                <Calendar className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Hero streak display */}
+          <div className="mt-6 flex items-end gap-4">
             <div>
-              <h2 className={`text-lg font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                {getGreeting()}{user?.displayName ? `, ${user.displayName.split(' ')[0]}` : ''}
-              </h2>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
-                {texts.title || "SmileStreak"}
-              </h1>
+              <p className="text-blue-200 text-xs font-bold uppercase tracking-widest mb-1">Current Streak</p>
+              <div className="flex items-end gap-2">
+                <span className="text-6xl font-black text-white leading-none">{streak}</span>
+                <span className="text-blue-200 font-semibold text-lg pb-1">{texts.days || "days"} 🔥</span>
+              </div>
             </div>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => go("scan")}
-              className="p-3 bg-white text-blue-600 rounded-xl shadow-lg hover:shadow-xl hover:scale-110 hover:-translate-y-1 transition-all duration-300 border-2 border-blue-200"
-              title="Quick Scan"
-            >
-              <Camera className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => go("today")}
-              className="p-3 bg-white text-blue-600 rounded-xl shadow-lg hover:shadow-xl hover:scale-110 hover:-translate-y-1 transition-all duration-300 border-2 border-blue-200"
-              title="Quick Update"
-            >
-              <Calendar className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        {/* STATS GRID */}
-        <div className="grid grid-cols-2 gap-4">
-          <div
-            className={`relative overflow-hidden bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 p-5 border border-blue-100 ${fadeInUpClass('delay-100')} hover:scale-[1.02] hover:-translate-y-1`}
-            onMouseEnter={() => setHoveredCard('streak')}
-            onMouseLeave={() => setHoveredCard(null)}
-          >
-            <div className={`absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent opacity-0 transition-opacity duration-500 ${hoveredCard === 'streak' ? 'opacity-100' : ''}`} />
-            <div className="relative">
-              <div className="flex items-center gap-1 mb-2">
-                <Flame className="w-4 h-4 text-blue-500" />
-                <p className="text-xs font-medium text-gray-500">{texts.currentStreak || "Current Streak"}</p>
-              </div>
-              <div className="flex items-end gap-1">
-                <p className="text-3xl font-black text-gray-900">{streak}</p>
-                <p className="text-sm font-semibold text-gray-500 pb-1">{texts.days || "days"}</p>
-              </div>
-              {streak >= 7 && (
-                <div className="flex items-center gap-1 mt-2 text-xs bg-blue-50 rounded-full px-2 py-1 w-fit border border-blue-200">
-                  <Sparkles className="w-3 h-3 text-blue-500" />
-                  <span className="text-blue-600">{texts.keepItUp || "Keep it up!"}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div
-            className={`relative overflow-hidden bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 p-5 border border-blue-100 ${fadeInUpClass('delay-150')} hover:scale-[1.02] hover:-translate-y-1`}
-            onMouseEnter={() => setHoveredCard('longest')}
-            onMouseLeave={() => setHoveredCard(null)}
-          >
-            <div className={`absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent opacity-0 transition-opacity duration-500 ${hoveredCard === 'longest' ? 'opacity-100' : ''}`} />
-            <div className="relative">
-              <div className="flex items-center gap-1 mb-2">
-                <Award className="w-4 h-4 text-blue-500" />
-                <p className="text-xs font-medium text-gray-500">{texts.longestStreak || "Longest Streak"}</p>
-              </div>
-              <div className="flex items-end gap-1">
-                <p className="text-3xl font-black text-gray-900">{longestStreak}</p>
-                <p className="text-sm font-semibold text-gray-500 pb-1">{texts.days || "days"}</p>
-              </div>
-              {nextMilestone && (
-                <p className="text-xs text-blue-600 mt-2 font-medium">Next: {nextMilestone} days</p>
-              )}
+            <div className="ml-auto text-right pb-1">
+              <p className="text-blue-200 text-xs font-bold uppercase tracking-widest mb-1">Best</p>
+              <p className="text-2xl font-black text-white">{longestStreak}<span className="text-blue-200 text-sm font-semibold">d</span></p>
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ── FLOATING STATS CARDS (overlap hero) ── */}
+      <div className="max-w-3xl mx-auto px-6 -mt-8 relative z-10 mb-2">
+        <div className="grid grid-cols-3 gap-3">
+          {/* Progress card */}
+          <div className="bg-white rounded-2xl shadow-xl border border-blue-100 p-4 hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-300">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Today</p>
+            <p className="text-2xl font-black text-blue-600">{todayProgress}%</p>
+            <div className="mt-2 h-1.5 bg-blue-50 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-blue-400 to-cyan-500 rounded-full transition-all duration-1000"
+                style={{ width: `${todayProgress}%` }}
+              />
+            </div>
+          </div>
+          {/* Milestone card */}
+          <div className="bg-white rounded-2xl shadow-xl border border-blue-100 p-4 hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-300">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Next Goal</p>
+            <p className="text-2xl font-black text-blue-600">{nextMilestone}<span className="text-sm text-gray-400 font-semibold">d</span></p>
+            <p className="text-[10px] text-gray-400 mt-1">{nextMilestone && streak ? `${nextMilestone - streak} to go` : '—'}</p>
+          </div>
+          {/* Score card */}
+          <div className="bg-white rounded-2xl shadow-xl border border-blue-100 p-4 hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-300">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Scans</p>
+            <p className="text-2xl font-black text-blue-600">{totalScans}</p>
+            <p className="text-[10px] text-gray-400 mt-1">{lastScanDate || "None yet"}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-3xl mx-auto px-6 pb-8 space-y-4 mt-4">
 
         {/* TODAY'S PROGRESS BAR */}
-        <div className={`bg-white border border-blue-100 rounded-2xl shadow-lg p-5 ${fadeInUpClass('delay-200')} hover:shadow-xl transition-all duration-300`}>
+        <div className={`bg-white border border-blue-100 rounded-2xl shadow-md p-5 ${fadeInUpClass('delay-200')} hover:shadow-lg transition-all duration-300`}>
           <div className="flex justify-between items-center mb-3">
-            <h3 className="font-bold text-gray-900">{texts.todayProgress || "Today's Progress"}</h3>
-            <span className="text-sm font-semibold text-blue-600">{todayProgress}%</span>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+                <Target className="w-4 h-4 text-white" />
+              </div>
+              <h3 className="font-bold text-gray-900">{texts.todayProgress || "Today's Progress"}</h3>
+            </div>
+            <span className="text-sm font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">{todayProgress}%</span>
           </div>
-          <div className="w-full h-3 bg-blue-50 rounded-full overflow-hidden">
+          <div className="w-full h-3 bg-blue-50 rounded-full overflow-hidden border border-blue-100">
             <div
-              className="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full transition-all duration-1000 ease-out"
+              className="h-full bg-gradient-to-r from-blue-400 to-cyan-500 rounded-full transition-all duration-1000 ease-out"
               style={{ width: `${todayProgress}%` }}
             />
           </div>
-          <div className="flex justify-between mt-2 text-xs text-gray-500">
-            <span>Morning</span>
-            <span>Evening</span>
+          <div className="flex justify-between mt-2 text-xs text-gray-400 font-medium">
+            <span>🌅 Morning</span>
+            <span>🌙 Evening</span>
           </div>
         </div>
 
         {/* NEXT DENTIST VISIT CARD */}
         <div
-          className={`bg-white border border-blue-100 rounded-2xl shadow-lg p-5 ${fadeInUpClass('delay-225')} hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.01]`}
+          className={`relative overflow-hidden rounded-2xl shadow-md border cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 ${fadeInUpClass('delay-225')} ${
+            !nextDentistVisit ? 'bg-white border-blue-100' :
+            daysUntilVisit <= 0 ? 'bg-orange-50 border-orange-200' :
+            daysUntilVisit <= 14 ? 'bg-amber-50 border-amber-200' :
+            'bg-white border-blue-100'
+          }`}
           onClick={() => go("today")}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${
-                !nextDentistVisit ? "bg-blue-50" :
-                daysUntilVisit <= 0 ? "bg-orange-100" :
-                daysUntilVisit <= 14 ? "bg-amber-100" :
-                "bg-blue-50"
-              }`}>
-                🦷
-              </div>
-              <div>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">Next Dentist Visit</p>
-                {!nextDentistVisit ? (
-                  <>
-                    <p className="font-black text-base text-blue-600">Not scheduled</p>
-                    <p className="text-xs text-gray-400">Tap to log a visit</p>
-                  </>
-                ) : daysUntilVisit <= 0 ? (
-                  <>
-                    <p className="font-black text-base text-orange-600">⚠️ Overdue</p>
-                    <p className="text-xs text-gray-500">Was due {formatVisitDate(nextDentistVisit)}</p>
-                  </>
-                ) : daysUntilVisit <= 14 ? (
-                  <>
-                    <p className="font-black text-base text-amber-600">In {daysUntilVisit} day{daysUntilVisit !== 1 ? "s" : ""}</p>
-                    <p className="text-xs text-gray-500">{formatVisitDate(nextDentistVisit)}</p>
-                  </>
-                ) : (
-                  <>
-                    <p className="font-black text-base text-blue-600">In {daysUntilVisit} days</p>
-                    <p className="text-xs text-gray-500">{formatVisitDate(nextDentistVisit)}</p>
-                  </>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-col items-end gap-1">
-              {lastDentistVisit && (
-                <div className="text-right">
-                  <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Last visit</p>
-                  <p className="text-xs text-gray-600 font-semibold">{formatVisitDate(lastDentistVisit)}</p>
+          {/* Subtle background accent */}
+          {nextDentistVisit && daysUntilVisit > 14 && (
+            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-full -translate-y-12 translate-x-12" />
+          )}
+          <div className="relative p-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-sm ${
+                  !nextDentistVisit ? 'bg-gradient-to-br from-blue-100 to-cyan-100' :
+                  daysUntilVisit <= 0 ? 'bg-orange-100' :
+                  daysUntilVisit <= 14 ? 'bg-amber-100' :
+                  'bg-gradient-to-br from-blue-100 to-cyan-100'
+                }`}>🦷</div>
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Next Dentist Visit</p>
+                  {!nextDentistVisit ? (
+                    <>
+                      <p className="font-black text-base text-blue-600">Not scheduled</p>
+                      <p className="text-xs text-gray-400">Tap to log a visit →</p>
+                    </>
+                  ) : daysUntilVisit <= 0 ? (
+                    <>
+                      <p className="font-black text-base text-orange-600">⚠️ Overdue</p>
+                      <p className="text-xs text-gray-500">Was due {formatVisitDate(nextDentistVisit)}</p>
+                    </>
+                  ) : daysUntilVisit <= 14 ? (
+                    <>
+                      <p className="font-black text-base text-amber-600">In {daysUntilVisit} day{daysUntilVisit !== 1 ? "s" : ""} ⏰</p>
+                      <p className="text-xs text-gray-500">{formatVisitDate(nextDentistVisit)}</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-black text-base text-blue-600">In {daysUntilVisit} days</p>
+                      <p className="text-xs text-gray-500">{formatVisitDate(nextDentistVisit)}</p>
+                    </>
+                  )}
                 </div>
-              )}
-              <ChevronRight className="w-4 h-4 text-blue-300 mt-1" />
+              </div>
+              <div className="flex flex-col items-end gap-1.5">
+                {lastDentistVisit && (
+                  <div className="text-right">
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Last visit</p>
+                    <p className="text-xs text-gray-600 font-semibold">{formatVisitDate(lastDentistVisit)}</p>
+                  </div>
+                )}
+                <ChevronRight className="w-4 h-4 text-blue-300" />
+              </div>
             </div>
           </div>
         </div>
 
         {/* DAILY TIP CARD */}
         {dailyTip && (
-          <div className={`bg-white border border-blue-200 rounded-2xl shadow-lg p-5 ${fadeInUpClass('delay-250')} hover:shadow-xl transition-all duration-300 hover:scale-[1.01]`}>
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0 text-white shadow-md">
+          <div className={`relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-500 rounded-2xl shadow-md p-5 ${fadeInUpClass('delay-250')} hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300`}>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-12 translate-x-12" />
+            <div className="relative flex items-start gap-3">
+              <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center flex-shrink-0 text-white border border-white/20">
                 {dailyTip.icon}
               </div>
               <div>
-                <h3 className="font-bold text-blue-600 mb-1">{dailyTip.title}</h3>
-                <p className="text-sm text-gray-600">{dailyTip.tip}</p>
+                <p className="text-[10px] font-bold text-blue-200 uppercase tracking-widest mb-0.5">✨ Daily Tip</p>
+                <h3 className="font-black text-white mb-1">{dailyTip.title}</h3>
+                <p className="text-sm text-blue-100 leading-relaxed">{dailyTip.tip}</p>
               </div>
             </div>
           </div>
         )}
 
         {/* WEEKLY ACTIVITY CHART */}
-        <div className={`bg-white border border-blue-100 rounded-2xl shadow-lg p-5 ${fadeInUpClass('delay-300')} hover:shadow-xl transition-all duration-300`}>
-          <h3 className="font-bold text-gray-900 mb-4">{texts.weeklyActivity || "Weekly Activity"}</h3>
+        <div className={`bg-white border border-blue-100 rounded-2xl shadow-md p-5 ${fadeInUpClass('delay-300')} hover:shadow-lg transition-all duration-300`}>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+              <TrendingUp className="w-4 h-4 text-white" />
+            </div>
+            <h3 className="font-bold text-gray-900">{texts.weeklyActivity || "Weekly Activity"}</h3>
+          </div>
           <div className="flex justify-between items-end h-24 gap-1">
             {weeklyActivity.map((day, i) => {
               const pct = Math.round(
@@ -370,32 +395,22 @@ export default function Home({ setActiveTab, user, habitData }) {
           </div>
         </div>
 
-        {/* SCAN STATS */}
-        <div className={`grid grid-cols-2 gap-4 ${fadeInUpClass('delay-350')}`}>
-          <div className="bg-white border border-blue-100 rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
-            <p className="text-xs text-gray-500 mb-1">{texts.totalScans || "Total Scans"}</p>
-            <p className="text-2xl font-bold text-gray-900">{totalScans}</p>
-          </div>
-          <div className="bg-white border border-blue-100 rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
-            <p className="text-xs text-gray-500 mb-1">{texts.lastScan || "Last Scan"}</p>
-            <p className="text-lg font-bold text-gray-900">{lastScanDate || "Never"}</p>
-          </div>
-        </div>
-
         {/* UPCOMING APPOINTMENTS */}
         {upcomingAppointments.length > 0 && (
-          <div className={`bg-white border border-blue-100 rounded-2xl shadow-lg p-5 ${fadeInUpClass('delay-400')} hover:shadow-xl transition-all duration-300`}>
+          <div className={`bg-white border border-blue-100 rounded-2xl shadow-md p-5 ${fadeInUpClass('delay-400')} hover:shadow-lg transition-all duration-300`}>
             <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-blue-600" />
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+                <Calendar className="w-4 h-4 text-white" />
+              </div>
               {texts.upcomingAppointments || "Upcoming Appointments"}
             </h3>
             {upcomingAppointments.map((apt, i) => (
-              <div key={i} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0 hover:bg-blue-50 px-2 rounded-lg transition-colors">
+              <div key={i} className="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0 hover:bg-blue-50 px-2 rounded-xl transition-colors">
                 <div>
-                  <p className="font-medium text-gray-900">{apt.dentist}</p>
-                  <p className="text-xs text-gray-500">{new Date(apt.date).toLocaleDateString()}</p>
+                  <p className="font-semibold text-gray-900 text-sm">{apt.dentist}</p>
+                  <p className="text-xs text-gray-400">{new Date(apt.date).toLocaleDateString()}</p>
                 </div>
-                <button className="text-sm text-blue-600 font-semibold hover:scale-105 transition-transform">View</button>
+                <button className="text-xs text-blue-600 font-bold bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors">View</button>
               </div>
             ))}
           </div>
@@ -403,24 +418,30 @@ export default function Home({ setActiveTab, user, habitData }) {
 
         {/* RECENT SCANS */}
         {recentScans.length > 0 && (
-          <div className={`bg-white border border-blue-100 rounded-2xl shadow-lg p-5 ${fadeInUpClass('delay-450')} hover:shadow-xl transition-all duration-300`}>
+          <div className={`bg-white border border-blue-100 rounded-2xl shadow-md p-5 ${fadeInUpClass('delay-450')} hover:shadow-lg transition-all duration-300`}>
             <div className="flex justify-between items-center mb-3">
-              <h3 className="font-bold text-gray-900">{texts.recentScans || "Recent Scans"}</h3>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+                  <Camera className="w-4 h-4 text-white" />
+                </div>
+                <h3 className="font-bold text-gray-900">{texts.recentScans || "Recent Scans"}</h3>
+              </div>
               <button
                 onClick={() => go("scan")}
-                className="text-sm text-blue-600 font-semibold flex items-center gap-1 hover:scale-105 transition-transform"
+                className="text-xs text-blue-600 font-bold flex items-center gap-1 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors"
               >
-                {texts.viewAll || "View All"} <ChevronRight className="w-4 h-4" />
+                {texts.viewAll || "View All"} <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {recentScans.map((scan, i) => (
-                <div key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-blue-50 transition-colors">
-                  <img src={scan.image} alt="Scan" className="w-12 h-12 rounded-lg object-cover ring-2 ring-blue-200" />
+                <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-blue-50 transition-colors border border-transparent hover:border-blue-100">
+                  <img src={scan.image} alt="Scan" className="w-12 h-12 rounded-xl object-cover ring-2 ring-blue-200 shadow-sm" />
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">{scan.timestamp}</p>
-                    <p className="text-xs text-gray-500 line-clamp-1">{scan.feedback}</p>
+                    <p className="text-sm font-semibold text-gray-900">{scan.timestamp}</p>
+                    <p className="text-xs text-gray-400 line-clamp-1">{scan.feedback}</p>
                   </div>
+                  <ChevronRight className="w-4 h-4 text-blue-200 flex-shrink-0" />
                 </div>
               ))}
             </div>
@@ -428,67 +449,36 @@ export default function Home({ setActiveTab, user, habitData }) {
         )}
 
         {/* QUICK ACTIONS GRID */}
-        <div className={`grid grid-cols-2 gap-4 ${fadeInUpClass('delay-500')}`}>
-          <button
-            onClick={() => go("scan")}
-            className="group relative bg-white border border-blue-200 rounded-2xl p-5 shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 text-left"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="relative space-y-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-400 rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                <Camera className="w-5 h-5 text-white" />
+        <div className={`grid grid-cols-2 gap-3 ${fadeInUpClass('delay-500')}`}>
+          {[
+            { tab: "scan",     icon: <Camera className="w-5 h-5 text-white" />,    label: texts.scanTeeth || "Scan Teeth",       sub: texts.aiFeedback || "AI brushing feedback",       emoji: "🔬" },
+            { tab: "today",    icon: <Calendar className="w-5 h-5 text-white" />,  label: texts.streaks || "Streaks",            sub: texts.trackHabits || "Track daily habits",        emoji: "🔥" },
+            { tab: "dentists", icon: <MapPin className="w-5 h-5 text-white" />,    label: texts.findDentists || "Find Dentists", sub: texts.nearbyCare || "Nearby care + insurance",    emoji: "📍" },
+            { tab: "progress", icon: <TrendingUp className="w-5 h-5 text-white" />,label: texts.progress || "Progress",         sub: texts.reviewImprovements || "Review improvements", emoji: "📈" },
+          ].map(({ tab, icon, label, sub, emoji }) => (
+            <button
+              key={tab}
+              onClick={() => go(tab)}
+              className="group relative bg-white border border-blue-100 rounded-2xl p-5 shadow-md hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 text-left overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-cyan-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
+              <div className="absolute top-3 right-3 text-xl opacity-10 group-hover:opacity-20 transition-opacity">{emoji}</div>
+              <div className="relative space-y-3">
+                <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-md group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                  {icon}
+                </div>
+                <div>
+                  <p className="font-bold text-gray-900 text-sm">{label}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{sub}</p>
+                </div>
               </div>
-              <p className="font-bold text-gray-900">{texts.scanTeeth || "Scan Teeth"}</p>
-              <p className="text-xs text-gray-500">{texts.aiFeedback || "AI brushing feedback"}</p>
-            </div>
-          </button>
-
-          <button
-            onClick={() => go("today")}
-            className="group relative bg-white border border-blue-200 rounded-2xl p-5 shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 text-left"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="relative space-y-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-400 rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                <Calendar className="w-5 h-5 text-white" />
-              </div>
-              <p className="font-bold text-gray-900">{texts.streaks || "Streaks"}</p>
-              <p className="text-xs text-gray-500">{texts.trackHabits || "Track daily habits"}</p>
-            </div>
-          </button>
-
-          <button
-            onClick={() => go("dentists")}
-            className="group relative bg-white border border-blue-200 rounded-2xl p-5 shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 text-left"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="relative space-y-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-400 rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                <MapPin className="w-5 h-5 text-white" />
-              </div>
-              <p className="font-bold text-gray-900">{texts.findDentists || "Find Dentists"}</p>
-              <p className="text-xs text-gray-500">{texts.nearbyCare || "Nearby care + insurance"}</p>
-            </div>
-          </button>
-
-          <button
-            onClick={() => go("progress")}
-            className="group relative bg-white border border-blue-200 rounded-2xl p-5 shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 text-left"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="relative space-y-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-400 rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                <TrendingUp className="w-5 h-5 text-white" />
-              </div>
-              <p className="font-bold text-gray-900">{texts.progress || "Progress"}</p>
-              <p className="text-xs text-gray-500">{texts.reviewImprovements || "Review improvements"}</p>
-            </div>
-          </button>
+            </button>
+          ))}
         </div>
 
         {/* MOTIVATIONAL QUOTE */}
-        <div className={`text-center text-sm text-blue-400 italic transition-all duration-700 delay-550 ${isAnimating ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
-          "Every smile is unique. Every streak matters."
+        <div className={`text-center py-2 transition-all duration-700 delay-550 ${isAnimating ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+          <p className="text-sm text-blue-400 italic font-medium">"Every smile is unique. Every streak matters."</p>
         </div>
 
       </div>

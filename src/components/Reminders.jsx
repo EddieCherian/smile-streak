@@ -2,7 +2,7 @@ import { scheduleDailyNotifications } from "../utils/scheduleNotifications";
 import { useState, useEffect, useContext } from "react";
 import { getReminders, saveReminders } from "../utils/reminders";
 import { requestNotificationPermission } from "../utils/notifications";
-import { Bell, BellOff, Clock, Sparkles, Zap, CheckCircle2, TrendingUp, Moon, Sun, Activity } from "lucide-react";
+import { Bell, BellOff, Clock, Sparkles, Zap, CheckCircle2, TrendingUp, Moon, Sun, Activity, Calendar, AlertCircle } from "lucide-react";
 import { TranslationContext } from "../App";
 
 const isIOS = /iPhone|iPad|iPo/.test(navigator.userAgent);
@@ -18,6 +18,14 @@ export default function Reminders() {
     streak: 0
   });
   const [translatedText, setTranslatedText] = useState({});
+
+  // ── DENTIST REMINDER STATE (new) ──
+  const [dentistReminderEnabled, setDentistReminderEnabled] = useState(
+    () => JSON.parse(localStorage.getItem('dentistReminderEnabled') || 'false')
+  );
+  const [nextDentistVisit, setNextDentistVisit] = useState(null);
+  const [lastDentistVisit, setLastDentistVisit] = useState(null);
+  const [scheduledDentistReminders, setScheduledDentistReminders] = useState([]);
 
   // Translation keys
   const translationKeys = {
@@ -63,7 +71,6 @@ export default function Reminders() {
       }
       setTranslatedText(translations);
     };
-    
     loadTranslations();
   }, [currentLanguage, t]);
 
@@ -72,21 +79,109 @@ export default function Reminders() {
   }, [reminders]);
 
   useEffect(() => {
-    // Load reminder stats from localStorage
     const stats = JSON.parse(localStorage.getItem('reminderStats') || '{"onTimeCount": 0, "streak": 0}');
     setReminderStats(stats);
-
-    // Check if notifications are enabled
     if ('Notification' in window) {
       setNotificationsEnabled(Notification.permission === 'granted');
     }
   }, []);
 
+  // ── LOAD DENTIST VISIT DATA (new) ──
+  useEffect(() => {
+    const loadDentistData = () => {
+      try {
+        const stored = localStorage.getItem('habitData');
+        if (stored) {
+          const data = JSON.parse(stored);
+          setNextDentistVisit(data.__nextDentistVisit || null);
+          setLastDentistVisit(data.__lastDentistVisit || null);
+        }
+      } catch (e) {
+        console.error('Error loading dentist data:', e);
+      }
+    };
+    loadDentistData();
+    // Poll for updates every 2 seconds in case Today page updates it
+    const interval = setInterval(loadDentistData, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // ── COMPUTE SCHEDULED DENTIST REMINDERS (new) ──
+  useEffect(() => {
+    if (!nextDentistVisit) {
+      setScheduledDentistReminders([]);
+      return;
+    }
+    const visitDate = new Date(nextDentistVisit);
+    const now = new Date();
+
+    const remindersToSchedule = [
+      {
+        label: "1 month before",
+        emoji: "📅",
+        date: new Date(visitDate.getTime() - 30 * 24 * 60 * 60 * 1000),
+        color: "bg-blue-50 border-blue-200 text-blue-700"
+      },
+      {
+        label: "2 weeks before",
+        emoji: "🗓️",
+        date: new Date(visitDate.getTime() - 14 * 24 * 60 * 60 * 1000),
+        color: "bg-purple-50 border-purple-200 text-purple-700"
+      },
+      {
+        label: "1 week before",
+        emoji: "⏰",
+        date: new Date(visitDate.getTime() - 7 * 24 * 60 * 60 * 1000),
+        color: "bg-teal-50 border-teal-200 text-teal-700"
+      }
+    ];
+
+    setScheduledDentistReminders(remindersToSchedule.map(r => ({
+      ...r,
+      isPast: r.date < now,
+      daysUntil: Math.ceil((r.date - now) / (1000 * 60 * 60 * 24)),
+      formattedDate: r.date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    })));
+  }, [nextDentistVisit]);
+
+  // ── SCHEDULE BROWSER NOTIFICATIONS FOR DENTIST (new) ──
+  useEffect(() => {
+    localStorage.setItem('dentistReminderEnabled', JSON.stringify(dentistReminderEnabled));
+
+    if (!dentistReminderEnabled || !nextDentistVisit || Notification.permission !== 'granted') return;
+
+    const visitDate = new Date(nextDentistVisit);
+    const now = new Date();
+
+    const checkAndNotify = (targetDate, message) => {
+      const diff = targetDate - now;
+      if (diff > 0 && diff < 24 * 60 * 60 * 1000) {
+        // Within today — schedule for now as a demo notification
+        setTimeout(() => {
+          new Notification("🦷 SmileStreak Dentist Reminder", {
+            body: message,
+            icon: "/icon-511.png"
+          });
+        }, Math.min(diff, 5000));
+      }
+    };
+
+    checkAndNotify(
+      new Date(visitDate.getTime() - 30 * 24 * 60 * 60 * 1000),
+      `Your dentist visit is in 1 month — ${visitDate.toLocaleDateString()}`
+    );
+    checkAndNotify(
+      new Date(visitDate.getTime() - 14 * 24 * 60 * 60 * 1000),
+      `Your dentist visit is in 2 weeks — ${visitDate.toLocaleDateString()}`
+    );
+    checkAndNotify(
+      new Date(visitDate.getTime() - 7 * 24 * 60 * 60 * 1000),
+      `Your dentist visit is in 1 week — ${visitDate.toLocaleDateString()}`
+    );
+  }, [dentistReminderEnabled, nextDentistVisit]);
+
   const updateTime = (key, value) => {
-    setReminders((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
+    setReminders((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleNotifications = async () => {
@@ -95,9 +190,7 @@ export default function Reminders() {
       setTimeout(() => setMessage(""), 5000);
       return;
     }
-
     const permission = await requestNotificationPermission();
-
     if (permission === "granted") {
       scheduleDailyNotifications();
       setNotificationsEnabled(true);
@@ -127,7 +220,37 @@ export default function Reminders() {
     setTimeout(() => setMessage(""), 2000);
   };
 
-  // Show loading state while translating
+  // ── DENTIST REMINDER TOGGLE HANDLER (new) ──
+  const handleDentistReminderToggle = async () => {
+    if (!dentistReminderEnabled && Notification.permission !== 'granted') {
+      const permission = await requestNotificationPermission();
+      if (permission !== 'granted') {
+        setMessage("❌ Please enable notifications first to use dentist reminders.");
+        setTimeout(() => setMessage(""), 4000);
+        return;
+      }
+      setNotificationsEnabled(true);
+    }
+    setDentistReminderEnabled(prev => !prev);
+    setMessage(!dentistReminderEnabled
+      ? "🦷 Dentist visit reminders enabled!"
+      : "🔕 Dentist visit reminders disabled."
+    );
+    setTimeout(() => setMessage(""), 3000);
+  };
+
+  const formatVisitDate = (iso) => {
+    if (!iso) return "";
+    return new Date(iso).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  };
+
+  const getDaysUntilVisit = () => {
+    if (!nextDentistVisit) return null;
+    return Math.ceil((new Date(nextDentistVisit) - new Date()) / (1000 * 60 * 60 * 24));
+  };
+
+  const daysUntilVisit = getDaysUntilVisit();
+
   if (translating || Object.keys(translatedText).length === 0) {
     return (
       <section className="space-y-6 pb-8">
@@ -147,7 +270,6 @@ export default function Reminders() {
       <div className="bg-gradient-to-br from-blue-600 via-cyan-500 to-blue-500 text-white rounded-3xl p-6 shadow-xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16" />
         <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-12 -translate-x-12" />
-        
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-2">
             <Bell className="w-6 h-6" />
@@ -159,8 +281,8 @@ export default function Reminders() {
 
       {/* Notification Status */}
       <div className={`rounded-2xl p-5 border-2 ${
-        notificationsEnabled 
-          ? "bg-green-50 border-green-300" 
+        notificationsEnabled
+          ? "bg-green-50 border-green-300"
           : "bg-orange-50 border-orange-300"
       }`}>
         <div className="flex items-center gap-3">
@@ -195,28 +317,17 @@ export default function Reminders() {
           <h3 className="font-bold text-gray-900">{translatedText.quickSetup}</h3>
         </div>
         <div className="grid grid-cols-3 gap-3">
-          <button
-            onClick={quickSetMorning}
-            className="group p-4 rounded-xl bg-gradient-to-br from-yellow-50 to-orange-50 border border-yellow-200 hover:shadow-md hover:-translate-y-1 transition-all"
-          >
+          <button onClick={quickSetMorning} className="group p-4 rounded-xl bg-gradient-to-br from-yellow-50 to-orange-50 border border-yellow-200 hover:shadow-md hover:-translate-y-1 transition-all">
             <Sun className="w-6 h-6 text-orange-500 mx-auto mb-2 group-hover:scale-110 transition-transform" />
             <p className="text-xs font-semibold text-gray-700">{translatedText.morning}</p>
             <p className="text-xs text-gray-500">8:00 AM</p>
           </button>
-          
-          <button
-            onClick={quickSetNight}
-            className="group p-4 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 hover:shadow-md hover:-translate-y-1 transition-all"
-          >
+          <button onClick={quickSetNight} className="group p-4 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 hover:shadow-md hover:-translate-y-1 transition-all">
             <Moon className="w-6 h-6 text-indigo-500 mx-auto mb-2 group-hover:scale-110 transition-transform" />
             <p className="text-xs font-semibold text-gray-700">{translatedText.night}</p>
             <p className="text-xs text-gray-500">9:00 PM</p>
           </button>
-          
-          <button
-            onClick={quickSetFloss}
-            className="group p-4 rounded-xl bg-gradient-to-br from-cyan-50 to-blue-50 border border-cyan-200 hover:shadow-md hover:-translate-y-1 transition-all"
-          >
+          <button onClick={quickSetFloss} className="group p-4 rounded-xl bg-gradient-to-br from-cyan-50 to-blue-50 border border-cyan-200 hover:shadow-md hover:-translate-y-1 transition-all">
             <Activity className="w-6 h-6 text-cyan-500 mx-auto mb-2 group-hover:scale-110 transition-transform" />
             <p className="text-xs font-semibold text-gray-700">{translatedText.floss}</p>
             <p className="text-xs text-gray-500">8:30 PM</p>
@@ -234,7 +345,6 @@ export default function Reminders() {
           <p className="text-3xl font-black text-gray-900">{reminderStats.onTimeCount}</p>
           <p className="text-xs text-gray-500 mt-1">{translatedText.onTimeActionsDesc}</p>
         </div>
-        
         <div className="bg-white rounded-2xl p-5 shadow-md border border-blue-100">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="w-5 h-5 text-blue-500" />
@@ -251,27 +361,123 @@ export default function Reminders() {
           <Clock className="w-5 h-5 text-blue-600" />
           <h3 className="font-bold text-gray-900">{translatedText.customTimes}</h3>
         </div>
-
         <ReminderRow
           label={translatedText.morningBrush}
           icon={<Sun className="w-5 h-5 text-orange-500" />}
           time={reminders.morning}
           onChange={(v) => updateTime("morning", v)}
         />
-
         <ReminderRow
           label={translatedText.nightBrush}
           icon={<Moon className="w-5 h-5 text-indigo-500" />}
           time={reminders.night}
           onChange={(v) => updateTime("night", v)}
         />
-
         <ReminderRow
           label={translatedText.flossTime}
           icon={<Activity className="w-5 h-5 text-cyan-500" />}
           time={reminders.floss}
           onChange={(v) => updateTime("floss", v)}
         />
+      </div>
+
+      {/* ── DENTIST VISIT REMINDER SECTION (new) ── */}
+      <div className="bg-white rounded-3xl p-5 shadow-lg border border-teal-100 space-y-4">
+        <div className="flex items-center gap-2 mb-1">
+          <Calendar className="w-5 h-5 text-teal-600" />
+          <h3 className="font-bold text-gray-900">Dentist Visit Reminder</h3>
+        </div>
+
+        {/* Next visit info */}
+        {nextDentistVisit ? (
+          <div className={`rounded-xl p-4 border-2 ${
+            daysUntilVisit !== null && daysUntilVisit <= 0
+              ? "bg-red-50 border-red-200"
+              : daysUntilVisit !== null && daysUntilVisit <= 30
+              ? "bg-amber-50 border-amber-200"
+              : "bg-teal-50 border-teal-200"
+          }`}>
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">🦷</span>
+              <div>
+                <p className="font-bold text-gray-900 text-sm">
+                  {daysUntilVisit !== null && daysUntilVisit <= 0
+                    ? "⚠️ Dentist visit overdue!"
+                    : daysUntilVisit !== null && daysUntilVisit <= 7
+                    ? `🔔 Visit in ${daysUntilVisit} days!`
+                    : `Next visit in ${daysUntilVisit} days`
+                  }
+                </p>
+                <p className="text-xs text-gray-600 mt-0.5">{formatVisitDate(nextDentistVisit)}</p>
+                {lastDentistVisit && (
+                  <p className="text-xs text-gray-400 mt-1">Last visit: {formatVisitDate(lastDentistVisit)}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-xl p-4 border-2 border-dashed border-teal-200 bg-teal-50 text-center">
+            <p className="text-sm text-teal-600 font-medium">No dentist visit logged yet</p>
+            <p className="text-xs text-teal-500 mt-1">Log a visit on the Today page to enable reminders</p>
+          </div>
+        )}
+
+        {/* Toggle */}
+        <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${dentistReminderEnabled ? "bg-teal-500" : "bg-gray-300"}`}>
+              <Bell className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900 text-sm">Dentist Visit Reminder</p>
+              <p className="text-xs text-gray-500">{dentistReminderEnabled ? "Reminders on" : "Reminders off"}</p>
+            </div>
+          </div>
+          <button
+            onClick={handleDentistReminderToggle}
+            disabled={!nextDentistVisit}
+            className={`relative w-12 h-6 rounded-full transition-all duration-300 ${
+              dentistReminderEnabled ? "bg-teal-500" : "bg-gray-300"
+            } ${!nextDentistVisit ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}
+          >
+            <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-300 ${
+              dentistReminderEnabled ? "left-6" : "left-0.5"
+            }`} />
+          </button>
+        </div>
+
+        {/* Scheduled reminders breakdown */}
+        {nextDentistVisit && dentistReminderEnabled && scheduledDentistReminders.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Scheduled Reminders</p>
+            {scheduledDentistReminders.map((r, i) => (
+              <div key={i} className={`flex items-center justify-between p-3 rounded-xl border ${r.color} ${r.isPast ? "opacity-40" : ""}`}>
+                <div className="flex items-center gap-2">
+                  <span>{r.emoji}</span>
+                  <div>
+                    <p className="text-xs font-bold">{r.label}</p>
+                    <p className="text-xs opacity-75">{r.formattedDate}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  {r.isPast ? (
+                    <span className="text-xs font-semibold opacity-60">Passed</span>
+                  ) : (
+                    <span className="text-xs font-bold">in {r.daysUntil}d</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Info note */}
+        {nextDentistVisit && !dentistReminderEnabled && (
+          <div className="flex items-start gap-2 p-3 bg-gray-50 rounded-xl border border-gray-200">
+            <AlertCircle className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-gray-500">Enable the toggle above to get reminders 1 month, 2 weeks, and 1 week before your visit.</p>
+          </div>
+        )}
       </div>
 
       {/* Enable Button */}
@@ -314,9 +520,7 @@ export default function Reminders() {
             <Bell className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
             <div>
               <p className="font-bold text-gray-900 text-sm mb-1">{translatedText.iosTitle}</p>
-              <p className="text-xs text-gray-600">
-                {translatedText.iosMessage}
-              </p>
+              <p className="text-xs text-gray-600">{translatedText.iosMessage}</p>
             </div>
           </div>
         </div>
@@ -332,7 +536,6 @@ function ReminderRow({ label, icon, time, onChange }) {
         {icon}
         <p className="font-semibold text-gray-900">{label}</p>
       </div>
-
       <input
         type="time"
         value={time}

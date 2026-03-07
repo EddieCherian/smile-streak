@@ -278,9 +278,7 @@ export default function Today({ habitData, setHabitData }) {
   };
 
   // ── DENTIST VISIT HANDLERS (new) ──
-  const logDentistVisit = () => {
-    setShowDentistModal(true);
-  };
+  const logDentistVisit = () => setShowDentistModal(true);
 
   const confirmDentistVisit = (months) => {
     const visitDate = new Date().toISOString();
@@ -290,6 +288,16 @@ export default function Today({ habitData, setHabitData }) {
       ...prev,
       __lastDentistVisit: visitDate,
       __nextDentistVisit: nextDate.toISOString(),
+    }));
+    setShowDentistModal(false);
+  };
+
+  const confirmDentistVisitByDate = (dateStr) => {
+    if (!dateStr) return;
+    setHabitData(prev => ({
+      ...prev,
+      __lastDentistVisit: new Date().toISOString(),
+      __nextDentistVisit: new Date(dateStr).toISOString(),
     }));
     setShowDentistModal(false);
   };
@@ -329,11 +337,11 @@ export default function Today({ habitData, setHabitData }) {
 
   const daysUntilVisit = getDaysUntilNextVisit();
 
-  // Loading state — matches Reminders pattern
+  // Loading state
   if (translating || !txReady) {
     return (
       <section className="space-y-6 pb-8">
-        <div className="bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-500 text-white rounded-3xl p-6 shadow-xl relative overflow-hidden">
+        <div className="bg-gradient-to-br from-blue-600 via-cyan-500 to-blue-500 text-white rounded-3xl p-6 shadow-xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16" />
           <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-12 -translate-x-12" />
           <div className="relative z-10 animate-pulse flex items-center gap-3">
@@ -393,7 +401,7 @@ export default function Today({ habitData, setHabitData }) {
       `}</style>
 
       {/* ── HERO HEADER ── */}
-      <div className="bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-500 text-white rounded-3xl p-6 shadow-xl relative overflow-hidden">
+      <div className="bg-gradient-to-br from-blue-600 via-cyan-500 to-blue-500 text-white rounded-3xl p-6 shadow-xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16" />
         <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-12 -translate-x-12" />
         <div className="relative z-10">
@@ -402,7 +410,7 @@ export default function Today({ habitData, setHabitData }) {
               <span className="text-3xl">{mot.emoji}</span>
               <div>
                 <h2 className="text-2xl font-black">🦷 {T("Today's Routine")}</h2>
-                <p className="text-sm opacity-80 mt-0.5">{dayLabel}</p>
+                <p className="text-sm opacity-90 mt-0.5">{dayLabel}</p>
               </div>
             </div>
             <button onClick={() => setShowReflection(true)}
@@ -601,37 +609,39 @@ export default function Today({ habitData, setHabitData }) {
         {/* ── LOG DENTIST VISIT BUTTON (new) ── */}
         <button
           onClick={logDentistVisit}
-          className="press hover-lift w-full py-3.5 rounded-2xl text-sm font-bold border-2 border-teal-200 bg-gradient-to-r from-teal-50 to-cyan-50 text-teal-700 hover:border-teal-400 transition-all flex items-center justify-center gap-2"
+          className="press hover-lift w-full py-3.5 rounded-2xl text-sm font-bold border border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50 text-blue-600 hover:border-blue-400 transition-all flex items-center justify-center gap-2"
         >
           🦷 Log Dentist Visit
         </button>
       </div>
 
-            {/* ── NEXT DENTIST VISIT CARD (new) ── */}
+      {/* ── NEXT DENTIST VISIT CARD (new) ── */}
       {nextDentistVisit && daysUntilVisit !== null && (
-        <div className={`rounded-3xl p-5 shadow-lg border-2 ${
-          daysUntilVisit <= 0 ? "bg-amber-50 border-amber-200" :
-          daysUntilVisit <= 14 ? "bg-orange-50 border-orange-200" :
-          "bg-gradient-to-r from-teal-50 to-cyan-50 border-teal-200"
+        <div className={`rounded-3xl p-5 shadow-md border ${
+          daysUntilVisit <= 0
+            ? "bg-orange-50 border-orange-200"
+            : daysUntilVisit <= 14
+            ? "bg-amber-50 border-amber-200"
+            : "bg-white border-blue-100"
         }`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-2xl ${
-                daysUntilVisit <= 0 ? "bg-amber-100" :
-                daysUntilVisit <= 14 ? "bg-orange-100" : "bg-teal-100"
+              <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-xl ${
+                daysUntilVisit <= 0 ? "bg-orange-100" :
+                daysUntilVisit <= 14 ? "bg-amber-100" : "bg-blue-50"
               }`}>🦷</div>
               <div>
-                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Next Dentist Visit</p>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">Next Dentist Visit</p>
                 {daysUntilVisit > 0 ? (
                   <>
-                    <p className={`text-lg font-black ${daysUntilVisit <= 14 ? "text-orange-600" : "text-teal-600"}`}>
+                    <p className={`font-black text-base ${daysUntilVisit <= 14 ? "text-amber-600" : "text-blue-600"}`}>
                       In {daysUntilVisit} day{daysUntilVisit !== 1 ? "s" : ""}
                     </p>
                     <p className="text-xs text-gray-500">{formatVisitDate(nextDentistVisit)}</p>
                   </>
                 ) : (
                   <>
-                    <p className="text-lg font-black text-amber-600">Overdue!</p>
+                    <p className="font-black text-base text-orange-600">⚠️ Overdue</p>
                     <p className="text-xs text-gray-500">Was due {formatVisitDate(nextDentistVisit)}</p>
                   </>
                 )}
@@ -639,14 +649,13 @@ export default function Today({ habitData, setHabitData }) {
             </div>
             {lastDentistVisit && (
               <div className="text-right">
-                <p className="text-[10px] text-gray-400 font-medium">Last visit</p>
-                <p className="text-xs text-gray-500 font-semibold">{formatVisitDate(lastDentistVisit)}</p>
+                <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Last visit</p>
+                <p className="text-xs text-gray-600 font-semibold mt-0.5">{formatVisitDate(lastDentistVisit)}</p>
               </div>
             )}
           </div>
         </div>
       )}
-
 
       {/* ── WATER TRACKER ── */}
       <div className="bg-white rounded-3xl p-5 shadow-lg border border-blue-100">
@@ -898,7 +907,7 @@ export default function Today({ habitData, setHabitData }) {
         </div>
       )}
 
-      {/* ── DENTIST VISIT INTERVAL MODAL (new) ── */}
+      {/* ── DENTIST VISIT MODAL (new) ── */}
       {showDentistModal && (
         <div className="fixed inset-0 bg-blue-900/25 backdrop-blur-sm flex items-end sm:items-center justify-center z-50"
           style={{animation:"fadeIn .22s ease"}} onClick={() => setShowDentistModal(false)}>
@@ -906,40 +915,64 @@ export default function Today({ habitData, setHabitData }) {
             style={{animation:"slideUp .35s cubic-bezier(.22,1,.36,1)"}}
             onClick={e => e.stopPropagation()}>
             <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5 sm:hidden" />
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-2xl">🦷</span>
-              <h3 className="text-lg font-black text-gray-900">Log Dentist Visit</h3>
+
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-xl">🦷</div>
+              <div>
+                <h3 className="text-lg font-black text-gray-900">Log Dentist Visit</h3>
+                <p className="text-xs text-gray-500">When should your next visit be?</p>
+              </div>
             </div>
-            <p className="text-xs text-gray-500 mb-5">When should your next visit be?</p>
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              {[3, 6, 12].map(months => (
+
+            <div className="mt-5 mb-3">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Quick Select</p>
+              <div className="grid grid-cols-3 gap-3">
+                {[3, 6, 12].map(months => (
+                  <button
+                    key={months}
+                    onClick={() => confirmDentistVisit(months)}
+                    className="press hover-lift py-4 rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50 text-blue-700 font-black text-sm hover:border-blue-400 transition-all text-center"
+                  >
+                    {months} mo
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mb-3">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Custom Interval</p>
+              <div className="flex items-center gap-3 p-4 rounded-2xl border-2 border-gray-200 bg-gray-50">
+                <input
+                  type="number"
+                  min="1"
+                  max="24"
+                  value={customMonths}
+                  onChange={e => setCustomMonths(Math.max(1, Math.min(24, parseInt(e.target.value) || 1)))}
+                  className="w-16 text-center border-2 border-blue-200 rounded-xl py-2 text-sm font-black text-blue-700 focus:outline-none focus:border-blue-400 bg-white"
+                />
+                <span className="text-sm text-gray-500 flex-1">months from today</span>
                 <button
-                  key={months}
-                  onClick={() => confirmDentistVisit(months)}
-                  className="press hover-lift py-4 rounded-2xl border-2 border-teal-200 bg-gradient-to-br from-teal-50 to-cyan-50 text-teal-700 font-black text-sm hover:border-teal-400 transition-all text-center"
+                  onClick={() => confirmDentistVisit(customMonths)}
+                  className="press px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-xs font-bold hover:opacity-90 shadow-md"
                 >
-                  {months} mo
+                  Set
                 </button>
-              ))}
+              </div>
             </div>
-            <div className="flex items-center gap-3 p-4 rounded-2xl border-2 border-gray-200 bg-gray-50 mb-4">
-              <span className="text-sm font-bold text-gray-600">Custom:</span>
-              <input
-                type="number"
-                min="1"
-                max="24"
-                value={customMonths}
-                onChange={e => setCustomMonths(Math.max(1, Math.min(24, parseInt(e.target.value) || 1)))}
-                className="w-16 text-center border-2 border-teal-200 rounded-xl py-1.5 text-sm font-black text-teal-700 focus:outline-none focus:border-teal-400"
-              />
-              <span className="text-sm text-gray-500">months</span>
-              <button
-                onClick={() => confirmDentistVisit(customMonths)}
-                className="ml-auto press px-4 py-2 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 text-white text-xs font-bold hover:opacity-90"
-              >
-                Set
-              </button>
+
+            <div className="mb-5">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Pick a Date</p>
+              <div className="flex items-center gap-3 p-4 rounded-2xl border-2 border-gray-200 bg-gray-50">
+                <span className="text-lg">📅</span>
+                <input
+                  type="date"
+                  min={new Date().toISOString().split("T")[0]}
+                  onChange={e => confirmDentistVisitByDate(e.target.value)}
+                  className="flex-1 border-2 border-blue-200 rounded-xl px-3 py-2 text-sm font-semibold text-blue-700 focus:outline-none focus:border-blue-400 bg-white"
+                />
+              </div>
             </div>
+
             <button onClick={() => setShowDentistModal(false)}
               className="w-full py-3 text-sm text-gray-400 hover:bg-gray-50 rounded-2xl press font-semibold">
               {T("Cancel")}

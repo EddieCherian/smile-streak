@@ -961,14 +961,14 @@ return (
         </div>
 
         {/* ── SECTION 1: Last Visit ── */}
-        <div className="mb-5 p-4 rounded-2xl bg-gray-50 border-2 border-gray-200">
+        <div className="mb-5 p-4 rounded-2xl bg-gray-50 border-2 border-gray-200 overflow-hidden">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">📅 Last Visit Date</p>
           <input
             type="date"
             max={new Date().toISOString().split("T")[0]}
             value={lastVisitDateInput}
             onChange={e => setLastVisitDateInput(e.target.value)}
-            className="w-full border-2 border-blue-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-blue-700 focus:outline-none focus:border-blue-400 bg-white"
+            className="w-full max-w-full box-border border-2 border-blue-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-blue-700 focus:outline-none focus:border-blue-400 bg-white"
           />
           <p className="text-[10px] text-gray-400 mt-2">When did you last visit the dentist?</p>
         </div>
@@ -993,26 +993,26 @@ return (
             ))}
           </div>
 
-          <div className="flex items-center gap-3 p-3.5 rounded-2xl border-2 border-gray-200 bg-gray-50 mb-3">
+          <div className="flex items-center gap-3 p-3.5 rounded-2xl border-2 border-gray-200 bg-gray-50 mb-3 overflow-hidden">
             <input
               type="number"
               min="1"
               max="24"
               value={nextCustomMonths}
               onChange={e => { setNextCustomMonths(Math.max(1, Math.min(24, parseInt(e.target.value) || 1))); setNextDateInput(""); }}
-              className="w-14 text-center border-2 border-blue-200 rounded-xl py-1.5 text-sm font-black text-blue-700 focus:outline-none focus:border-blue-400 bg-white"
+              className="w-14 min-w-0 text-center border-2 border-blue-200 rounded-xl py-1.5 text-sm font-black text-blue-700 focus:outline-none focus:border-blue-400 bg-white"
             />
-            <span className="text-sm text-gray-500 flex-1">months from today</span>
+            <span className="text-sm text-gray-500 flex-1 min-w-0">months from today</span>
           </div>
 
-          <div className="p-3.5 rounded-2xl border-2 border-gray-200 bg-gray-50">
+          <div className="p-3.5 rounded-2xl border-2 border-gray-200 bg-gray-50 overflow-hidden">
             <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-2">Or pick a specific date</p>
             <input
               type="date"
               min={new Date().toISOString().split("T")[0]}
               value={nextDateInput}
               onChange={e => setNextDateInput(e.target.value)}
-              className="w-full border-2 border-blue-200 rounded-xl px-3 py-2 text-sm font-semibold text-blue-700 focus:outline-none focus:border-blue-400 bg-white"
+              className="w-full max-w-full box-border border-2 border-blue-200 rounded-xl px-3 py-2 text-sm font-semibold text-blue-700 focus:outline-none focus:border-blue-400 bg-white"
             />
           </div>
         </div>

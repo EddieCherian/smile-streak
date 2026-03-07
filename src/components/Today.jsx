@@ -607,29 +607,46 @@ export default function Today({ habitData, setHabitData }) {
         </button>
       </div>
 
-      {/* ── NEXT DENTIST VISIT CARD (new) ── */}
+            {/* ── NEXT DENTIST VISIT CARD (new) ── */}
       {nextDentistVisit && daysUntilVisit !== null && (
-        <div className="bg-white rounded-3xl p-5 shadow-lg border border-teal-100">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-xl">🏥</span>
-            <p className="font-bold text-gray-900">Next Dentist Visit</p>
+        <div className={`rounded-3xl p-5 shadow-lg border-2 ${
+          daysUntilVisit <= 0 ? "bg-amber-50 border-amber-200" :
+          daysUntilVisit <= 14 ? "bg-orange-50 border-orange-200" :
+          "bg-gradient-to-r from-teal-50 to-cyan-50 border-teal-200"
+        }`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-2xl ${
+                daysUntilVisit <= 0 ? "bg-amber-100" :
+                daysUntilVisit <= 14 ? "bg-orange-100" : "bg-teal-100"
+              }`}>🦷</div>
+              <div>
+                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Next Dentist Visit</p>
+                {daysUntilVisit > 0 ? (
+                  <>
+                    <p className={`text-lg font-black ${daysUntilVisit <= 14 ? "text-orange-600" : "text-teal-600"}`}>
+                      In {daysUntilVisit} day{daysUntilVisit !== 1 ? "s" : ""}
+                    </p>
+                    <p className="text-xs text-gray-500">{formatVisitDate(nextDentistVisit)}</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-lg font-black text-amber-600">Overdue!</p>
+                    <p className="text-xs text-gray-500">Was due {formatVisitDate(nextDentistVisit)}</p>
+                  </>
+                )}
+              </div>
+            </div>
+            {lastDentistVisit && (
+              <div className="text-right">
+                <p className="text-[10px] text-gray-400 font-medium">Last visit</p>
+                <p className="text-xs text-gray-500 font-semibold">{formatVisitDate(lastDentistVisit)}</p>
+              </div>
+            )}
           </div>
-          {daysUntilVisit > 0 ? (
-            <>
-              <p className="text-2xl font-black text-teal-600">In {daysUntilVisit} days</p>
-              <p className="text-xs text-gray-500 mt-1">{formatVisitDate(nextDentistVisit)}</p>
-            </>
-          ) : (
-            <>
-              <p className="text-sm font-bold text-amber-600">⚠️ Your dentist visit is overdue!</p>
-              <p className="text-xs text-gray-500 mt-1">Was due: {formatVisitDate(nextDentistVisit)}</p>
-            </>
-          )}
-          {lastDentistVisit && (
-            <p className="text-xs text-gray-400 mt-2">Last visit: {formatVisitDate(lastDentistVisit)}</p>
-          )}
         </div>
       )}
+
 
       {/* ── WATER TRACKER ── */}
       <div className="bg-white rounded-3xl p-5 shadow-lg border border-blue-100">

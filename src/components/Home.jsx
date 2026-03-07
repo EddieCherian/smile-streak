@@ -26,128 +26,46 @@ export default function Home({ setActiveTab, user, habitData }) {
   const [weeklyActivity, setWeeklyActivity] = useState([]);
   const [hoveredCard, setHoveredCard] = useState(null);
 
-  // Daily tips database (rotating, educational content)
   const dailyTips = [
-    { 
-      id: 1,
-      title: "Perfect Brushing Time",
-      tip: "Brush for a full 2 minutes, spending 30 seconds in each quadrant of your mouth.",
-      icon: <Clock className="w-4 h-4" />,
-      bgColor: "bg-blue-50",
-      borderColor: "border-blue-200",
-      textColor: "text-blue-600",
-      iconBg: "bg-blue-500"
-    },
-    { 
-      id: 2,
-      title: "Flossing Facts",
-      tip: "Flossing removes plaque between teeth where your toothbrush can't reach. Do it before brushing!",
-      icon: <Activity className="w-4 h-4" />,
-      bgColor: "bg-blue-50",
-      borderColor: "border-blue-200",
-      textColor: "text-blue-600",
-      iconBg: "bg-blue-500"
-    },
-    { 
-      id: 3,
-      title: "Mouthwash Matters",
-      tip: "Use mouthwash after brushing and flossing to rinse away loosened debris and freshen breath.",
-      icon: <Droplets className="w-4 h-4" />,
-      bgColor: "bg-blue-50",
-      borderColor: "border-blue-200",
-      textColor: "text-blue-600",
-      iconBg: "bg-blue-500"
-    },
-    { 
-      id: 4,
-      title: "Replace Your Toothbrush",
-      tip: "Change your toothbrush every 3-4 months or sooner if bristles are frayed.",
-      icon: <Brush className="w-4 h-4" />,
-      bgColor: "bg-blue-50",
-      borderColor: "border-blue-200",
-      textColor: "text-blue-600",
-      iconBg: "bg-blue-500"
-    },
-    { 
-      id: 5,
-      title: "Healthy Diet, Healthy Teeth",
-      tip: "Limit sugary snacks and drinks. Crunchy fruits and veggies like apples and carrots help clean teeth naturally.",
-      icon: <Apple className="w-4 h-4" />,
-      bgColor: "bg-blue-50",
-      borderColor: "border-blue-200",
-      textColor: "text-blue-600",
-      iconBg: "bg-blue-500"
-    },
-    { 
-      id: 6,
-      title: "Don't Brush Too Hard",
-      tip: "Aggressive brushing can damage gums and enamel. Use gentle, circular motions.",
-      icon: <Heart className="w-4 h-4" />,
-      bgColor: "bg-blue-50",
-      borderColor: "border-blue-200",
-      textColor: "text-blue-600",
-      iconBg: "bg-blue-500"
-    },
-    { 
-      id: 7,
-      title: "Stay Hydrated",
-      tip: "Drinking water helps wash away food particles and bacteria, and prevents dry mouth.",
-      icon: <Coffee className="w-4 h-4" />,
-      bgColor: "bg-blue-50",
-      borderColor: "border-blue-200",
-      textColor: "text-blue-600",
-      iconBg: "bg-blue-500"
-    }
+    { id: 1, title: "Perfect Brushing Time", tip: "Brush for a full 2 minutes, spending 30 seconds in each quadrant of your mouth.", icon: <Clock className="w-4 h-4" />, bgColor: "bg-blue-50", borderColor: "border-blue-200", textColor: "text-blue-600", iconBg: "bg-blue-500" },
+    { id: 2, title: "Flossing Facts", tip: "Flossing removes plaque between teeth where your toothbrush can't reach. Do it before brushing!", icon: <Activity className="w-4 h-4" />, bgColor: "bg-blue-50", borderColor: "border-blue-200", textColor: "text-blue-600", iconBg: "bg-blue-500" },
+    { id: 3, title: "Mouthwash Matters", tip: "Use mouthwash after brushing and flossing to rinse away loosened debris and freshen breath.", icon: <Droplets className="w-4 h-4" />, bgColor: "bg-blue-50", borderColor: "border-blue-200", textColor: "text-blue-600", iconBg: "bg-blue-500" },
+    { id: 4, title: "Replace Your Toothbrush", tip: "Change your toothbrush every 3-4 months or sooner if bristles are frayed.", icon: <Brush className="w-4 h-4" />, bgColor: "bg-blue-50", borderColor: "border-blue-200", textColor: "text-blue-600", iconBg: "bg-blue-500" },
+    { id: 5, title: "Healthy Diet, Healthy Teeth", tip: "Limit sugary snacks and drinks. Crunchy fruits and veggies like apples and carrots help clean teeth naturally.", icon: <Apple className="w-4 h-4" />, bgColor: "bg-blue-50", borderColor: "border-blue-200", textColor: "text-blue-600", iconBg: "bg-blue-500" },
+    { id: 6, title: "Don't Brush Too Hard", tip: "Aggressive brushing can damage gums and enamel. Use gentle, circular motions.", icon: <Heart className="w-4 h-4" />, bgColor: "bg-blue-50", borderColor: "border-blue-200", textColor: "text-blue-600", iconBg: "bg-blue-500" },
+    { id: 7, title: "Stay Hydrated", tip: "Drinking water helps wash away food particles and bacteria, and prevents dry mouth.", icon: <Coffee className="w-4 h-4" />, bgColor: "bg-blue-50", borderColor: "border-blue-200", textColor: "text-blue-600", iconBg: "bg-blue-500" }
   ];
 
   useEffect(() => {
-    // Get streak data using utility functions
     const currentStreak = getCurrentStreak(habitData);
     setStreak(currentStreak);
-    
-    // Get longest streak
     const longest = getLongestStreak(habitData);
     setLongestStreak(longest);
-    
-    // Get today's progress using utility
     const progress = getTodayProgress(habitData);
     setTodayProgress(progress);
-    
-    // Get weekly activity using utility
     const weekly = getWeeklyActivity(habitData);
     setWeeklyActivity(weekly);
-    
-    // Set next milestone
     const milestones = [7, 30, 60, 90, 180, 365];
     const next = milestones.find(m => m > currentStreak) || 365;
     setNextMilestone(next);
-    
-    // Load scan history
     const scanHistory = JSON.parse(localStorage.getItem('scanHistory') || '[]');
     setRecentScans(scanHistory.slice(0, 3));
     setTotalScans(scanHistory.length);
-    
     if (scanHistory.length > 0) {
       const lastScan = new Date(scanHistory[0].date);
       const today = new Date();
       const diffDays = Math.floor((today - lastScan) / (1000 * 60 * 60 * 24));
       setLastScanDate(diffDays === 0 ? 'Today' : diffDays === 1 ? 'Yesterday' : `${diffDays} days ago`);
     }
-    
-    // Load upcoming appointments from storage
     const appointments = storage.get('appointments', []);
     const upcoming = appointments
       .filter(apt => new Date(apt.date) > new Date())
       .sort((a, b) => new Date(a.date) - new Date(b.date))
       .slice(0, 2);
     setUpcomingAppointments(upcoming);
-    
-    // Set daily tip (rotates based on day of month)
     const dayOfMonth = new Date().getDate();
     const tipIndex = (dayOfMonth - 1) % dailyTips.length;
     setDailyTip(dailyTips[tipIndex]);
-    
-    // Trigger animation
     setIsAnimating(true);
   }, [habitData, user]);
 
@@ -193,12 +111,9 @@ export default function Home({ setActiveTab, user, habitData }) {
   }, [currentLanguage, t]);
 
   const go = (tab) => {
-    if (typeof setActiveTab === "function") {
-      setActiveTab(tab);
-    }
+    if (typeof setActiveTab === "function") setActiveTab(tab);
   };
 
-  // Get greeting based on time of day
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return texts.goodMorning || "Good Morning";
@@ -206,9 +121,24 @@ export default function Home({ setActiveTab, user, habitData }) {
     return texts.goodEvening || "Good Evening";
   };
 
-  // Animation variants
   const fadeInUp = "transition-all duration-700 ease-out";
   const fadeInUpClass = (delay) => `${fadeInUp} ${isAnimating ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`;
+
+  // Dentist visit data from habitData
+  const nextDentistVisit = habitData?.__nextDentistVisit || null;
+  const lastDentistVisit = habitData?.__lastDentistVisit || null;
+
+  const getDaysUntilVisit = () => {
+    if (!nextDentistVisit) return null;
+    return Math.ceil((new Date(nextDentistVisit) - new Date()) / (1000 * 60 * 60 * 24));
+  };
+
+  const formatVisitDate = (iso) => {
+    if (!iso) return "";
+    return new Date(iso).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  };
+
+  const daysUntilVisit = getDaysUntilVisit();
 
   return (
     <div className={`min-h-screen p-6 transition-colors duration-300 ${
@@ -216,7 +146,7 @@ export default function Home({ setActiveTab, user, habitData }) {
     }`}>
       <div className="max-w-3xl mx-auto space-y-6">
 
-        {/* WELCOME HEADER - Matching buttons */}
+        {/* WELCOME HEADER */}
         <div className={`flex items-center justify-between ${fadeInUpClass('delay-0')}`}>
           <div className="flex items-center gap-3">
             <img
@@ -228,7 +158,7 @@ export default function Home({ setActiveTab, user, habitData }) {
               <h2 className={`text-lg font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                 {getGreeting()}{user?.displayName ? `, ${user.displayName.split(' ')[0]}` : ''}
               </h2>
-              <h1 className={`text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent`}>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
                 {texts.title || "SmileStreak"}
               </h1>
             </div>
@@ -251,10 +181,9 @@ export default function Home({ setActiveTab, user, habitData }) {
           </div>
         </div>
 
-        {/* STATS GRID - Clean white cards */}
+        {/* STATS GRID */}
         <div className="grid grid-cols-2 gap-4">
-          {/* STREAK CARD */}
-          <div 
+          <div
             className={`relative overflow-hidden bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 p-5 border border-blue-100 ${fadeInUpClass('delay-100')} hover:scale-[1.02] hover:-translate-y-1`}
             onMouseEnter={() => setHoveredCard('streak')}
             onMouseLeave={() => setHoveredCard(null)}
@@ -278,8 +207,7 @@ export default function Home({ setActiveTab, user, habitData }) {
             </div>
           </div>
 
-          {/* LONGEST STREAK CARD */}
-          <div 
+          <div
             className={`relative overflow-hidden bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 p-5 border border-blue-100 ${fadeInUpClass('delay-150')} hover:scale-[1.02] hover:-translate-y-1`}
             onMouseEnter={() => setHoveredCard('longest')}
             onMouseLeave={() => setHoveredCard(null)}
@@ -295,9 +223,7 @@ export default function Home({ setActiveTab, user, habitData }) {
                 <p className="text-sm font-semibold text-gray-500 pb-1">{texts.days || "days"}</p>
               </div>
               {nextMilestone && (
-                <p className="text-xs text-blue-600 mt-2 font-medium">
-                  Next: {nextMilestone} days
-                </p>
+                <p className="text-xs text-blue-600 mt-2 font-medium">Next: {nextMilestone} days</p>
               )}
             </div>
           </div>
@@ -310,7 +236,7 @@ export default function Home({ setActiveTab, user, habitData }) {
             <span className="text-sm font-semibold text-blue-600">{todayProgress}%</span>
           </div>
           <div className="w-full h-3 bg-blue-50 rounded-full overflow-hidden">
-            <div 
+            <div
               className="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full transition-all duration-1000 ease-out"
               style={{ width: `${todayProgress}%` }}
             />
@@ -321,15 +247,67 @@ export default function Home({ setActiveTab, user, habitData }) {
           </div>
         </div>
 
+        {/* NEXT DENTIST VISIT CARD */}
+        <div
+          className={`bg-white border border-blue-100 rounded-2xl shadow-lg p-5 ${fadeInUpClass('delay-225')} hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.01]`}
+          onClick={() => go("today")}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${
+                !nextDentistVisit ? "bg-blue-50" :
+                daysUntilVisit <= 0 ? "bg-orange-100" :
+                daysUntilVisit <= 14 ? "bg-amber-100" :
+                "bg-blue-50"
+              }`}>
+                🦷
+              </div>
+              <div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">Next Dentist Visit</p>
+                {!nextDentistVisit ? (
+                  <>
+                    <p className="font-black text-base text-blue-600">Not scheduled</p>
+                    <p className="text-xs text-gray-400">Tap to log a visit</p>
+                  </>
+                ) : daysUntilVisit <= 0 ? (
+                  <>
+                    <p className="font-black text-base text-orange-600">⚠️ Overdue</p>
+                    <p className="text-xs text-gray-500">Was due {formatVisitDate(nextDentistVisit)}</p>
+                  </>
+                ) : daysUntilVisit <= 14 ? (
+                  <>
+                    <p className="font-black text-base text-amber-600">In {daysUntilVisit} day{daysUntilVisit !== 1 ? "s" : ""}</p>
+                    <p className="text-xs text-gray-500">{formatVisitDate(nextDentistVisit)}</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-black text-base text-blue-600">In {daysUntilVisit} days</p>
+                    <p className="text-xs text-gray-500">{formatVisitDate(nextDentistVisit)}</p>
+                  </>
+                )}
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-1">
+              {lastDentistVisit && (
+                <div className="text-right">
+                  <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Last visit</p>
+                  <p className="text-xs text-gray-600 font-semibold">{formatVisitDate(lastDentistVisit)}</p>
+                </div>
+              )}
+              <ChevronRight className="w-4 h-4 text-blue-300 mt-1" />
+            </div>
+          </div>
+        </div>
+
         {/* DAILY TIP CARD */}
         {dailyTip && (
           <div className={`bg-white border border-blue-200 rounded-2xl shadow-lg p-5 ${fadeInUpClass('delay-250')} hover:shadow-xl transition-all duration-300 hover:scale-[1.01]`}>
             <div className="flex items-start gap-3">
-              <div className={`w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0 text-white shadow-md`}>
+              <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0 text-white shadow-md">
                 {dailyTip.icon}
               </div>
               <div>
-                <h3 className="font-bold text-gray-900 mb-1 text-blue-600">{dailyTip.title}</h3>
+                <h3 className="font-bold text-blue-600 mb-1">{dailyTip.title}</h3>
                 <p className="text-sm text-gray-600">{dailyTip.tip}</p>
               </div>
             </div>
@@ -337,70 +315,60 @@ export default function Home({ setActiveTab, user, habitData }) {
         )}
 
         {/* WEEKLY ACTIVITY CHART */}
-<div className={`bg-white border border-blue-100 rounded-2xl shadow-lg p-5 ${fadeInUpClass('delay-300')} hover:shadow-xl transition-all duration-300`}>
-  <h3 className="font-bold text-gray-900 mb-4">{texts.weeklyActivity || "Weekly Activity"}</h3>
-  <div className="flex justify-between items-end h-24 gap-1">
-    {weeklyActivity.map((day, i) => {
-      const pct = Math.round(
-        (() => {
-          const d = new Date();
-          d.setDate(d.getDate() - (6 - i));
-          const key = d.toISOString().split("T")[0];
-          const entry = habitData[key];
-          if (!entry) return 0;
-          const done = ["morning", "night", "floss"].filter(k => entry[k]).length;
-          return (done / 3) * 100;
-        })()
-      );
-      const label = new Date(
-        (() => { const d = new Date(); d.setDate(d.getDate() - (6 - i)); return d; })()
-      ).toLocaleDateString("en-US", { weekday: "short" }).slice(0, 1);
+        <div className={`bg-white border border-blue-100 rounded-2xl shadow-lg p-5 ${fadeInUpClass('delay-300')} hover:shadow-xl transition-all duration-300`}>
+          <h3 className="font-bold text-gray-900 mb-4">{texts.weeklyActivity || "Weekly Activity"}</h3>
+          <div className="flex justify-between items-end h-24 gap-1">
+            {weeklyActivity.map((day, i) => {
+              const pct = Math.round(
+                (() => {
+                  const d = new Date();
+                  d.setDate(d.getDate() - (6 - i));
+                  const key = d.toISOString().split("T")[0];
+                  const entry = habitData[key];
+                  if (!entry) return 0;
+                  const done = ["morning", "night", "floss"].filter(k => entry[k]).length;
+                  return (done / 3) * 100;
+                })()
+              );
+              const label = new Date(
+                (() => { const d = new Date(); d.setDate(d.getDate() - (6 - i)); return d; })()
+              ).toLocaleDateString("en-US", { weekday: "short" }).slice(0, 1);
 
-      return (
-        <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
-          {pct > 0 && (
-            <span className="text-[9px] font-bold text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity">
-              {pct}%
-            </span>
-          )}
-          <div className="w-full flex justify-center items-end" style={{ height: "72px" }}>
-            <div
-              className={`w-full max-w-[24px] rounded-t-lg transition-all duration-700 ${
-                pct === 0
-                  ? "bg-blue-50 border border-blue-100"
-                  : pct === 33
-                  ? "bg-gradient-to-t from-blue-300 to-blue-400"
-                  : pct === 67
-                  ? "bg-gradient-to-t from-blue-400 to-blue-500"
-                  : "bg-gradient-to-t from-blue-500 to-blue-600"
-              } group-hover:brightness-110`}
-              style={{ height: pct === 0 ? "4px" : `${(pct / 100) * 72}px` }}
-            />
+              return (
+                <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
+                  {pct > 0 && (
+                    <span className="text-[9px] font-bold text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {pct}%
+                    </span>
+                  )}
+                  <div className="w-full flex justify-center items-end" style={{ height: "72px" }}>
+                    <div
+                      className={`w-full max-w-[24px] rounded-t-lg transition-all duration-700 ${
+                        pct === 0 ? "bg-blue-50 border border-blue-100" :
+                        pct === 33 ? "bg-gradient-to-t from-blue-300 to-blue-400" :
+                        pct === 67 ? "bg-gradient-to-t from-blue-400 to-blue-500" :
+                        "bg-gradient-to-t from-blue-500 to-blue-600"
+                      } group-hover:brightness-110`}
+                      style={{ height: pct === 0 ? "4px" : `${(pct / 100) * 72}px` }}
+                    />
+                  </div>
+                  <span className={`text-xs font-medium transition-colors ${
+                    new Date().toLocaleDateString("en-US", { weekday: "short" }).slice(0,1) === label &&
+                    new Date().toISOString().split("T")[0] === (() => { const d = new Date(); d.setDate(d.getDate() - (6 - i)); return d.toISOString().split("T")[0]; })()
+                      ? "text-blue-600 font-bold"
+                      : "text-gray-400 group-hover:text-blue-500"
+                  }`}>{label}</span>
+                </div>
+              );
+            })}
           </div>
-          <span className={`text-xs font-medium transition-colors ${
-            new Date().toLocaleDateString("en-US", { weekday: "short" }).slice(0,1) === label && 
-            new Date().toISOString().split("T")[0] === (() => { const d = new Date(); d.setDate(d.getDate() - (6 - i)); return d.toISOString().split("T")[0]; })()
-              ? "text-blue-600 font-bold"
-              : "text-gray-400 group-hover:text-blue-500"
-          }`}>{label}</span>
+          <div className="flex justify-between mt-3 pt-3 border-t border-blue-50 text-[10px] text-gray-400 font-medium">
+            <span>0%</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-300 inline-block" /> 33%</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400 inline-block" /> 67%</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-600 inline-block" /> 100%</span>
+          </div>
         </div>
-      );
-    })}
-  </div>
-  <div className="flex justify-between mt-3 pt-3 border-t border-blue-50 text-[10px] text-gray-400 font-medium">
-    <span>0%</span>
-    <span className="flex items-center gap-1">
-      <span className="w-2 h-2 rounded-full bg-blue-300 inline-block" /> 33%
-    </span>
-    <span className="flex items-center gap-1">
-      <span className="w-2 h-2 rounded-full bg-blue-400 inline-block" /> 67%
-    </span>
-    <span className="flex items-center gap-1">
-      <span className="w-2 h-2 rounded-full bg-blue-600 inline-block" /> 100%
-    </span>
-  </div>
-</div>
-
 
         {/* SCAN STATS */}
         <div className={`grid grid-cols-2 gap-4 ${fadeInUpClass('delay-350')}`}>
@@ -438,7 +406,7 @@ export default function Home({ setActiveTab, user, habitData }) {
           <div className={`bg-white border border-blue-100 rounded-2xl shadow-lg p-5 ${fadeInUpClass('delay-450')} hover:shadow-xl transition-all duration-300`}>
             <div className="flex justify-between items-center mb-3">
               <h3 className="font-bold text-gray-900">{texts.recentScans || "Recent Scans"}</h3>
-              <button 
+              <button
                 onClick={() => go("scan")}
                 className="text-sm text-blue-600 font-semibold flex items-center gap-1 hover:scale-105 transition-transform"
               >
@@ -459,7 +427,7 @@ export default function Home({ setActiveTab, user, habitData }) {
           </div>
         )}
 
-        {/* QUICK ACTIONS GRID - Camera icon at bottom */}
+        {/* QUICK ACTIONS GRID */}
         <div className={`grid grid-cols-2 gap-4 ${fadeInUpClass('delay-500')}`}>
           <button
             onClick={() => go("scan")}

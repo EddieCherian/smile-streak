@@ -293,16 +293,6 @@ export default function Today({ habitData, setHabitData }) {
     setShowDentistModal(false);
   };
 
-  const confirmDentistVisitByDate = (dateStr) => {
-    if (!dateStr) return;
-    setHabitData(prev => ({
-      ...prev,
-      __lastDentistVisit: new Date().toISOString(),
-      __nextDentistVisit: new Date(dateStr).toISOString(),
-    }));
-    setShowDentistModal(false);
-  };
-
   const getDaysUntilNextVisit = () => {
     if (!nextDentistVisit) return null;
     const diff = new Date(nextDentistVisit) - new Date();

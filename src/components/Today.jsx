@@ -1,3 +1,5 @@
+Here’s the updated file. The core changes: the “Log Dentist Visit” button now opens a modal that has two separate sections — one for logging when the last visit was (with date picker), and one for setting the next appointment (with quick select, custom interval, and date picker). The next visit auto-defaults to 6 months from today so it’s never immediately overdue. The existing dentist visit card below shows both dates cleanly.
+
 import { useEffect, useState, useContext, useRef, useCallback } from "react";
 import { getDateKey, getYesterdayKey } from "../utils/date.js";
 import { calculateStreaks } from "../utils/streak.js";
@@ -90,9 +92,15 @@ export default function Today({ habitData, setHabitData }) {
   const [tipsOpen, setTipsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // ── DENTIST VISIT STATE (new) ──
+  // ── DENTIST VISIT STATE ──
   const [showDentistModal, setShowDentistModal] = useState(false);
   const [customMonths, setCustomMonths] = useState(6);
+  // Last visit controls
+  const [lastVisitDateInput, setLastVisitDateInput] = useState("");
+  // Next appointment controls
+  const [nextCustomMonths, setNextCustomMonths] = useState(6);
+  const [nextDateInput, setNextDateInput] = useState("");
+
   const lastDentistVisit = habitData.__lastDentistVisit || null;
   const nextDentistVisit = habitData.__nextDentistVisit || null;
 
@@ -118,7 +126,6 @@ export default function Today({ habitData, setHabitData }) {
   useEffect(() => { forceUpdate(v => v + 1); }, [habitData]);
   useEffect(() => { setTipIndex(new Date().getDate() % DENTAL_TIPS_EN.length); }, []);
 
-  // Translation
   useEffect(() => {
     setTxReady(false);
     if (!currentLanguage || currentLanguage === "en") {
@@ -139,17 +146,14 @@ export default function Today({ habitData, setHabitData }) {
         const map = {};
         UI_STRINGS.forEach((s, i) => { map[s] = uiTranslated[i] ?? s; });
         setTx(map);
-
         const tipTexts = DENTAL_TIPS_EN.flatMap(t => [t.title, t.body]);
         const tipTranslated = await translateBatch(tipTexts, currentLanguage, "en");
         setTranslatedTips(DENTAL_TIPS_EN.map((t, i) => ({
           ...t, title: tipTranslated[i*2] ?? t.title, body: tipTranslated[i*2+1] ?? t.body,
         })));
-
         const moodLabels = MOOD_OPTIONS.map(m => m.labelKey);
         const moodTranslated = await translateBatch(moodLabels, currentLanguage, "en");
         setTranslatedMoods(MOOD_OPTIONS.map((m, i) => ({ ...m, label: moodTranslated[i] ?? m.labelKey })));
-
         const badgeKeys = Object.keys(BADGE_META);
         const badgeTranslated = await translateBatch(badgeKeys, currentLanguage, "en");
         const bm = {};
@@ -175,7 +179,6 @@ export default function Today({ habitData, setHabitData }) {
       dots.push({ label: d.toLocaleDateString("en-US", { weekday:"short" }).slice(0,1), done, isToday: i === 0 });
     }
     setWeekDots(dots);
-
     const scores = [];
     for (let i = 0; i < 7; i++) {
       const d = new Date(); d.setDate(d.getDate() - i);
@@ -183,10 +186,8 @@ export default function Today({ habitData, setHabitData }) {
       if (day) scores.push(["morning","night","floss"].filter(k => day[k]).length / 3);
     }
     setConsistencyScore(Math.round(scores.reduce((a,b) => a+b, 0) / 7 * 100) || 0);
-
     const { current, longest } = calculateStreaks(habitData);
     setStreakMultiplier(current >= 30 ? 2 : current >= 14 ? 1.5 : current >= 7 ? 1.25 : 1);
-
     const nb = [];
     if (longest >= 7) nb.push("Week Warrior");
     if (longest >= 30) nb.push("Monthly Master");
@@ -198,7 +199,6 @@ export default function Today({ habitData, setHabitData }) {
     for (let i = 0; i < 30; i++) { const d = new Date(); d.setDate(d.getDate()-i); const day = habitData[getDateKey(d)]; if (!day||!day.morning||!day.night||!day.floss){pm=false;break;} }
     if (pm) nb.push("Perfect Month");
     setBadges(nb);
-
     const milestones = [7,30,60,90,180,365];
     const next = milestones.find(m => m > current) || 365;
     setStreakMilestones([{ current, next, remaining: next - current }]);
@@ -277,31 +277,68 @@ export default function Today({ habitData, setHabitData }) {
     }
   };
 
-  // ── DENTIST VISIT HANDLERS (new) ──
-  const logDentistVisit = () => setShowDentistModal(true);
+  // ── DENTIST VISIT HANDLERS ──
+  const openDentistModal = () => {
+    // Pre-fill last visit as today
+    setLastVisitDateInput(new Date().toISOString().split("T")[0]);
+    // Pre-fill next appointment as 6 months from now
+    const sixMonths = new Date();
+    sixMonths.setMonth(sixMonths.getMonth() + 6);
+    setNextCustomMonths(6);
+    setNextDateInput("");
+    setShowDentistModal(true);
+  };
 
-  const confirmDentistVisit = (months) => {
-    const visitDate = new Date().toISOString();
+  const parseLocalDate = (dateStr) => {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    return new Date(y, m - 1, d, 12, 0, 0);
+  };
+
+  // Save last visit date
+  const saveLastVisit = (dateStr) => {
+    if (!dateStr) return;
+    setHabitData(prev => ({
+      ...prev,
+      __lastDentistVisit: parseLocalDate(dateStr).toISOString(),
+    }));
+  };
+
+  // Set next appointment by months
+  const setNextByMonths = (months) => {
     const nextDate = new Date();
     nextDate.setMonth(nextDate.getMonth() + months);
     setHabitData(prev => ({
       ...prev,
-      __lastDentistVisit: visitDate,
       __nextDentistVisit: nextDate.toISOString(),
     }));
     setShowDentistModal(false);
   };
 
-  const confirmDentistVisitByDate = (dateStr) => {
+  // Set next appointment by specific date
+  const setNextByDate = (dateStr) => {
     if (!dateStr) return;
-    // Parse as local date (append T12:00:00 to avoid UTC midnight shifting the date back a day)
-    const [year, month, day] = dateStr.split("-").map(Number);
-    const localDate = new Date(year, month - 1, day, 12, 0, 0);
     setHabitData(prev => ({
       ...prev,
-      __lastDentistVisit: new Date().toISOString(),
-      __nextDentistVisit: localDate.toISOString(),
+      __nextDentistVisit: parseLocalDate(dateStr).toISOString(),
     }));
+    setShowDentistModal(false);
+  };
+
+  // Save both at once and close
+  const saveDentistModal = () => {
+    const updates = {};
+    if (lastVisitDateInput) {
+      updates.__lastDentistVisit = parseLocalDate(lastVisitDateInput).toISOString();
+    }
+    if (nextDateInput) {
+      updates.__nextDentistVisit = parseLocalDate(nextDateInput).toISOString();
+    } else {
+      // Default: next months from today
+      const nextDate = new Date();
+      nextDate.setMonth(nextDate.getMonth() + nextCustomMonths);
+      updates.__nextDentistVisit = nextDate.toISOString();
+    }
+    setHabitData(prev => ({ ...prev, ...updates }));
     setShowDentistModal(false);
   };
 
@@ -337,10 +374,8 @@ export default function Today({ habitData, setHabitData }) {
 
   const currentMoodOption = MOOD_OPTIONS.find(m => m.labelKey === currentMood);
   const currentMoodTranslated = translatedMoods.find(m => m.labelKey === currentMood);
-
   const daysUntilVisit = getDaysUntilNextVisit();
 
-  // Loading state
   if (translating || !txReady) {
     return (
       <section className="space-y-6 pb-8">
@@ -368,7 +403,6 @@ export default function Today({ habitData, setHabitData }) {
   return (
     <section className="space-y-5 pb-8">
 
-      {/* Copied toast */}
       {copied && (
         <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50" style={{animation:"fadeIn .22s ease"}}>
           <div className="bg-gray-900 text-white text-sm font-semibold px-5 py-2.5 rounded-2xl shadow-xl">
@@ -377,7 +411,6 @@ export default function Today({ habitData, setHabitData }) {
         </div>
       )}
 
-      {/* Completion overlay */}
       {showCompletion && (
         <div className="fixed inset-0 bg-blue-900/25 backdrop-blur-sm flex items-center justify-center z-50" style={{animation:"fadeIn .22s ease"}}>
           <div className="bg-white rounded-3xl px-10 py-9 text-center shadow-2xl border border-blue-100" style={{animation:"bounceIn .45s cubic-bezier(.22,1,.36,1)"}}>
@@ -480,7 +513,6 @@ export default function Today({ habitData, setHabitData }) {
 
       {/* ── DAILY TASKS ── */}
       <div className="bg-white rounded-3xl p-5 shadow-lg border border-blue-100 space-y-3">
-        {/* Progress ring + timer header */}
         <div className="flex items-center gap-4 mb-2">
           <div className="relative w-14 h-14 flex-shrink-0">
             <svg className="w-full h-full -rotate-90" viewBox="0 0 56 56">
@@ -515,7 +547,6 @@ export default function Today({ habitData, setHabitData }) {
           </button>
         </div>
 
-        {/* Morning & Night */}
         {["morning","night"].map(task => {
           const isDone = todayData[task];
           const isRunning = activeTimer === task;
@@ -539,9 +570,7 @@ export default function Today({ habitData, setHabitData }) {
                 <div className="relative flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-2xl ${
-                      task === "morning"
-                        ? "bg-gradient-to-br from-yellow-100 to-orange-100"
-                        : "bg-gradient-to-br from-indigo-100 to-purple-100"
+                      task === "morning" ? "bg-gradient-to-br from-yellow-100 to-orange-100" : "bg-gradient-to-br from-indigo-100 to-purple-100"
                     }`}>
                       {task === "morning" ? "🪥" : "🌙"}
                     </div>
@@ -573,7 +602,6 @@ export default function Today({ habitData, setHabitData }) {
           );
         })}
 
-        {/* Floss */}
         <button className="press w-full text-left group" onClick={() => toggleTask("floss")}>
           <div className={`rounded-2xl border-2 p-4 transition-all duration-200 ${
             todayData.floss
@@ -582,9 +610,7 @@ export default function Today({ habitData, setHabitData }) {
           }`}>
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center text-2xl">
-                  🧵
-                </div>
+                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center text-2xl">🧵</div>
                 <div>
                   <p className="font-bold text-gray-900 text-sm">{T("Interdental Care")}</p>
                   <select value={interdentalType} onChange={e => setInterdentalType(e.target.value)}
@@ -609,54 +635,67 @@ export default function Today({ habitData, setHabitData }) {
           </div>
         </button>
 
-        {/* ── LOG DENTIST VISIT BUTTON (new) ── */}
+        {/* ── LOG DENTIST VISIT BUTTON ── */}
         <button
-          onClick={logDentistVisit}
+          onClick={openDentistModal}
           className="press hover-lift w-full py-3.5 rounded-2xl text-sm font-bold border border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50 text-blue-600 hover:border-blue-400 transition-all flex items-center justify-center gap-2"
         >
           🦷 Log Dentist Visit
         </button>
       </div>
 
-      {/* ── NEXT DENTIST VISIT CARD (new) ── */}
-      {nextDentistVisit && daysUntilVisit !== null && (
+      {/* ── DENTIST VISIT CARD ── */}
+      {(nextDentistVisit || lastDentistVisit) && (
         <div className={`rounded-3xl p-5 shadow-md border ${
-          daysUntilVisit <= 0
+          nextDentistVisit && daysUntilVisit !== null && daysUntilVisit <= 0
             ? "bg-orange-50 border-orange-200"
-            : daysUntilVisit <= 14
+            : nextDentistVisit && daysUntilVisit !== null && daysUntilVisit <= 14
             ? "bg-amber-50 border-amber-200"
             : "bg-white border-blue-100"
         }`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-xl ${
-                daysUntilVisit <= 0 ? "bg-orange-100" :
-                daysUntilVisit <= 14 ? "bg-amber-100" : "bg-blue-50"
-              }`}>🦷</div>
-              <div>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">Next Dentist Visit</p>
-                {daysUntilVisit > 0 ? (
-                  <>
-                    <p className={`font-black text-base ${daysUntilVisit <= 14 ? "text-amber-600" : "text-blue-600"}`}>
-                      In {daysUntilVisit} day{daysUntilVisit !== 1 ? "s" : ""}
-                    </p>
-                    <p className="text-xs text-gray-500">{formatVisitDate(nextDentistVisit)}</p>
-                  </>
-                ) : (
-                  <>
-                    <p className="font-black text-base text-orange-600">⚠️ Overdue</p>
-                    <p className="text-xs text-gray-500">Was due {formatVisitDate(nextDentistVisit)}</p>
-                  </>
-                )}
+          {/* Next appointment row */}
+          {nextDentistVisit && daysUntilVisit !== null && (
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-xl ${
+                  daysUntilVisit <= 0 ? "bg-orange-100" :
+                  daysUntilVisit <= 14 ? "bg-amber-100" : "bg-blue-50"
+                }`}>🦷</div>
+                <div>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">Next Appointment</p>
+                  {daysUntilVisit > 0 ? (
+                    <>
+                      <p className={`font-black text-base ${daysUntilVisit <= 14 ? "text-amber-600" : "text-blue-600"}`}>
+                        In {daysUntilVisit} day{daysUntilVisit !== 1 ? "s" : ""}
+                      </p>
+                      <p className="text-xs text-gray-500">{formatVisitDate(nextDentistVisit)}</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-black text-base text-orange-600">⚠️ Overdue</p>
+                      <p className="text-xs text-gray-500">Was due {formatVisitDate(nextDentistVisit)}</p>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
-            {lastDentistVisit && (
-              <div className="text-right">
-                <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Last visit</p>
-                <p className="text-xs text-gray-600 font-semibold mt-0.5">{formatVisitDate(lastDentistVisit)}</p>
+          )}
+
+          {/* Divider if both exist */}
+          {nextDentistVisit && lastDentistVisit && (
+            <div className="border-t border-blue-50 my-3" />
+          )}
+
+          {/* Last visit row */}
+          {lastDentistVisit && (
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center text-xl flex-shrink-0">📅</div>
+              <div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">Last Visit</p>
+                <p className="font-semibold text-sm text-gray-700">{formatVisitDate(lastDentistVisit)}</p>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -825,7 +864,6 @@ export default function Today({ habitData, setHabitData }) {
 
       {/* ── MODALS ── */}
 
-      {/* Reflection */}
       {showReflection && (
         <div className="fixed inset-0 bg-blue-900/25 backdrop-blur-sm flex items-end sm:items-center justify-center z-50"
           style={{animation:"fadeIn .22s ease"}} onClick={() => setShowReflection(false)}>
@@ -855,7 +893,6 @@ export default function Today({ habitData, setHabitData }) {
         </div>
       )}
 
-      {/* Mood */}
       {showMoodModal && (
         <div className="fixed inset-0 bg-blue-900/25 backdrop-blur-sm flex items-end sm:items-center justify-center z-50"
           style={{animation:"fadeIn .22s ease"}} onClick={() => setShowMoodModal(false)}>
@@ -885,7 +922,6 @@ export default function Today({ habitData, setHabitData }) {
         </div>
       )}
 
-      {/* Share modal */}
       {showShareModal && (
         <div className="fixed inset-0 bg-blue-900/25 backdrop-blur-sm flex items-end sm:items-center justify-center z-50"
           style={{animation:"fadeIn .22s ease"}} onClick={() => setShowShareModal(false)}>
@@ -910,72 +946,87 @@ export default function Today({ habitData, setHabitData }) {
         </div>
       )}
 
-      {/* ── DENTIST VISIT MODAL (new) ── */}
+      {/* ── DENTIST VISIT MODAL ── */}
       {showDentistModal && (
         <div className="fixed inset-0 bg-blue-900/25 backdrop-blur-sm flex items-end sm:items-center justify-center z-50"
           style={{animation:"fadeIn .22s ease"}} onClick={() => setShowDentistModal(false)}>
-          <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-md p-6 shadow-2xl"
+          <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-md p-6 shadow-2xl overflow-y-auto max-h-[90vh]"
             style={{animation:"slideUp .35s cubic-bezier(.22,1,.36,1)"}}
             onClick={e => e.stopPropagation()}>
             <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5 sm:hidden" />
 
-            <div className="flex items-center gap-3 mb-1">
+            <div className="flex items-center gap-3 mb-5">
               <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-xl">🦷</div>
               <div>
                 <h3 className="text-lg font-black text-gray-900">Log Dentist Visit</h3>
-                <p className="text-xs text-gray-500">When should your next visit be?</p>
+                <p className="text-xs text-gray-500">Record your last visit and schedule the next one</p>
               </div>
             </div>
 
-            <div className="mt-5 mb-3">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Quick Select</p>
-              <div className="grid grid-cols-3 gap-3">
+            {/* ── SECTION 1: Last Visit ── */}
+            <div className="mb-5 p-4 rounded-2xl bg-gray-50 border-2 border-gray-200">
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">📅 Last Visit Date</p>
+              <input
+                type="date"
+                max={new Date().toISOString().split("T")[0]}
+                value={lastVisitDateInput}
+                onChange={e => setLastVisitDateInput(e.target.value)}
+                className="w-full border-2 border-blue-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-blue-700 focus:outline-none focus:border-blue-400 bg-white"
+              />
+              <p className="text-[10px] text-gray-400 mt-2">When did you last visit the dentist?</p>
+            </div>
+
+            {/* ── SECTION 2: Next Appointment ── */}
+            <div className="mb-5">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">🗓️ Next Appointment</p>
+
+              <div className="grid grid-cols-3 gap-2 mb-3">
                 {[3, 6, 12].map(months => (
                   <button
                     key={months}
-                    onClick={() => confirmDentistVisit(months)}
-                    className="press hover-lift py-4 rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50 text-blue-700 font-black text-sm hover:border-blue-400 transition-all text-center"
+                    onClick={() => setNextCustomMonths(months)}
+                    className={`press py-3 rounded-2xl border-2 font-black text-sm transition-all text-center ${
+                      nextCustomMonths === months && !nextDateInput
+                        ? "bg-gradient-to-br from-blue-500 to-cyan-500 border-transparent text-white shadow-md"
+                        : "border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50 text-blue-700 hover:border-blue-400"
+                    }`}
                   >
                     {months} mo
                   </button>
                 ))}
               </div>
-            </div>
 
-            <div className="mb-3">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Custom Interval</p>
-              <div className="flex items-center gap-3 p-4 rounded-2xl border-2 border-gray-200 bg-gray-50">
+              <div className="flex items-center gap-3 p-3.5 rounded-2xl border-2 border-gray-200 bg-gray-50 mb-3">
                 <input
                   type="number"
                   min="1"
                   max="24"
-                  value={customMonths}
-                  onChange={e => setCustomMonths(Math.max(1, Math.min(24, parseInt(e.target.value) || 1)))}
-                  className="w-16 text-center border-2 border-blue-200 rounded-xl py-2 text-sm font-black text-blue-700 focus:outline-none focus:border-blue-400 bg-white"
+                  value={nextCustomMonths}
+                  onChange={e => { setNextCustomMonths(Math.max(1, Math.min(24, parseInt(e.target.value) || 1))); setNextDateInput(""); }}
+                  className="w-14 text-center border-2 border-blue-200 rounded-xl py-1.5 text-sm font-black text-blue-700 focus:outline-none focus:border-blue-400 bg-white"
                 />
                 <span className="text-sm text-gray-500 flex-1">months from today</span>
-                <button
-                  onClick={() => confirmDentistVisit(customMonths)}
-                  className="press px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-xs font-bold hover:opacity-90 shadow-md"
-                >
-                  Set
-                </button>
               </div>
-            </div>
 
-            <div className="mb-5">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Pick a Date</p>
-              <div className="flex items-center gap-3 p-4 rounded-2xl border-2 border-gray-200 bg-gray-50">
-                <span className="text-lg">📅</span>
+              <div className="p-3.5 rounded-2xl border-2 border-gray-200 bg-gray-50">
+                <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-2">Or pick a specific date</p>
                 <input
                   type="date"
                   min={new Date().toISOString().split("T")[0]}
-                  onChange={e => confirmDentistVisitByDate(e.target.value)}
-                  className="flex-1 border-2 border-blue-200 rounded-xl px-3 py-2 text-sm font-semibold text-blue-700 focus:outline-none focus:border-blue-400 bg-white"
+                  value={nextDateInput}
+                  onChange={e => setNextDateInput(e.target.value)}
+                  className="w-full border-2 border-blue-200 rounded-xl px-3 py-2 text-sm font-semibold text-blue-700 focus:outline-none focus:border-blue-400 bg-white"
                 />
               </div>
             </div>
 
+            {/* ── SAVE ── */}
+            <button
+              onClick={saveDentistModal}
+              className="press hover-lift w-full py-4 rounded-2xl text-sm font-black text-white bg-gradient-to-r from-blue-600 to-cyan-600 shadow-lg shadow-blue-200 mb-2"
+            >
+              💾 Save Visit
+            </button>
             <button onClick={() => setShowDentistModal(false)}
               className="w-full py-3 text-sm text-gray-400 hover:bg-gray-50 rounded-2xl press font-semibold">
               {T("Cancel")}

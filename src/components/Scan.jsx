@@ -225,11 +225,11 @@ export default function Scan() {
     const canvas = canvasRef.current;
     const video = videoRef.current;
     
-    if (canvas && video) {
+    if (canvas && video && video.videoWidth > 0 && video.videoHeight > 0) {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       
       const imageData = canvas.toDataURL('image/jpeg', 0.9);
       setImage(imageData);
@@ -237,9 +237,16 @@ export default function Scan() {
       // Analyze image quality (real brightness calculation)
       analyzeImageQuality(ctx, canvas.width, canvas.height);
       
+      // Stop camera first
       stopCamera();
+      
+      // Then analyze the photo
       setMode('analyzing');
       analyzePhoto(imageData);
+    } else {
+      // Fallback if video dimensions aren't ready
+      console.error("Camera not ready for capture");
+      alert("Please wait for camera to focus before taking photo");
     }
   };
 
@@ -317,8 +324,8 @@ const analyzePhoto = async (imageData) => {
     if (guidanceStep < guidanceSteps.length - 1) {
       setGuidanceStep(guidanceStep + 1);
     } else {
-      // Auto-capture after final step
-      setTimeout(capturePhoto, 2000);
+      // Capture immediately after final step
+      capturePhoto();
     }
   };
 

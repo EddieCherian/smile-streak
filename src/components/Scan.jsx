@@ -105,22 +105,22 @@ const guidanceSteps = [
 id: 0,
 title: "Position yourself",
 instruction: "Face the camera with good lighting",
-icon: "\U0001f4f1",
+icon: "📱",
 tip: "Natural light works best"
 },
 {
 id: 1,
 title: "Open wide",
 instruction: "Open your mouth to show all teeth",
-icon: "\U0001f601",
+icon: "😁",
 tip: "Relax your jaw and smile naturally"
 },
 {
 id: 2,
 title: "Hold steady",
-instruction: "Keep still for 2 seconds",
-icon: "\u23f1\ufe0f",
-tip: "We're capturing the perfect shot"
+instruction: "Keep still and get ready to take the photo",
+icon: "⏱️",
+tip: "When you're ready, tap the capture button below"
 }
 ];
 
@@ -332,9 +332,6 @@ setLoading(false);
 const nextGuidanceStep = () => {
 if (guidanceStep < guidanceSteps.length - 1) {
 setGuidanceStep(guidanceStep + 1);
-} else {
-// Capture immediately after final step
-capturePhoto();
 }
 };
 
@@ -808,6 +805,7 @@ return (
             <div className="relative w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
               <div className="w-16 h-16 border-4 border-blue-500 rounded-full" />
             </div>
+            <p className="absolute -bottom-8 text-xs text-gray-500 font-medium whitespace-nowrap">Tap to take photo</p>
           </button>
         )}
       </div>

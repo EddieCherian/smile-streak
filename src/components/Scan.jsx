@@ -757,7 +757,7 @@ return (
   )}
 
   {/* MODE: CAMERA */}
-  {mode === 'camera' && cameraActive && (
+  {mode === 'camera' && (
     <div className="space-y-4">
       <button
         onClick={stopCamera}

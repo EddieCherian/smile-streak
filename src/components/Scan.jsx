@@ -246,7 +246,14 @@ export default function Scan() {
     } else {
       // Fallback if video dimensions aren't ready
       console.error("Camera not ready for capture");
-      alert("Please wait for camera to focus before taking photo");
+      // Try again after a short delay
+      setTimeout(() => {
+        if (videoRef.current && videoRef.current.videoWidth > 0) {
+          capturePhoto();
+        } else {
+          alert("Camera not ready. Please try again.");
+        }
+      }, 500);
     }
   };
 
@@ -958,3 +965,4 @@ const analyzePhoto = async (imageData) => {
     </div>
   );
 }
+```

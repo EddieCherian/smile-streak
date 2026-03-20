@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useContext } from “react”;
+import { useState, useRef, useEffect, useContext } from "react";
 import {
 Camera, Upload, X, Sparkles, History, ArrowLeft, ChevronRight,
 AlertCircle, CheckCircle2, Zap, TrendingUp, Image as ImageIcon,
@@ -7,13 +7,13 @@ Mail, User, Star, FileText, BarChart3, Brain,
 Activity, Shield, Award, Target,
 Users, Globe, Lock, Eye, EyeOff, Bell, RefreshCw,
 BookOpen
-} from “lucide-react”;
-import { TranslationContext } from “../App”;
+} from "lucide-react";
+import { TranslationContext } from "../App";
 
 export default function Scan() {
 const { t, currentLanguage, translating } = useContext(TranslationContext);
 
-const [mode, setMode] = useState(“select”); // ‘select’, ‘camera’, ‘upload’, ‘analyzing’, ‘results’
+const [mode, setMode] = useState("select"); // 'select', 'camera', 'upload', 'analyzing', 'results'
 const [image, setImage] = useState(null);
 const [loading, setLoading] = useState(false);
 const [feedback, setFeedback] = useState(null);
@@ -27,53 +27,52 @@ const [showComparison, setShowComparison] = useState(false);
 const [selectedScanForComparison, setSelectedScanForComparison] = useState(null);
 const [showExportOptions, setShowExportOptions] = useState(false);
 const [showShareModal, setShowShareModal] = useState(false);
-const [shareEmail, setShareEmail] = useState(’’);
-const [shareNotes, setShareNotes] = useState(’’);
+const [shareEmail, setShareEmail] = useState("");
+const [shareNotes, setShareNotes] = useState("");
 
 const videoRef = useRef(null);
 const canvasRef = useRef(null);
 const streamRef = useRef(null);
 
-// Translation keys - only what’s actually used
+// Translation keys - only what's actually used
 const translationKeys = {
-title: “AI Dental Scan”,
-subtitle: “Get instant feedback on your dental health”,
-howItWorks: “How it works”,
-howItWorksDesc: “Take a clear photo of your teeth showing your gums. Our AI will analyze your dental hygiene and provide personalized feedback.”,
-takePhoto: “Take Photo”,
-takePhotoDesc: “Use camera with guided capture”,
-uploadPhoto: “Upload Photo”,
-uploadPhotoDesc: “Choose from gallery”,
-tipsTitle: “Tips for best results”,
-tip1: “\u2713 Use natural lighting or a well-lit room”,
-tip2: “\u2713 Show all your teeth clearly”,
-tip3: “\u2713 Keep the camera steady”,
-tip4: “\u2713 Avoid shadows on your teeth”,
-back: “Back”,
-nextStep: “Next Step”,
-analyzingTitle: “Analyzing Your Scan”,
-analyzingDesc: “Our AI is examining your dental health…”,
-analyzingStep1: “Analyzing image…”,
-analyzingStep2: “Checking for issues…”,
-analyzingStep3: “Comparing with dental database…”,
-analyzingStep4: “Generating feedback…”,
-analysisComplete: “Analysis Complete”,
-analysisCompleteDesc: “Here’s your personalized feedback”,
-newScan: “New Scan”,
-viewHistory: “View History”,
-trackProgress: “Track Your Progress”,
-trackProgressDesc: “Take scans regularly to see improvements over time.”,
-scanHistory: “Scan History”,
-noScans: “No scans yet”,
-viewDetails: “View Details”,
-delete: “Delete”,
-imageTooDark: “Image is too dark”,
-imageTooBright: “Image is too bright”,
-goodLighting: “Good lighting!”,
-failedAnalysis: “Failed to analyze image. Please try again.”,
-cameraError: “Could not access camera. Please check permissions.”,
+title: "AI Dental Scan",
+subtitle: "Get instant feedback on your dental health",
+howItWorks: "How it works",
+howItWorksDesc: "Take a clear photo of your teeth showing your gums. Our AI will analyze your dental hygiene and provide personalized feedback.",
+takePhoto: "Take Photo",
+takePhotoDesc: "Use camera with guided capture",
+uploadPhoto: "Upload Photo",
+uploadPhotoDesc: "Choose from gallery",
+tipsTitle: "Tips for best results",
+tip1: "\u2713 Use natural lighting or a well-lit room",
+tip2: "\u2713 Show all your teeth clearly",
+tip3: "\u2713 Keep the camera steady",
+tip4: "\u2713 Avoid shadows on your teeth",
+back: "Back",
+nextStep: "Next Step",
+analyzingTitle: "Analyzing Your Scan",
+analyzingDesc: "Our AI is examining your dental health...",
+analyzingStep1: "Analyzing image...",
+analyzingStep2: "Checking for issues...",
+analyzingStep3: "Comparing with dental database...",
+analyzingStep4: "Generating feedback...",
+analysisComplete: "Analysis Complete",
+analysisCompleteDesc: "Here's your personalized feedback",
+newScan: "New Scan",
+viewHistory: "View History",
+trackProgress: "Track Your Progress",
+trackProgressDesc: "Take scans regularly to see improvements over time.",
+scanHistory: "Scan History",
+noScans: "No scans yet",
+viewDetails: "View Details",
+delete: "Delete",
+imageTooDark: "Image is too dark",
+imageTooBright: "Image is too bright",
+goodLighting: "Good lighting!",
+failedAnalysis: "Failed to analyze image. Please try again.",
+cameraError: "Could not access camera. Please check permissions.",
 
-```
 // Real features
 compareScans: "Compare Scans",
 improvements: "Improvements",
@@ -98,32 +97,30 @@ previousScan: "Previous Scan",
 
 exportTitle: "Export Options",
 exportDesc: "Download or share your scan results"
-```
-
 };
 
 // Camera guidance steps
 const guidanceSteps = [
 {
 id: 0,
-title: “Position yourself”,
-instruction: “Face the camera with good lighting”,
-icon: “\U0001f4f1”,
-tip: “Natural light works best”
+title: "Position yourself",
+instruction: "Face the camera with good lighting",
+icon: "\U0001f4f1",
+tip: "Natural light works best"
 },
 {
 id: 1,
-title: “Open wide”,
-instruction: “Open your mouth to show all teeth”,
-icon: “\U0001f601”,
-tip: “Relax your jaw and smile naturally”
+title: "Open wide",
+instruction: "Open your mouth to show all teeth",
+icon: "\U0001f601",
+tip: "Relax your jaw and smile naturally"
 },
 {
 id: 2,
-title: “Hold steady”,
-instruction: “Keep still for 2 seconds”,
-icon: “\u23f1\ufe0f”,
-tip: “We’re capturing the perfect shot”
+title: "Hold steady",
+instruction: "Keep still for 2 seconds",
+icon: "\u23f1\ufe0f",
+tip: "We're capturing the perfect shot"
 }
 ];
 
@@ -141,7 +138,7 @@ loadTranslations();
 
 // Load scan history from localStorage (real user data)
 useEffect(() => {
-const history = JSON.parse(localStorage.getItem(‘scanHistory’) || ‘[]’);
+const history = JSON.parse(localStorage.getItem('scanHistory') || '[]');
 setScanHistory(history);
 }, []);
 
@@ -153,22 +150,18 @@ date: new Date().toISOString(),
 image: imageData,
 feedback: feedbackData,
 timestamp: new Date().toLocaleString(),
-quality: captureQuality?.isGoodQuality ? ‘good’ : ‘poor’
+quality: captureQuality?.isGoodQuality ? 'good' : 'poor'
 };
 
-```
 const updatedHistory = [scan, ...scanHistory].slice(0, 20);
 setScanHistory(updatedHistory);
 localStorage.setItem('scanHistory', JSON.stringify(updatedHistory));
-```
-
 };
 
 // Compare two scans based on actual feedback text
 const compareScans = (currentFeedback, previousFeedback) => {
 if (!previousFeedback) return null;
 
-```
 const current = currentFeedback.toLowerCase();
 const previous = previousFeedback.toLowerCase();
 
@@ -190,17 +183,15 @@ keywords.forEach(keyword => {
 });
 
 return { improvements, declines };
-```
-
 };
 
 // FIXED: set mode first so video element renders, then attach stream
 const startCamera = async () => {
-setMode(‘camera’);
+setMode('camera');
 try {
 const stream = await navigator.mediaDevices.getUserMedia({
 video: {
-facingMode: ‘user’,
+facingMode: 'user',
 width: { ideal: 1280 },
 height: { ideal: 720 }
 }
@@ -214,8 +205,8 @@ setCameraActive(true);
 setGuidanceStep(0);
 }
 } catch (err) {
-console.error(“Camera error:”, err);
-setMode(‘select’);
+console.error("Camera error:", err);
+setMode('select');
 alert(translatedText.cameraError || translationKeys.cameraError);
 }
 };
@@ -227,7 +218,7 @@ streamRef.current.getTracks().forEach(track => track.stop());
 streamRef.current = null;
 }
 setCameraActive(false);
-setMode(‘select’);
+setMode('select');
 setGuidanceStep(0);
 };
 
@@ -236,7 +227,6 @@ const capturePhoto = () => {
 const canvas = canvasRef.current;
 const video = videoRef.current;
 
-```
 if (canvas && video && video.videoWidth > 0 && video.videoHeight > 0) {
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
@@ -267,8 +257,6 @@ if (canvas && video && video.videoWidth > 0 && video.videoHeight > 0) {
     }
   }, 500);
 }
-```
-
 };
 
 // Analyze image quality (real brightness calculation)
@@ -277,7 +265,6 @@ const imageData = ctx.getImageData(0, 0, width, height);
 const data = imageData.data;
 let brightness = 0;
 
-```
 for (let i = 0; i < data.length; i += 4) {
   brightness += (data[i] + data[i + 1] + data[i + 2]) / 3;
 }
@@ -295,8 +282,6 @@ const quality = {
 };
 
 setCaptureQuality(quality);
-```
-
 };
 
 // Handle file upload
@@ -304,7 +289,6 @@ const handleUpload = (e) => {
 const file = e.target.files[0];
 if (!file) return;
 
-```
 const reader = new FileReader();
 reader.onloadend = () => {
   setImage(reader.result);
@@ -312,8 +296,6 @@ reader.onloadend = () => {
   analyzePhoto(reader.result);
 };
 reader.readAsDataURL(file);
-```
-
 };
 
 // Analyze photo with API
@@ -321,7 +303,6 @@ const analyzePhoto = async (imageData) => {
 setLoading(true);
 setFeedback(null);
 
-```
 try {
   const res = await fetch("/api/scan", {
     method: "POST",
@@ -345,8 +326,6 @@ try {
 }
 
 setLoading(false);
-```
-
 };
 
 // Progress through guidance steps
@@ -363,7 +342,7 @@ capturePhoto();
 const reset = () => {
 setImage(null);
 setFeedback(null);
-setMode(‘select’);
+setMode('select');
 setCaptureQuality(null);
 setShowComparison(false);
 setSelectedScanForComparison(null);
@@ -374,7 +353,7 @@ stopCamera();
 const viewHistoryScan = (scan) => {
 setImage(scan.image);
 setFeedback(scan.feedback);
-setMode(‘results’);
+setMode('results');
 setShowHistory(false);
 };
 
@@ -382,7 +361,7 @@ setShowHistory(false);
 const deleteScan = (scanId) => {
 const updated = scanHistory.filter(s => s.id !== scanId);
 setScanHistory(updated);
-localStorage.setItem(‘scanHistory’, JSON.stringify(updated));
+localStorage.setItem('scanHistory', JSON.stringify(updated));
 };
 
 // Export results as text (real export)
@@ -393,7 +372,6 @@ feedback: feedback,
 imageQuality: captureQuality
 };
 
-```
 const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
 const url = URL.createObjectURL(blob);
 const a = document.createElement('a');
@@ -401,18 +379,15 @@ a.href = url;
 a.download = `scan-results-${new Date().toISOString().split('T')[0]}.json`;
 a.click();
 URL.revokeObjectURL(url);
-```
-
 };
 
 // Share with dentist via email
 const shareWithDentist = () => {
 if (!shareEmail) {
-alert(‘Please enter an email address’);
+alert('Please enter an email address');
 return;
 }
 
-```
 const subject = encodeURIComponent('Dental Scan Results from Smile Streak');
 const body = encodeURIComponent(
   `Scan Results:\n\n${feedback}\n\nDate: ${new Date().toLocaleDateString()}\n\n${shareNotes ? `Notes: ${shareNotes}\n\n` : ''}`
@@ -422,8 +397,6 @@ window.location.href = `mailto:${shareEmail}?subject=${subject}&body=${body}`;
 setShowShareModal(false);
 setShareEmail('');
 setShareNotes('');
-```
-
 };
 
 // Show loading state while translating
@@ -447,7 +420,6 @@ return (
 <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16" />
 <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-12 -translate-x-12" />
 
-```
     <div className="relative z-10">
       <div className="flex items-center justify-between">
         <div>
@@ -661,10 +633,10 @@ return (
         <div className="space-y-3">
           {compareScans(feedback, selectedScanForComparison.feedback).improvements.length > 0 && (
             <div className="p-3 bg-green-50 rounded-xl">
-              <p className="font-semibold text-green-700 text-sm mb-2">\u2705 Improvements</p>
+              <p className="font-semibold text-green-700 text-sm mb-2">✅ Improvements</p>
               <ul className="space-y-1">
                 {compareScans(feedback, selectedScanForComparison.feedback).improvements.map((item, i) => (
-                  <li key={i} className="text-xs text-gray-600">\u2022 {item}</li>
+                  <li key={i} className="text-xs text-gray-600">• {item}</li>
                 ))}
               </ul>
             </div>
@@ -672,10 +644,10 @@ return (
           
           {compareScans(feedback, selectedScanForComparison.feedback).declines.length > 0 && (
             <div className="p-3 bg-red-50 rounded-xl">
-              <p className="font-semibold text-red-700 text-sm mb-2">\u26a0\ufe0f Areas to Watch</p>
+              <p className="font-semibold text-red-700 text-sm mb-2">⚠️ Areas to Watch</p>
               <ul className="space-y-1">
                 {compareScans(feedback, selectedScanForComparison.feedback).declines.map((item, i) => (
-                  <li key={i} className="text-xs text-gray-600">\u2022 {item}</li>
+                  <li key={i} className="text-xs text-gray-600">• {item}</li>
                 ))}
               </ul>
             </div>
@@ -796,7 +768,7 @@ return (
             <div className="text-4xl mb-2">{guidanceSteps[guidanceStep].icon}</div>
             <h3 className="text-xl font-black">{guidanceSteps[guidanceStep].title}</h3>
             <p className="text-sm opacity-90">{guidanceSteps[guidanceStep].instruction}</p>
-            <p className="text-xs opacity-75">\U0001f4a1 {guidanceSteps[guidanceStep].tip}</p>
+            <p className="text-xs opacity-75">💡 {guidanceSteps[guidanceStep].tip}</p>
             
             {/* Progress dots */}
             <div className="flex justify-center gap-2 pt-2">
@@ -993,7 +965,5 @@ return (
     </div>
   )}
 </div>
-```
-
 );
 }

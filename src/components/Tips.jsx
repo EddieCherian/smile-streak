@@ -1,50 +1,50 @@
-import { TIPS } from "../data”;
-import { Lightbulb, ExternalLink, XCircle, CheckCircle, AlertCircle, BookOpen, Sparkles, TrendingUp, Newspaper, ChevronRight, RefreshCw } from "lucide-react”;
-import { useState, useEffect, useContext, useCallback } from "react”;
-import { TranslationContext } from "../App”;
+import { TIPS } from "../data";
+import { Lightbulb, ExternalLink, XCircle, CheckCircle, AlertCircle, BookOpen, Sparkles, TrendingUp, Newspaper, ChevronRight, RefreshCw } from "lucide-react";
+import { useState, useEffect, useContext, useCallback } from "react";
+import { TranslationContext } from "../App";
 
 const MYTHS = [
-{ id: 1, myth: "You should rinse your mouth with water right after brushing”, truth: "False! Wait 30 minutes before rinsing. Toothpaste needs time to work its magic.”, icon: "💧”, isMyth: true },
-{ id: 2, myth: "Whitening toothpaste damages your enamel”, truth: "False! ADA-approved whitening toothpaste is safe when used as directed.”, icon: "✨”, isMyth: true },
-{ id: 3, myth: "You need to brush harder to clean better”, truth: "False! Gentle brushing is more effective and won’t damage your gums.”, icon: "🪥”, isMyth: true },
-{ id: 4, myth: "Flossing once a day is recommended by dentists”, truth: "True! Daily flossing removes plaque between teeth that brushing can’t reach.”, icon: "🧵”, isMyth: false },
-{ id: 5, myth: "Sugar-free soda is safe for your teeth”, truth: "False! The acid in soda (even sugar-free) erodes enamel over time.”, icon: "🥤”, isMyth: true },
-{ id: 6, myth: "Electric toothbrushes clean better than manual ones”, truth: "True! Studies show electric brushes reduce plaque by 21% more than manual.”, icon: "⚡”, isMyth: false },
-{ id: 7, myth: "Baby teeth don’t matter since they fall out anyway”, truth: "False! Healthy baby teeth guide the growth of permanent teeth and affect speech development.”, icon: "🍼”, isMyth: true },
-{ id: 8, myth: "You only need to see a dentist if something hurts”, truth: "False! Regular checkups catch problems early before they become painful or expensive.”, icon: "🦷”, isMyth: true },
-{ id: 9, myth: "Bleeding gums while brushing is normal”, truth: "False! Bleeding gums are usually a sign of gum disease and should be checked by a dentist.”, icon: "🩸”, isMyth: true },
-{ id: 10, myth: "Mouthwash can replace brushing”, truth: "False! Mouthwash is a supplement, not a substitute. You still need to brush and floss.”, icon: "🫧”, isMyth: true }
+{ id: 1, myth: "You should rinse your mouth with water right after brushing", truth: "False! Wait 30 minutes before rinsing. Toothpaste needs time to work its magic.", icon: "💧", isMyth: true },
+{ id: 2, myth: "Whitening toothpaste damages your enamel", truth: "False! ADA-approved whitening toothpaste is safe when used as directed.", icon: "✨", isMyth: true },
+{ id: 3, myth: "You need to brush harder to clean better", truth: "False! Gentle brushing is more effective and won’t damage your gums.", icon: "🪥", isMyth: true },
+{ id: 4, myth: "Flossing once a day is recommended by dentists", truth: "True! Daily flossing removes plaque between teeth that brushing can’t reach.", icon: "🧵", isMyth: false },
+{ id: 5, myth: "Sugar-free soda is safe for your teeth", truth: "False! The acid in soda (even sugar-free) erodes enamel over time.", icon: "🥤", isMyth: true },
+{ id: 6, myth: "Electric toothbrushes clean better than manual ones", truth: "True! Studies show electric brushes reduce plaque by 21% more than manual.", icon: "⚡", isMyth: false },
+{ id: 7, myth: "Baby teeth don’t matter since they fall out anyway", truth: "False! Healthy baby teeth guide the growth of permanent teeth and affect speech development.", icon: "🍼", isMyth: true },
+{ id: 8, myth: "You only need to see a dentist if something hurts", truth: "False! Regular checkups catch problems early before they become painful or expensive.", icon: "🦷", isMyth: true },
+{ id: 9, myth: "Bleeding gums while brushing is normal", truth: "False! Bleeding gums are usually a sign of gum disease and should be checked by a dentist.", icon: "🩸", isMyth: true },
+{ id: 10, myth: "Mouthwash can replace brushing", truth: "False! Mouthwash is a supplement, not a substitute. You still need to brush and floss.", icon: "🫧", isMyth: true }
 ];
 
 const DID_YOU_KNOW = [
-"Your mouth produces about 1 liter of saliva per day, which helps neutralize acids and protect your teeth.”,
-"Tooth enamel is the hardest substance in the human body, even stronger than bone.”,
-"The average person spends about 38.5 days brushing their teeth over a lifetime.”,
-"Humans have two sets of teeth in their lifetime. Sharks can have up to 50 sets.”,
-"Gum disease affects nearly half of adults over 30 in the United States.”,
-"Your tongue print is as unique as your fingerprint.”,
-"People who drink 3 or more glasses of soda daily have 62% more tooth decay than those who don’t.”,
-"The first toothbrush with bristles was invented in China in 1498.”,
-"Oral health is directly linked to heart health. Gum bacteria can enter the bloodstream and affect your heart.”,
-"Smiling releases endorphins, which naturally reduce stress and boost mood.”
+"Your mouth produces about 1 liter of saliva per day, which helps neutralize acids and protect your teeth.",
+"Tooth enamel is the hardest substance in the human body, even stronger than bone.",
+"The average person spends about 38.5 days brushing their teeth over a lifetime.",
+"Humans have two sets of teeth in their lifetime. Sharks can have up to 50 sets.",
+"Gum disease affects nearly half of adults over 30 in the United States.",
+"Your tongue print is as unique as your fingerprint.",
+"People who drink 3 or more glasses of soda daily have 62% more tooth decay than those who don’t.",
+"The first toothbrush with bristles was invented in China in 1498.",
+"Oral health is directly linked to heart health. Gum bacteria can enter the bloodstream and affect your heart.",
+"Smiling releases endorphins, which naturally reduce stress and boost mood."
 ];
 
 const BLOG_ARTICLES = [
 {
-title: "Building SmileStreak: The Journey of Creating a Dental AI App”,
-description: "How I built a dental habit tracker with AI smile scanning as a high school student, the struggles, lessons learned, and the ethics behind health technology.”,
-tag: "Founder Story”,
-tagColor: "#3b82f6”,
-emoji: "🚀”,
-url: "https://medium.com/@eddiecherianj”
+title: "Building SmileStreak: The Journey of Creating a Dental AI App",
+description: "How I built a dental habit tracker with AI smile scanning as a high school student, the struggles, lessons learned, and the ethics behind health technology.",
+tag: "Founder Story",
+tagColor: "#3b82f6",
+emoji: "🚀",
+url: "https://medium.com/@eddiecherianj"
 },
 {
-title: "AI in Dentistry: How SmileStreak is Bringing Intelligent Oral Care to Your Phone”,
-description: "Artificial intelligence is transforming healthcare. Here’s how SmileStreak uses AI-powered smile scanning and a dental chatbot to make better oral care accessible to everyone.”,
-tag: "Health Tech”,
-tagColor: "#10b981”,
-emoji: "🤖”,
-url: "https://medium.com/@eddiecherianj”
+title: "AI in Dentistry: How SmileStreak is Bringing Intelligent Oral Care to Your Phone",
+description: "Artificial intelligence is transforming healthcare. Here’s how SmileStreak uses AI-powered smile scanning and a dental chatbot to make better oral care accessible to everyone.",
+tag: "Health Tech",
+tagColor: "#10b981",
+emoji: "🤖",
+url: "https://medium.com/@eddiecherianj"
 }
 ];
 
@@ -65,30 +65,30 @@ setDidYouKnowIndex(idx);
 useEffect(() => {
 const translateAll = async () => {
 const translations = {
-dentalTips: await t("Dental Tips & Facts”),
-expertAdvice: await t("Expert advice backed by science”),
-mythBusters: await t("Myth Busters”),
-testKnowledge: await t("Test your dental knowledge!”),
-myth: await t("MYTH!”),
-true: await t("TRUE!”),
-tapReveal: await t("Tap to reveal the truth →”),
-revealed: await t("revealed”),
-proTip: await t("Pro Tip of the Day”),
-proTipText: await t("Brush your teeth at a 45-degree angle toward your gumline. This removes more plaque and prevents gum disease!”),
-source: await t("Source”),
-learnMore: await t("Learn More”),
-adaDesc: await t("Comprehensive oral health research”),
-cdcDesc: await t("Public health guidelines and basics”),
-whoDesc: await t("Global oral health statistics”),
-important: await t("Important”),
-disclaimer: await t("These tips are for prevention and education only, based on published dental research. This app does not provide medical diagnosis or treatment recommendations. Always consult with a licensed dental professional for personalized advice, treatment, or if you have concerns about your oral health.”),
-didYouKnow: await t("Did You Know?”),
-newFact: await t("New fact”),
-fromTheBlog: await t("From the Blog”),
-blogDesc: await t("Deep dives into dental health, technology, and the story behind SmileStreak.”),
-readArticle: await t("Read Article”),
-showMore: await t("Show more myths”),
-showLess: await t("Show less”),
+dentalTips: await t("Dental Tips & Facts"),
+expertAdvice: await t("Expert advice backed by science"),
+mythBusters: await t("Myth Busters"),
+testKnowledge: await t("Test your dental knowledge!"),
+myth: await t("MYTH!"),
+true: await t("TRUE!"),
+tapReveal: await t("Tap to reveal the truth →"),
+revealed: await t("revealed"),
+proTip: await t("Pro Tip of the Day"),
+proTipText: await t("Brush your teeth at a 45-degree angle toward your gumline. This removes more plaque and prevents gum disease!"),
+source: await t("Source"),
+learnMore: await t("Learn More"),
+adaDesc: await t("Comprehensive oral health research"),
+cdcDesc: await t("Public health guidelines and basics"),
+whoDesc: await t("Global oral health statistics"),
+important: await t("Important"),
+disclaimer: await t("These tips are for prevention and education only, based on published dental research. This app does not provide medical diagnosis or treatment recommendations. Always consult with a licensed dental professional for personalized advice, treatment, or if you have concerns about your oral health."),
+didYouKnow: await t("Did You Know?"),
+newFact: await t("New fact"),
+fromTheBlog: await t("From the Blog"),
+blogDesc: await t("Deep dives into dental health, technology, and the story behind SmileStreak."),
+readArticle: await t("Read Article"),
+showMore: await t("Show more myths"),
+showLess: await t("Show less"),
 };
 for (const myth of MYTHS) {
 translations[`myth${myth.id}`] = await t(myth.myth);
@@ -130,9 +130,9 @@ return (
 <div className="relative z-10">
 <div className="flex items-center gap-2 mb-2">
 <Lightbulb className="w-6 h-6" />
-<h2 className="text-2xl font-black">{texts.dentalTips || "Dental Tips & Facts”}</h2>
+<h2 className="text-2xl font-black">{texts.dentalTips || "Dental Tips & Facts"}</h2>
 </div>
-<p className="text-sm opacity-90">{texts.expertAdvice || "Expert advice backed by science”}</p>
+<p className="text-sm opacity-90">{texts.expertAdvice || "Expert advice backed by science"}</p>
 </div>
 </div>
 

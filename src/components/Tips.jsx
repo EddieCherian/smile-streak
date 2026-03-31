@@ -102,7 +102,7 @@ translateAll();
 const handleMythClick = (mythId) => {
 if (revealedMyths.has(mythId)) return;
 setSelectedMyth(mythId);
-setRevealedMyths(prev => new Set([…prev, mythId]));
+setRevealedMyths(prev => new Set([...prev, mythId]));
 };
 
 const rotateFact = useCallback(() => {
@@ -114,7 +114,7 @@ setFactAnimating(false);
 }, []);
 
 const translatedMyths = MYTHS.map((myth) => ({
-…myth,
+...myth,
 myth: texts[`myth${myth.id}`] || myth.myth,
 truth: texts[`truth${myth.id}`] || myth.truth
 }));
